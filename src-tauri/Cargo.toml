@@ -1,0 +1,27 @@
+[package]
+name = "poe-manager"
+description = "poe-manager — инструменты для Path of Exile 1"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "poe_manager_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+item-parser = { path = "../crates/item-parser" }
+game-window = { path = "../crates/game-window" }
+browser-bridge = { path = "../crates/browser-bridge" }
+# HTTP-клиент для связи с сервером (BFF): маленький, синхронный — работает в своём потоке.
+ureq = { version = "3", features = ["json"] }
+# Чтение .env / .env.local в отладочной сборке (API_URL).
+dotenvy = "0.15"
