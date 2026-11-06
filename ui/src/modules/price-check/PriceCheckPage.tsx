@@ -10,8 +10,8 @@ import { ItemCard } from "./ItemCard";
  * Оценка цены и похожие лоты появятся вместе с данными от бэкенда (пример раскладки — в витрине).
  */
 export function PriceCheckPage() {
-  const { currentItem: item, caughtAt, hotkeys, demoProblems } = useShell();
-  const game = useGameStatus(demoProblems);
+  const { currentItem: item, caughtAt, hotkeys } = useShell();
+  const game = useGameStatus();
 
   return (
     <Page title="Price check" subtitle={item && caughtAt ? `Пойман в ${caughtAt}` : undefined}>

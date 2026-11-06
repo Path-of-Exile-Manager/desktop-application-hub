@@ -24,7 +24,7 @@ fn app_info(app: tauri::AppHandle) -> AppInfo {
     }
 }
 
-/// Открыть инструменты разработчика WebView (кнопка в Админке). Есть только в отладочной сборке.
+/// Открыть инструменты разработчика WebView (кнопка на странице «Режим разработки»). Есть только в отладочной сборке.
 #[tauri::command]
 fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
     #[cfg(debug_assertions)]

@@ -159,7 +159,7 @@ function Row({ label, children }: { label?: string; children: ReactNode }) {
 function ShellStates() {
   const [league, setLeague] = useState(LEAGUES[0].id);
   return (
-    <Section title="Оболочка" note="симуляция «игра не найдена» и повтор экрана запуска — в Админке">
+    <Section title="Оболочка" note="симуляция «игра не найдена» и повтор экрана запуска — на странице «Режим разработки»">
       <Row label="Знак">
         <AppLogo size={20} />
         <AppLogo size={40} />

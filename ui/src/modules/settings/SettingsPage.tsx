@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardSection, Checkbox, Field, HotkeyInput, Page } from "@/design-system";
+import { Card, CardHeader, CardSection, Checkbox, Field, HotkeyInput, Page, Switch } from "@/design-system";
 import { useShell } from "@/app/store";
 
 /**
@@ -26,12 +26,27 @@ export function SettingsPage() {
           </CardSection>
         </Card>
 
-        <Card>
-          <CardHeader title="Интерфейс" />
-          <CardSection>
-            <Checkbox checked={s.sidebarCollapsed} onCheckedChange={s.setSidebarCollapsed} label="Узкая боковая панель" />
-          </CardSection>
-        </Card>
+        <div className="flex min-w-0 flex-col gap-4">
+          <Card>
+            <CardHeader title="Интерфейс" />
+            <CardSection>
+              <Checkbox checked={s.sidebarCollapsed} onCheckedChange={s.setSidebarCollapsed} label="Узкая боковая панель" />
+            </CardSection>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Режим разработчика"
+              aside={<Switch aria-label="Режим разработчика" checked={s.developerMode} onCheckedChange={s.setDeveloperMode} />}
+            />
+            <CardSection>
+              <p className="text-label text-text-secondary">
+                Добавляет в навигацию страницы «Режим разработки» и «Витрина»: адрес сервера, симуляция состояний, сырые данные ядра.
+                Пока режим выключен, приложение работает с сервером по умолчанию.
+              </p>
+            </CardSection>
+          </Card>
+        </div>
       </div>
     </Page>
   );

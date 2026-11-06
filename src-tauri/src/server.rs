@@ -2,7 +2,8 @@
 //! событием `server-status`.
 //!
 //! Адрес сервера, по убыванию приоритета:
-//! 1. задан в Админке (команда `server_set_url`, интерфейс сохраняет его между запусками);
+//! 1. задан на странице «Режим разработки» (команда `server_set_url`; интерфейс сохраняет его между запусками
+//!    и передаёт ядру, только пока в настройках включён режим разработчика);
 //! 2. переменная окружения `API_URL` при запуске (в отладочной сборке читаются и `.env.local` / `.env`);
 //! 3. `API_URL`, заданный при сборке (`option_env!`) — так в релиз попадёт адрес боевого сервера.
 
@@ -36,8 +37,8 @@ pub enum ServerState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum UrlSource {
-    /// Задан в Админке.
-    Admin,
+    /// Задан на странице «Режим разработки».
+    Developer,
     /// Переменная окружения или .env-файл при запуске.
     Env,
     /// Задан при сборке.
@@ -50,7 +51,7 @@ pub struct ServerStatus {
     pub state: ServerState,
     pub url: Option<String>,
     pub source: Option<UrlSource>,
-    /// Адрес по умолчанию (без Админки) — чтобы показать, к чему вернёт «Сбросить».
+    /// Адрес по умолчанию (API_URL) — чтобы показать, к чему вернёт «Сбросить».
     pub default_url: Option<String>,
     pub latency_ms: Option<u64>,
     /// Версия сервера из ответа /v1/health.
@@ -176,7 +177,7 @@ fn watch(app: AppHandle, wake: Receiver<()>) {
 
         let interval = match url {
             None => {
-                // Адреса нет — ждём, пока его зададут в Админке.
+                // Адреса нет — ждём, пока его зададут в режиме разработки.
                 if wake.recv().is_err() {
                     return;
                 }
@@ -227,7 +228,7 @@ pub fn server_check_now(watcher: State<ServerWatcher>) {
     let _ = watcher.wake.lock().unwrap().send(());
 }
 
-/// Задать адрес сервера из Админки. `null` — вернуть адрес по умолчанию (API_URL).
+/// Задать адрес сервера (страница «Режим разработки»). `null` — вернуть адрес по умолчанию (API_URL).
 #[tauri::command]
 pub fn server_set_url(app: AppHandle, watcher: State<ServerWatcher>, url: Option<String>) -> Result<ServerStatus, String> {
     let status = {
@@ -235,7 +236,7 @@ pub fn server_set_url(app: AppHandle, watcher: State<ServerWatcher>, url: Option
         match url {
             Some(url) => {
                 inner.url = Some(normalize(&url)?);
-                inner.source = Some(UrlSource::Admin);
+                inner.source = Some(UrlSource::Developer);
             }
             None => {
                 inner.url = inner.default.as_ref().map(|(u, _)| u.clone());

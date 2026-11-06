@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import process from "node:process";
@@ -9,20 +9,11 @@ const host = process.env.TAURI_DEV_HOST;
 const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 
 // https://vite.dev/config/
-export default defineConfig(({ mode, command }) => {
-  // Режим разработки приложения: DEVELOPMENT=true в окружении или в .env / .env.local в корне репозитория.
-  // Включает пометку «Development» в интерфейсе и инструменты разработчика (Админка, Витрина).
-  const env = loadEnv(mode, projectRoot, "");
-  const development = /^(1|true|yes|on)$/i.test((env.DEVELOPMENT ?? "").trim());
-  if (development && command === "build") {
-    console.warn("\n⚠ DEVELOPMENT=true: сборка с инструментами разработчика (Админка). Не публикуйте её.\n");
-  }
-
+// Инструменты разработчика включаются не при сборке, а в самом приложении:
+// Настройки → «Режим разработчика» (ui/src/app/store.ts, developerMode).
+export default defineConfig(() => {
   return {
   plugins: [react(), tailwindcss()],
-  define: {
-    __DEVELOPMENT__: JSON.stringify(development),
-  },
 
   // Фронтенд живёт в ui/, сборка кладётся в dist/ в корне репозитория (её берёт Tauri).
   root: "ui",

@@ -1,15 +1,15 @@
 import type { ComponentType } from "react";
-import { LayoutGrid, Settings, ShieldCheck, Tag, type LucideIcon } from "lucide-react";
+import { LayoutGrid, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { SettingsPage } from "@/modules/settings/SettingsPage";
-import { AdminPage } from "@/modules/admin/AdminPage";
+import { DeveloperPage } from "@/modules/developer/DeveloperPage";
 import { ShowcasePage } from "@/showcase/ShowcasePage";
-import { DEVELOPMENT } from "./env";
+import { useShell } from "./store";
 
 /**
  * Описание модуля. Чтобы добавить модуль: сделать страницу в `modules/<имя>/`
- * и одну запись в MODULES — навигация, палитра Ctrl+K и «Передать в модуль» подхватят её сами.
+ * и одну запись в списке ниже — навигация, палитра Ctrl+K и «Передать в модуль» подхватят её сами.
  * В навигацию попадают только работающие модули: заглушек «в разработке» нет.
  */
 export type ModuleDef = {
@@ -17,7 +17,7 @@ export type ModuleDef = {
   /** Подпись в навигации ≤ 22 символов. */
   label: string;
   icon: LucideIcon;
-  /** Группа навигации; `footer` — внизу сайдбара; `dev` — только в режиме Development. */
+  /** Группа навигации; `footer` — внизу сайдбара; `dev` — только при включённом режиме разработчика. */
   group: "check" | "craft" | "data" | "dev" | "footer";
   component: ComponentType;
   /** Можно ли передать в модуль текущий предмет. */
@@ -26,17 +26,39 @@ export type ModuleDef = {
   keywords?: string;
 };
 
-/** Инструменты разработчика — только с DEVELOPMENT=true (app/env.ts). */
+export const DEVELOPER_MODULE_ID = "developer";
+
+/** Инструменты разработчика — только при включённом режиме разработчика (Настройки). */
 const DEV_MODULES: ModuleDef[] = [
-  { id: "admin", label: "Админка", icon: ShieldCheck, group: "dev", component: AdminPage, keywords: "admin разработка отладка devtools" },
+  {
+    id: DEVELOPER_MODULE_ID,
+    label: "Режим разработки",
+    icon: Wrench,
+    group: "dev",
+    component: DeveloperPage,
+    keywords: "разработчик разработка отладка devtools сервер симуляция",
+  },
   { id: "showcase", label: "Витрина", icon: LayoutGrid, group: "dev", component: ShowcasePage, keywords: "дизайн-система компоненты экраны" },
 ];
 
-export const MODULES: ModuleDef[] = [
-  { id: "price-check", label: "Price check", icon: Tag, group: "check", component: PriceCheckPage, acceptsItem: true, keywords: "цена проверка" },
-  ...(DEVELOPMENT ? DEV_MODULES : []),
-  { id: "settings", label: "Настройки", icon: Settings, group: "footer", component: SettingsPage, keywords: "горячие клавиши" },
-];
+const PRICE_CHECK: ModuleDef = {
+  id: "price-check",
+  label: "Price check",
+  icon: Tag,
+  group: "check",
+  component: PriceCheckPage,
+  acceptsItem: true,
+  keywords: "цена проверка",
+};
+
+const SETTINGS: ModuleDef = {
+  id: "settings",
+  label: "Настройки",
+  icon: Settings,
+  group: "footer",
+  component: SettingsPage,
+  keywords: "горячие клавиши режим разработчика",
+};
 
 const GROUP_LABELS: Record<Exclude<ModuleDef["group"], "footer">, string> = {
   check: "Проверка",
@@ -47,10 +69,29 @@ const GROUP_LABELS: Record<Exclude<ModuleDef["group"], "footer">, string> = {
 
 const toNav = (m: ModuleDef) => ({ id: m.id, label: m.label, icon: m.icon });
 
-export const NAV_GROUPS: NavGroup[] = (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
-  .map((g) => ({ id: g, label: GROUP_LABELS[g], items: MODULES.filter((m) => m.group === g).map(toNav) }))
-  .filter((g) => g.items.length > 0);
+export type ModuleSet = {
+  modules: ModuleDef[];
+  navGroups: NavGroup[];
+  navFooter: ReturnType<typeof toNav>[];
+  /** Модуль по id; скрытый или неизвестный — первый (Price check). */
+  find: (id: string) => ModuleDef;
+};
 
-export const NAV_FOOTER = MODULES.filter((m) => m.group === "footer").map(toNav);
+function buildModuleSet(developerMode: boolean): ModuleSet {
+  const modules = [PRICE_CHECK, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  return {
+    modules,
+    navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
+      .map((g) => ({ id: g, label: GROUP_LABELS[g], items: modules.filter((m) => m.group === g).map(toNav) }))
+      .filter((g) => g.items.length > 0),
+    navFooter: modules.filter((m) => m.group === "footer").map(toNav),
+    find: (id) => modules.find((m) => m.id === id) ?? modules[0],
+  };
+}
 
-export const findModule = (id: string) => MODULES.find((m) => m.id === id) ?? MODULES[0];
+const SETS = { off: buildModuleSet(false), on: buildModuleSet(true) };
+
+/** Модули с учётом режима разработчика: переключатель в Настройках сразу меняет навигацию. */
+export function useModules(): ModuleSet {
+  return useShell((s) => (s.developerMode ? SETS.on : SETS.off));
+}

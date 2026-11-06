@@ -6,15 +6,14 @@ import { create } from "zustand";
 import { Button, type StatusItem } from "@/design-system";
 import { inTauri } from "./window";
 import { useShell } from "./store";
-import { DEVELOPMENT } from "./env";
 
 // Те же структуры, что отдаёт Rust (src-tauri/src/server.rs, serde camelCase).
 
 export type ServerStatus = {
   state: "unconfigured" | "checking" | "online" | "offline";
   url: string | null;
-  /** Откуда адрес: Админка, переменная окружения при запуске, адрес из сборки. */
-  source: "admin" | "env" | "build" | null;
+  /** Откуда адрес: режим разработки, переменная окружения при запуске, адрес из сборки. */
+  source: "developer" | "env" | "build" | null;
   /** Адрес по умолчанию (API_URL) — к нему вернёт «Сбросить». */
   defaultUrl: string | null;
   latencyMs: number | null;
@@ -24,7 +23,7 @@ export type ServerStatus = {
 };
 
 export const SOURCE_LABEL: Record<NonNullable<ServerStatus["source"]>, string> = {
-  admin: "задан в Админке",
+  developer: "задан в режиме разработки",
   env: "API_URL при запуске",
   build: "API_URL из сборки",
 };
@@ -41,11 +40,12 @@ const DEMO_STATUS: ServerStatus = {
   checkedAt: Date.now(),
 };
 
-const OFFLINE: Partial<ServerStatus> = { state: "offline", error: "симуляция из Админки", latencyMs: null, version: null };
+const OFFLINE: Partial<ServerStatus> = { state: "offline", error: "симуляция из режима разработки", latencyMs: null, version: null };
+const ONLINE: Partial<ServerStatus> = { state: "online", error: null, latencyMs: 48, version: "симуляция" };
 
 export const useServer = create<{ status: ServerStatus | null }>(() => ({ status: null }));
 
-/** Подписка на состояние связи от Rust-ядра + адрес из Админки. Ставится один раз в корне приложения. */
+/** Подписка на состояние связи от Rust-ядра + адрес из режима разработки. Ставится один раз в корне приложения. */
 export function useServerStatusSync() {
   useEffect(() => {
     if (!inTauri) {
@@ -58,30 +58,58 @@ export function useServerStatusSync() {
       if (disposed) fn();
       else unlisten = fn;
     });
-    // Адрес из Админки сохраняется в интерфейсе; при запуске передаём его ядру.
-    // Только в режиме Development — обычный запуск всегда идёт на API_URL.
-    const override = DEVELOPMENT ? useShell.getState().apiUrlOverride : null;
+    // Адрес из режима разработки сохраняется в интерфейсе; при запуске передаём его ядру.
+    // Только пока режим разработчика включён — иначе приложение всегда идёт на API_URL.
+    const override = activeOverride();
     const initial = override
       ? invoke<ServerStatus>("server_set_url", { url: override }).catch(() => invoke<ServerStatus>("server_status"))
       : invoke<ServerStatus>("server_status");
     initial.then((status) => useServer.setState({ status }));
+    // Режим разработчика переключили — сразу применяем свой адрес или возвращаем API_URL.
+    // Сам сохранённый адрес не трогаем: при повторном включении он вернётся.
+    const unsubscribe = useShell.subscribe((s, prev) => {
+      if (s.developerMode === prev.developerMode) return;
+      const url = activeOverride();
+      if (!url && useServer.getState().status?.source !== "developer") return;
+      invoke<ServerStatus>("server_set_url", { url })
+        .then((status) => useServer.setState({ status }))
+        .catch(() => undefined);
+    });
     return () => {
       disposed = true;
       unlisten?.();
+      unsubscribe();
     };
   }, []);
 }
 
-/** Состояние с учётом симуляции «нет связи с сервером» из Админки. */
-export function useServerStatus(demoServerDown: boolean): ServerStatus | null {
-  const status = useServer((s) => s.status);
-  return demoServerDown && status ? { ...status, ...OFFLINE } : status;
+/** Адрес, заданный в режиме разработки, если режим включён; иначе `null` (API_URL). */
+function activeOverride(): string | null {
+  const s = useShell.getState();
+  return s.developerMode ? s.apiUrlOverride : null;
 }
 
-/** Задать адрес сервера (Админка). `null` — вернуть API_URL. Бросает текст ошибки, если адрес неверный. */
+/** Состояние с учётом симуляции «на связи / нет связи» из режима разработки. */
+export function useServerStatus(): ServerStatus | null {
+  const status = useServer((s) => s.status);
+  const sim = useShell((s) => s.sim.server);
+  if (sim === "off") return { ...(status ?? DEMO_STATUS), ...OFFLINE, url: status?.url ?? DEMO_STATUS.url, checkedAt: status?.checkedAt ?? Date.now() };
+  if (sim === "on" && status?.state !== "online")
+    return {
+      ...DEMO_STATUS,
+      ...status,
+      ...ONLINE,
+      url: status?.url ?? DEMO_STATUS.url,
+      source: status?.source ?? DEMO_STATUS.source,
+      checkedAt: status?.checkedAt ?? Date.now(),
+    };
+  return status;
+}
+
+/** Задать адрес сервера (страница «Режим разработки»). `null` — вернуть API_URL. Бросает текст ошибки, если адрес неверный. */
 export async function setServerUrl(url: string | null): Promise<void> {
   if (!inTauri) {
-    useServer.setState({ status: { ...DEMO_STATUS, url: url ?? DEMO_STATUS.defaultUrl, source: url ? "admin" : "env" } });
+    useServer.setState({ status: { ...DEMO_STATUS, url: url ?? DEMO_STATUS.defaultUrl, source: url ? "developer" : "env" } });
   } else {
     const status = await invoke<ServerStatus>("server_set_url", { url });
     useServer.setState({ status });
@@ -129,7 +157,7 @@ export function serverStatusItem(s: ServerStatus | null): StatusItem {
       status: "warning",
       icon: ServerOff,
       label: "Сервер не настроен",
-      details: <Details title="Адрес сервера не задан" lines={["Задайте API_URL в окружении или в .env.local, либо укажите адрес в Админке (режим Development)."]} />,
+      details: <Details title="Адрес сервера не задан" lines={["Задайте API_URL в окружении или в .env.local, либо включите режим разработчика в Настройках и укажите адрес на странице «Режим разработки»."]} />,
     };
 
   const source = s.source ? SOURCE_LABEL[s.source] : "";

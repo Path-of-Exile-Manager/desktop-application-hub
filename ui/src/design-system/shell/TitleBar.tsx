@@ -13,7 +13,7 @@ import { AppLogo } from "./AppLogo";
 const drag = { "data-tauri-drag-region": "" };
 
 export type TitleBarProps = {
-  /** Метка справа от названия (например, режим Development). */
+  /** Метка справа от названия (например, пометка режима разработчика). */
   badge?: ReactNode;
   /** Выбор лиги (LeagueSelect). */
   league?: ReactNode;

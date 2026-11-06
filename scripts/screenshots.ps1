@@ -7,7 +7,6 @@
 param(
   [string]$Out = (Join-Path $env:TEMP 'poe-manager-screens'),
   [string]$Chrome = 'C:\Program Files\Google\Chrome\Application\chrome.exe',
-  # Админка и Витрина видны только на сервере, запущенном с DEVELOPMENT=true.
   [string]$BaseUrl = 'http://localhost:1420',
   # Снять только кадры, в имени которых есть эта строка.
   [string]$Only = ''
@@ -15,7 +14,7 @@ param(
 
 Add-Type -AssemblyName System.Drawing
 New-Item -ItemType Directory -Force $Out | Out-Null
-# splash=0 — без экрана запуска; budget — сколько миллисекунд «прожить» до снимка.
+# splash=0 — без экрана запуска; dev=1 — режим разработчика (Режим разработки, Витрина); budget — сколько миллисекунд «прожить» до снимка.
 $shots = @(
   @{ name = 'splash-1440'; w = 1440; h = 900; q = 'module=price-check'; budget = 1100 },
   @{ name = 'price-1440'; w = 1440; h = 900; q = 'module=price-check&splash=0' },
@@ -24,12 +23,12 @@ $shots = @(
   @{ name = 'palette-1440'; w = 1440; h = 900; q = 'module=price-check&palette=1&splash=0' },
   @{ name = 'collapsed-1280'; w = 1280; h = 720; q = 'module=settings&collapsed=1&splash=0' },
   @{ name = 'settings-1280'; w = 1280; h = 720; q = 'module=settings&splash=0' },
-  @{ name = 'showcase-1440'; w = 1440; h = 900; q = 'module=showcase&splash=0' },
-  @{ name = 'example-price-1440'; w = 1440; h = 900; q = 'module=showcase&screen=price&splash=0' },
-  @{ name = 'example-craft-1440'; w = 1440; h = 900; q = 'module=showcase&screen=craft&splash=0' },
-  @{ name = 'example-catalog-1440'; w = 1440; h = 900; q = 'module=showcase&screen=catalog&splash=0' },
-  @{ name = 'admin-1440'; w = 1440; h = 900; q = 'module=admin&splash=0' },
-  @{ name = 'admin-1280'; w = 1280; h = 720; q = 'module=admin&splash=0' }
+  @{ name = 'showcase-1440'; w = 1440; h = 900; q = 'dev=1&module=showcase&splash=0' },
+  @{ name = 'example-price-1440'; w = 1440; h = 900; q = 'dev=1&module=showcase&screen=price&splash=0' },
+  @{ name = 'example-craft-1440'; w = 1440; h = 900; q = 'dev=1&module=showcase&screen=craft&splash=0' },
+  @{ name = 'example-catalog-1440'; w = 1440; h = 900; q = 'dev=1&module=showcase&screen=catalog&splash=0' },
+  @{ name = 'developer-1440'; w = 1440; h = 900; q = 'dev=1&module=developer&splash=0' },
+  @{ name = 'developer-1280'; w = 1280; h = 720; q = 'dev=1&module=developer&splash=0' }
 ) | Where-Object { -not $Only -or $_.name -like "*$Only*" }
 foreach ($s in $shots) {
   $profile = Join-Path $env:TEMP ("pm-chrome-" + [guid]::NewGuid())

@@ -5,6 +5,7 @@ import { Plug, Unplug } from "lucide-react";
 import { create } from "zustand";
 import type { StatusItem } from "@/design-system";
 import { inTauri } from "./window";
+import { useShell } from "./store";
 
 /**
  * Связь с расширением браузера (боковая панель на pathofexile.com/trade).
@@ -43,8 +44,10 @@ const DISCONNECTED: ExtensionStatus = {
   bridge: { registered: false, manifestPath: null, listening: false, error: null, extensionIds: [] },
 };
 
-/** Для симуляции из Админки и предпросмотра без Tauri. */
+/** Для симуляции из режима разработки и предпросмотра без Tauri. */
 const DEMO_CONNECTED: Partial<ExtensionStatus> = { state: "connected", browser: "Chrome", version: "0.2.0", clients: 1 };
+
+const SIM_SINCE = Date.now();
 
 export const useExtension = create<{ status: ExtensionStatus }>(() => ({ status: DISCONNECTED }));
 
@@ -66,10 +69,13 @@ export function useExtensionStatusSync() {
   }, []);
 }
 
-/** Состояние с учётом симуляции «расширение подключено» из Админки. */
-export function useExtensionStatus(demoConnected: boolean): ExtensionStatus {
+/** Состояние с учётом симуляции «подключено / не подключено» из режима разработки. */
+export function useExtensionStatus(): ExtensionStatus {
   const status = useExtension((s) => s.status);
-  return demoConnected ? { ...status, ...DEMO_CONNECTED, lastSeenAt: status.lastSeenAt ?? Date.now() } : status;
+  const sim = useShell((s) => s.sim.extension);
+  if (sim === "on" && status.state !== "connected") return { ...status, ...DEMO_CONNECTED, lastSeenAt: status.lastSeenAt ?? SIM_SINCE };
+  if (sim === "off" && status.state !== "disconnected") return { ...DISCONNECTED, bridge: status.bridge };
+  return status;
 }
 
 function Details({ title, lines }: { title: string; lines: string[] }) {

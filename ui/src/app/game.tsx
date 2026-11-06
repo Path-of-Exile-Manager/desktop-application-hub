@@ -5,6 +5,7 @@ import { Monitor, MonitorOff, MonitorX, ShieldAlert } from "lucide-react";
 import { create } from "zustand";
 import type { StatusItem } from "@/design-system";
 import { inTauri } from "./window";
+import { useShell } from "./store";
 
 // Те же структуры, что отдаёт Rust (crates/game-window, serde camelCase).
 
@@ -36,7 +37,7 @@ export const MODE_LABEL: Record<WindowMode, string> = {
   minimized: "Свёрнут",
 };
 
-/** Состояние для предпросмотра в браузере (`pnpm dev` без Tauri) — как в макетах. */
+/** Состояние для предпросмотра в браузере (`pnpm dev` без Tauri) и симуляции «игра найдена» — как в макетах. */
 const DEMO_STATUS: GameStatus = {
   state: "running",
   appElevated: false,
@@ -78,10 +79,13 @@ export function useGameStatusSync() {
   }, []);
 }
 
-/** Состояние с учётом демо-режима «что-то не так» из витрины. */
-export function useGameStatus(demoProblems: boolean): GameStatus | null {
+/** Состояние с учётом симуляции «игра найдена / не найдена» из режима разработки. */
+export function useGameStatus(): GameStatus | null {
   const status = useGame((s) => s.status);
-  return demoProblems ? NOT_RUNNING : status;
+  const sim = useShell((s) => s.sim.game);
+  if (sim === "off") return { ...NOT_RUNNING, appElevated: status?.appElevated ?? false };
+  if (sim === "on") return status?.state === "running" ? status : { ...DEMO_STATUS, appElevated: status?.appElevated ?? false };
+  return status;
 }
 
 /** Windows не пропускает ввод от обычного процесса в процесс администратора. */

@@ -2,6 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Item } from "@/design-system";
 
+/**
+ * Симуляция состояния из режима разработки: `real` — как есть на самом деле,
+ * `on` — принудительно «хорошо» (игра найдена, сервер на связи, расширение подключено),
+ * `off` — принудительно «плохо».
+ */
+export type Sim = "real" | "on" | "off";
+
+export type SimTarget = "game" | "server" | "extension";
+
 type ShellState = {
   /** Открытый модуль. */
   activeModule: string;
@@ -12,24 +21,24 @@ type ShellState = {
   currentItem: Item | null;
   /** Время захвата: «14:32». */
   caughtAt: string | null;
-  /** Демо состояния «что-то не так» из витрины: игра будто бы не найдена. */
-  demoProblems: boolean;
-  /** Симуляция «нет связи с сервером» из Админки. */
-  demoServerDown: boolean;
-  /** Симуляция «расширение подключено» из Админки (пока расширения нет). */
-  demoExtensionConnected: boolean;
-  /** Адрес сервера, заданный в Админке (работает только в режиме Development). `null` — API_URL. */
+  /** Симуляция состояний из режима разработки. Не сохраняется между запусками. */
+  sim: Record<SimTarget, Sim>;
+  /**
+   * Режим разработчика (Настройки → «Режим разработчика»): пометка Dev в шапке,
+   * страницы «Режим разработки» и «Витрина» в навигации, свой адрес сервера.
+   */
+  developerMode: boolean;
+  /** Адрес сервера, заданный в режиме разработки (действует, только пока он включён). `null` — API_URL. */
   apiUrlOverride: string | null;
   hotkeys: { check: string[]; palette: string[] };
 
   openModule: (id: string) => void;
-  setDemoServerDown: (v: boolean) => void;
-  setDemoExtensionConnected: (v: boolean) => void;
+  setSim: (target: SimTarget, value: Sim) => void;
+  setDeveloperMode: (v: boolean) => void;
   setApiUrlOverride: (url: string | null) => void;
   setSidebarCollapsed: (v: boolean) => void;
   setPanelHidden: (v: boolean) => void;
   setPaletteOpen: (v: boolean) => void;
-  setDemoProblems: (v: boolean) => void;
   setHotkey: (name: "check" | "palette", keys: string[]) => void;
 };
 
@@ -46,20 +55,20 @@ export const useShell = create<ShellState>()(
       paletteOpen: false,
       currentItem: null,
       caughtAt: null,
-      demoProblems: false,
-      demoServerDown: false,
-      demoExtensionConnected: false,
+      sim: { game: "real", server: "real", extension: "real" },
+      developerMode: false,
       apiUrlOverride: null,
       hotkeys: { check: ["Ctrl", "D"], palette: ["Ctrl", "K"] },
 
       openModule: (activeModule) => set({ activeModule }),
-      setDemoServerDown: (demoServerDown) => set({ demoServerDown }),
-      setDemoExtensionConnected: (demoExtensionConnected) => set({ demoExtensionConnected }),
+      setSim: (target, value) => set((s) => ({ sim: { ...s.sim, [target]: value } })),
+      // Выключили режим — симуляции тоже выключаем: управлять ими уже негде.
+      setDeveloperMode: (developerMode) =>
+        set(developerMode ? { developerMode } : { developerMode, sim: { game: "real", server: "real", extension: "real" } }),
       setApiUrlOverride: (apiUrlOverride) => set({ apiUrlOverride }),
       setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       setPanelHidden: (panelHidden) => set({ panelHidden }),
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
-      setDemoProblems: (demoProblems) => set({ demoProblems }),
       setHotkey: (name, keys) => set((s) => ({ hotkeys: { ...s.hotkeys, [name]: keys } })),
     }),
     {
@@ -75,6 +84,7 @@ export const useShell = create<ShellState>()(
         sidebarCollapsed: s.sidebarCollapsed,
         panelHidden: s.panelHidden,
         hotkeys: s.hotkeys,
+        developerMode: s.developerMode,
         apiUrlOverride: s.apiUrlOverride,
       }),
     },

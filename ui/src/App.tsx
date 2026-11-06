@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { PanelRightClose, PanelRightOpen, ShieldCheck } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Wrench } from "lucide-react";
 import {
   AppShell,
   CommandPalette,
@@ -15,14 +15,13 @@ import {
   type PaletteItem,
 } from "@/design-system";
 import { useShell } from "@/app/store";
-import { MODULES, NAV_FOOTER, NAV_GROUPS, findModule } from "@/app/modules";
+import { DEVELOPER_MODULE_ID, useModules } from "@/app/modules";
 import { useWindowControls } from "@/app/window";
 import { gameStatusItem, useGameStatus, useGameStatusSync } from "@/app/game";
 import { serverStatusItem, useServerStatus, useServerStatusSync } from "@/app/server";
 import { extensionStatusItem, useExtensionStatus, useExtensionStatusSync } from "@/app/extension";
 import { useStartup } from "@/app/startup";
-import { SPLASH_VERSION } from "@/app/SplashReplay";
-import { DEVELOPMENT } from "@/app/env";
+import { splashVersion } from "@/app/SplashReplay";
 import { DevBadge } from "@/app/DevBadge";
 
 /** При ширине окна меньше 1360 правая панель скрывается автоматически (app-shell.md). */
@@ -34,16 +33,17 @@ const SKIP_SPLASH = import.meta.env.DEV && new URLSearchParams(location.search).
 export default function App() {
   const s = useShell();
   const windowControls = useWindowControls();
-  const active = findModule(s.activeModule);
+  const { modules, navGroups, navFooter, find } = useModules();
+  const active = find(s.activeModule);
   const ActivePage = active.component;
   const startup = useStartup(SKIP_SPLASH);
 
   useGameStatusSync();
   useServerStatusSync();
   useExtensionStatusSync();
-  const game = useGameStatus(s.demoProblems);
-  const server = useServerStatus(s.demoServerDown);
-  const extension = useExtensionStatus(s.demoExtensionConnected);
+  const game = useGameStatus();
+  const server = useServerStatus();
+  const extension = useExtensionStatus();
 
   useHotkey(s.hotkeys.palette.join("+"), () => s.setPaletteOpen(true), startup.phase === "done");
 
@@ -60,7 +60,7 @@ export default function App() {
   const showPanel = !!item && !s.panelHidden;
 
   const paletteItems: PaletteItem[] = [
-    ...MODULES.map((m) => ({
+    ...modules.map((m) => ({
       id: `module-${m.id}`,
       group: "Модули",
       label: m.label,
@@ -86,16 +86,16 @@ export default function App() {
       <AppShell
         titlebar={
           <TitleBar
-            badge={DEVELOPMENT && <DevBadge />}
+            badge={s.developerMode && <DevBadge />}
             onSearchClick={() => s.setPaletteOpen(true)}
             actions={
               <>
-                {DEVELOPMENT && (
+                {s.developerMode && (
                   <IconButton
-                    icon={ShieldCheck}
-                    label="Админка"
-                    active={active.id === "admin"}
-                    onClick={() => s.openModule("admin")}
+                    icon={Wrench}
+                    label="Режим разработки"
+                    active={active.id === DEVELOPER_MODULE_ID}
+                    onClick={() => s.openModule(DEVELOPER_MODULE_ID)}
                     className="size-7"
                   />
                 )}
@@ -109,8 +109,8 @@ export default function App() {
         }
         sidebar={
           <Sidebar
-            groups={NAV_GROUPS}
-            footerItems={NAV_FOOTER}
+            groups={navGroups}
+            footerItems={navFooter}
             activeId={active.id}
             onSelect={s.openModule}
             collapsed={s.sidebarCollapsed}
@@ -122,7 +122,7 @@ export default function App() {
             <CurrentItemPanel
               item={item}
               caught={s.caughtAt ? `пойман в ${s.caughtAt}` : undefined}
-              targets={MODULES.filter((m) => m.acceptsItem).map((m) => ({ id: m.id, label: m.label, icon: m.icon }))}
+              targets={modules.filter((m) => m.acceptsItem).map((m) => ({ id: m.id, label: m.label, icon: m.icon }))}
               activeModuleId={active.id}
               onSend={s.openModule}
               onHide={() => s.setPanelHidden(true)}
@@ -135,7 +135,7 @@ export default function App() {
         <ActivePage key={active.id} />
       </AppShell>
       <CommandPalette open={s.paletteOpen} onOpenChange={s.setPaletteOpen} items={paletteItems} groups={["Модули", "Команды"]} />
-      {startup.phase !== "done" && <SplashScreen steps={startup.steps} version={SPLASH_VERSION} leaving={startup.phase === "leaving"} />}
+      {startup.phase !== "done" && <SplashScreen steps={startup.steps} version={splashVersion(s.developerMode)} leaving={startup.phase === "leaving"} />}
     </DesignSystemProvider>
   );
 }

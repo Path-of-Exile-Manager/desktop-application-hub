@@ -10,18 +10,17 @@ import {
   Field,
   Input,
   Page,
+  SegmentedControl,
   StatusBadge,
-  Switch,
   Tabs,
   toast,
   type Status,
 } from "@/design-system";
-import { useShell } from "@/app/store";
+import { useShell, type Sim, type SimTarget } from "@/app/store";
 import { useGame } from "@/app/game";
 import { useExtension } from "@/app/extension";
 import { checkServerNow, formatCheckedAt, setServerUrl, SOURCE_LABEL, useServer, type ServerStatus } from "@/app/server";
 import { APP_VERSION } from "@/app/startup";
-import { ENVIRONMENT } from "@/app/env";
 import { inTauri } from "@/app/window";
 import { SplashReplay } from "@/app/SplashReplay";
 
@@ -37,14 +36,15 @@ function engine(): string {
 }
 
 /**
- * Админка — инструменты разработчика. Видна только с DEVELOPMENT=true (app/env.ts).
+ * Режим разработки — инструменты разработчика. Видна, только пока в Настройках
+ * включён «Режим разработчика» (`developerMode` в app/store.ts).
  * Адрес сервера, окружение, сырые данные ядра и действия для отладки.
  * Служебная страница: блок сырых данных может прокручиваться.
  */
-export function AdminPage() {
+export function DeveloperPage() {
   const [replay, setReplay] = useState(0);
   return (
-    <Page title="Админка" subtitle="Инструменты разработчика · видны только в режиме Development">
+    <Page title="Режим разработки" subtitle="Инструменты разработчика · выключаются в Настройках">
       <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
         <ServerCard />
         <div className="flex min-w-0 flex-col gap-4">
@@ -153,7 +153,7 @@ function ServerCard() {
           <Fact label="Проверено">{formatCheckedAt(status?.checkedAt ?? null)}</Fact>
           {status?.error && <Fact label="Ошибка">{status.error}</Fact>}
         </dl>
-        {status?.source === "admin" && (
+        {status?.source === "developer" && (
           <Button variant="ghost" icon={Undo2} onClick={reset} className="mt-3 -ml-3">
             Сбросить к API_URL
           </Button>
@@ -169,7 +169,6 @@ function EnvironmentCard() {
       <CardHeader title="Окружение" />
       <CardSection>
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
-          <Fact label="Режим">{ENVIRONMENT}</Fact>
           <Fact label="Версия">{APP_VERSION}</Fact>
           <Fact label="Запуск">{inTauri ? "Tauri" : "браузер (без ядра)"}</Fact>
           <Fact label="Интерфейс">{import.meta.env.DEV ? "dev-сервер Vite" : "production-сборка"}</Fact>
@@ -183,8 +182,32 @@ function EnvironmentCard() {
   );
 }
 
+/** Строка симуляции: «Реальное» — настоящее состояние от ядра, остальные два — принудительно. */
+function SimRow({ target, label, on, off }: { target: SimTarget; label: string; on: string; off: string }) {
+  const value = useShell((s) => s.sim[target]);
+  const setSim = useShell((s) => s.setSim);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-label text-text-primary">{label}</span>
+      <SegmentedControl<Sim>
+        aria-label={`Симуляция: ${label}`}
+        value={value}
+        onValueChange={(v) => setSim(target, v)}
+        className="w-full [&>*]:flex-1 [&>*]:justify-center"
+        options={[
+          { value: "real", label: "Реальное" },
+          { value: "on", label: on },
+          { value: "off", label: off },
+        ]}
+      />
+    </div>
+  );
+}
+
 function ActionsCard({ onReplay }: { onReplay: () => void }) {
-  const { demoProblems, setDemoProblems, demoServerDown, setDemoServerDown, demoExtensionConnected, setDemoExtensionConnected } = useShell();
+  const sim = useShell((s) => s.sim);
+  const setSim = useShell((s) => s.setSim);
+  const simulating = Object.values(sim).some((v) => v !== "real");
   const [confirmReset, setConfirmReset] = useState(false);
 
   async function openDevtools() {
@@ -198,11 +221,23 @@ function ActionsCard({ onReplay }: { onReplay: () => void }) {
   return (
     <Card>
       <CardHeader title="Действия" />
-      <CardSection className="flex flex-col gap-2.5">
-        <span className="text-label text-text-secondary">Симуляция</span>
-        <Switch checked={demoProblems} onCheckedChange={setDemoProblems} label="Игра не найдена" />
-        <Switch checked={demoServerDown} onCheckedChange={setDemoServerDown} label="Нет связи с сервером" />
-        <Switch checked={demoExtensionConnected} onCheckedChange={setDemoExtensionConnected} label="Расширение подключено" />
+      <CardSection className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-label text-text-secondary">Симуляция</span>
+          {simulating && (
+            <Button
+              variant="ghost"
+              icon={Undo2}
+              className="-my-1 h-7 text-label"
+              onClick={() => (["game", "server", "extension"] as const).forEach((t) => setSim(t, "real"))}
+            >
+              Всё реальное
+            </Button>
+          )}
+        </div>
+        <SimRow target="game" label="Игра" on="Найдена" off="Не найдена" />
+        <SimRow target="server" label="Сервер" on="На связи" off="Нет связи" />
+        <SimRow target="extension" label="Расширение" on="Подключено" off="Не подключено" />
       </CardSection>
       <CardSection className="flex flex-wrap gap-2">
         <Button icon={RotateCcw} onClick={onReplay}>
@@ -222,7 +257,7 @@ function ActionsCard({ onReplay }: { onReplay: () => void }) {
         open={confirmReset}
         onOpenChange={setConfirmReset}
         title="Сбросить настройки?"
-        description="Горячие клавиши, открытый модуль, вид панелей и адрес сервера из Админки вернутся к начальным. Интерфейс перезагрузится."
+        description="Горячие клавиши, открытый модуль, вид панелей и адрес сервера вернутся к начальным, режим разработчика выключится. Интерфейс перезагрузится."
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmReset(false)}>
