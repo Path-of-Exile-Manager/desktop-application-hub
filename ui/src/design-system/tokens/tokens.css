@@ -1,0 +1,248 @@
+/* poe-manager design system — generated from tokens.json. Do not edit by hand. */
+:root {
+  color-scheme: dark;
+
+  /* primitive-neutral */
+  --primitive-color-neutral-1: #0c090b;
+  --primitive-color-neutral-2: #130f12;
+  --primitive-color-neutral-3: #1a1618;
+  --primitive-color-neutral-4: #211d1f;
+  --primitive-color-neutral-5: #292528;
+  --primitive-color-neutral-6: #363134;
+  --primitive-color-neutral-7: #4b4649;
+  --primitive-color-neutral-8: #676165;
+  --primitive-color-neutral-9: #847e82;
+  --primitive-color-neutral-10: #a8a3a6;
+  --primitive-color-neutral-11: #cdc9cb;
+  --primitive-color-neutral-12: #f1edef;
+
+  /* primitive-accent */
+  --primitive-color-accent-1: #460029;
+  --primitive-color-accent-2: #64003d;
+  --primitive-color-accent-3: #850b53;
+  --primitive-color-accent-4: #a9246e;
+  --primitive-color-accent-5: #ca3786;
+  --primitive-color-accent-6: #ec4aa0;
+  --primitive-color-accent-7: #ff72b7;
+  --primitive-color-accent-8: #ffa4cc;
+  --primitive-color-accent-9: #ffc9df;
+  --primitive-color-accent-10: #ffe7f0;
+
+  /* primitive-green */
+  --primitive-color-green-500: #61cb7c;
+
+  /* primitive-amber */
+  --primitive-color-amber-500: #fca942;
+
+  /* primitive-coral */
+  --primitive-color-coral-500: #f47759;
+
+  /* primitive-white */
+  --primitive-color-white: #ffffff;
+
+  /* primitive-black */
+  --primitive-color-black: #000000;
+
+  /* color */
+  --color-bg-app: var(--primitive-color-neutral-1);
+  --color-bg-surface: var(--primitive-color-neutral-2);
+  --color-bg-raised: var(--primitive-color-neutral-3);
+  --color-bg-hover: var(--primitive-color-neutral-4);
+  --color-bg-active: var(--primitive-color-neutral-5);
+  --color-bg-selected: rgba(236, 74, 160, 0.12);
+  --color-bg-overlay: rgba(19, 15, 18, 0.94);
+  --color-bg-overlay-header: rgba(33, 29, 31, 0.9);
+  --color-bg-scrim: rgba(12, 9, 11, 0.6);
+  --color-border-subtle: var(--primitive-color-neutral-5);
+  --color-border-default: var(--primitive-color-neutral-6);
+  --color-border-strong: var(--primitive-color-neutral-7);
+  --color-border-focus: var(--primitive-color-accent-7);
+  --color-text-primary: var(--primitive-color-neutral-12);
+  --color-text-secondary: var(--primitive-color-neutral-10);
+  --color-text-muted: var(--primitive-color-neutral-9);
+  --color-text-disabled: var(--primitive-color-neutral-8);
+  --color-text-on-accent: var(--primitive-color-neutral-1);
+  --color-text-inverse: var(--primitive-color-neutral-1);
+  --color-text-accent: var(--primitive-color-accent-7);
+  --color-icon-default: var(--primitive-color-neutral-10);
+  --color-icon-strong: var(--primitive-color-neutral-11);
+  --color-icon-accent: var(--primitive-color-accent-7);
+  --color-accent-solid: var(--primitive-color-accent-6);
+  --color-accent-solid-hover: var(--primitive-color-accent-7);
+  --color-accent-solid-active: var(--primitive-color-accent-5);
+  --color-accent-subtle: rgba(236, 74, 160, 0.12);
+  --color-accent-subtle-strong: rgba(236, 74, 160, 0.08);
+  --color-accent-border: var(--primitive-color-accent-4);
+  --color-status-success-fg: var(--primitive-color-green-500);
+  --color-status-success-bg: rgba(97, 203, 124, 0.10);
+  --color-status-success-border: rgba(97, 203, 124, 0.35);
+  --color-status-warning-fg: var(--primitive-color-amber-500);
+  --color-status-warning-bg: rgba(252, 169, 66, 0.10);
+  --color-status-warning-border: rgba(252, 169, 66, 0.35);
+  --color-status-danger-fg: var(--primitive-color-coral-500);
+  --color-status-danger-bg: rgba(244, 119, 89, 0.10);
+  --color-status-danger-border: rgba(244, 119, 89, 0.35);
+  --color-status-info-fg: var(--primitive-color-neutral-10);
+  --color-status-info-bg: rgba(168, 163, 166, 0.10);
+  --color-status-info-border: rgba(168, 163, 166, 0.35);
+
+  /* game */
+  --game-rarity-normal: #C8C8C8;
+  --game-rarity-magic: #8888FF;
+  --game-rarity-rare: #FFFF77;
+  --game-rarity-unique: #D07940;
+  --game-rarity-gem: #1BA29B;
+  --game-rarity-currency: #AA9E82;
+  --game-rarity-divination: #0EBAFF;
+  --game-mod-crafted: #B4B4FF;
+  --game-mod-fractured: #A29162;
+  --game-state-corrupted: #F3413C;
+  --game-socket-red: #D9564A;
+  --game-socket-green: #6FBF5A;
+  --game-socket-blue: #6F8DE8;
+  --game-socket-white: #E0E0E0;
+  --game-raw-unique: #AF6025;
+  --game-raw-corrupted: #D20000;
+
+  /* font */
+  --font-family-sans: "Inter Variable", Inter, system-ui, sans-serif;
+  --font-family-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-size-caption: 12px;
+  --font-size-label: 13px;
+  --font-size-body: 14px;
+  --font-size-body-lg: 16px;
+  --font-size-title-sm: 18px;
+  --font-size-title: 22px;
+  --font-size-display: 28px;
+  --font-size-number-lg: 20px;
+  --font-size-number-xl: 36px;
+  --font-size-micro: 11px;
+  --font-line-height-caption: 16px;
+  --font-line-height-label: 18px;
+  --font-line-height-body: 20px;
+  --font-line-height-body-lg: 24px;
+  --font-line-height-title-sm: 24px;
+  --font-line-height-title: 28px;
+  --font-line-height-display: 34px;
+  --font-letter-spacing-caps: 0.06em;
+  --font-feature-numeric: "tnum" 1;
+
+  /* space */
+  --space-0: 0px;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* radius */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 999px;
+
+  /* border-width */
+  --border-width-default: 1px;
+  --border-width-focus: 2px;
+  --border-width-kbd-bottom: 2px;
+
+  /* shadow */
+  --shadow-popover: 0px 8px 20px 0px rgba(0, 0, 0, 0.5);
+  --shadow-panel: 0px -8px 24px 0px rgba(0, 0, 0, 0.35);
+  --shadow-overlay: 0px 16px 40px 0px rgba(0, 0, 0, 0.55), 0px 0px 0px 1px rgba(0, 0, 0, 0.4);
+  --shadow-dialog: 0px 24px 60px 0px rgba(0, 0, 0, 0.6);
+
+  /* blur */
+  --blur-overlay: 16px;
+
+  /* density */
+  --density-default-control-height: 32px;
+  --density-default-row-height: 36px;
+  --density-default-table-row-height: 32px;
+  --density-default-padding-x: 12px;
+  --density-default-card-padding-y: 16px;
+  --density-default-card-padding-x: 20px;
+  --density-default-page-padding-y: 20px;
+  --density-default-page-padding-x: 28px;
+  --density-compact-control-height: 28px;
+  --density-compact-row-height: 28px;
+  --density-compact-table-row-height: 28px;
+  --density-compact-padding-x: 8px;
+  --density-compact-card-padding-y: 12px;
+  --density-compact-card-padding-x: 16px;
+  --density-compact-page-padding-y: 12px;
+  --density-compact-page-padding-x: 12px;
+
+  /* size */
+  --size-control-height: var(--density-default-control-height);
+  --size-row-height: var(--density-default-row-height);
+  --size-table-row-height: var(--density-default-table-row-height);
+  --size-padding-x: var(--density-default-padding-x);
+  --size-card-padding-y: var(--density-default-card-padding-y);
+  --size-card-padding-x: var(--density-default-card-padding-x);
+  --size-page-padding-y: var(--density-default-page-padding-y);
+  --size-page-padding-x: var(--density-default-page-padding-x);
+
+  /* motion */
+  --motion-duration-instant: 0ms;
+  --motion-duration-fast: 90ms;
+  --motion-duration-base: 140ms;
+  --motion-duration-slow: 200ms;
+  --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* z */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 100;
+  --z-popover: 200;
+  --z-tooltip: 300;
+  --z-palette: 400;
+  --z-toast: 500;
+
+  /* layout */
+  --layout-window-min-width: 1280px;
+  --layout-window-min-height: 720px;
+  --layout-window-default-width: 1440px;
+  --layout-window-default-height: 900px;
+  --layout-titlebar-height: 40px;
+  --layout-statusbar-height: 28px;
+  --layout-sidebar-width: 256px;
+  --layout-sidebar-width-collapsed: 64px;
+  --layout-panel-width: 300px;
+  --layout-overlay-width: 440px;
+  --layout-overlay-min-width: 360px;
+  --layout-overlay-max-width: 480px;
+  --layout-inventory-cell-grid: 22px;
+  --layout-inventory-cell-thumb: 10px;
+}
+
+/* Compact density: put on the overlay root, the browser-extension root, or any subtree. */
+[data-density="compact"] {
+  --size-control-height: var(--density-compact-control-height);
+  --size-row-height: var(--density-compact-row-height);
+  --size-table-row-height: var(--density-compact-table-row-height);
+  --size-padding-x: var(--density-compact-padding-x);
+  --size-card-padding-y: var(--density-compact-card-padding-y);
+  --size-card-padding-x: var(--density-compact-card-padding-x);
+  --size-page-padding-y: var(--density-compact-page-padding-y);
+  --size-page-padding-x: var(--density-compact-page-padding-x);
+}
+
+/* Base */
+html { font-family: var(--font-family-sans); font-feature-settings: var(--font-feature-numeric); color: var(--color-text-primary); background: var(--color-bg-app); }
+:focus-visible { outline: var(--border-width-focus) solid var(--color-border-focus); outline-offset: 2px; }

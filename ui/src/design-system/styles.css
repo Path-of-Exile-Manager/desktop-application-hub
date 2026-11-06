@@ -1,0 +1,53 @@
+/* Точка входа стилей дизайн-системы. Подключается один раз в main.tsx (и в оверлее). */
+
+@import "tailwindcss";
+
+/* Шрифты офлайн (SIL OFL 1.1). Имена семейств совпадают с font.family.* в токенах. */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* Токены — в слое base: он идёт после слоя theme Tailwind, поэтому значения токенов
+   всегда главнее, а утилиты (слой utilities) по-прежнему могут переопределять base-стили. */
+@import "./tokens/tokens.css" layer(base);
+@import "./tokens/theme.css";
+@import "./base/base.css" layer(base);
+
+/* Плавная пульсация скелетона (components.md, п. 14) */
+@theme {
+  --animate-skeleton: skeleton 1.2s ease-in-out infinite;
+  /* Экран запуска: появление (fade + небольшой подъём) и «щелчок» галочки готового шага. */
+  --animate-splash-in: splash-in calc(var(--motion-duration-slow) * 2) var(--motion-easing-standard) both;
+  --animate-splash-pop: splash-pop var(--motion-duration-base) var(--motion-easing-standard) both;
+  @keyframes splash-in {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-1-5));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes splash-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes skeleton {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
+
+/* Варианты для состояний, которые Radix передаёт через data-атрибуты */
+@custom-variant density-compact (&:where([data-density="compact"], [data-density="compact"] *));
