@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Модуль Справочник</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 100%; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: {{gap}}; color: #f1edef; font-family: Inter, system-ui, sans-serif; font-feature-settings: 'tnum' 1">
+
+  <sc-if value="{{full}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Справочник</h1>
+      <span style="font-size: 13px; color: #a8a3a6">найдено <span style="font-family: 'JetBrains Mono', monospace">11</span> · данные 3.29.3.3</span>
+    </div>
+  </sc-if>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <label style="flex: 1 1 220px; min-width: 0; height: 34px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 6px; border: 1px solid #4b4649; background: #130f12; color: #a8a3a6">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"></path></svg>
+        <input aria-label="Поиск предметов" placeholder="Название предмета или мода…" style="flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #f1edef; font: 400 14px Inter, sans-serif">
+      </label>
+      <div role="group" aria-label="Редкость" style="display: flex; padding: 2px; border-radius: 6px; background: #1a1618; border: 1px solid #363134">
+        <button style="height: 28px; padding: 0 10px; border-radius: 4px; border: none; background: #363134; color: #f1edef; font: 500 13px Inter, sans-serif">Все</button>
+        <button style="height: 28px; padding: 0 10px; border-radius: 4px; border: none; background: transparent; color: #a8a3a6; font: 500 13px Inter, sans-serif">Обычные</button>
+        <button style="height: 28px; padding: 0 10px; border-radius: 4px; border: none; background: transparent; color: #a8a3a6; font: 500 13px Inter, sans-serif">Уникальные</button>
+      </div>
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cdc9cb; white-space: nowrap"><span style="width: 32px; height: 18px; border-radius: 9px; background: #ec4aa0; position: relative; display: inline-block"><span style="position: absolute; top: 2px; left: 16px; width: 14px; height: 14px; border-radius: 7px; background: #0c090b"></span></span>Только продаваемое</label>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <sc-for list="{{classes}}" as="c" hint-placeholder-count="9">
+        <button style="height: 28px; padding: 0 10px; border-radius: 14px; border: 1px solid {{c.b}}; background: {{c.bg}}; color: {{c.fg}}; font: 500 13px Inter, sans-serif">{{c.t}}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{full}}" hint-placeholder-val="{{ true }}">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px">
+      <sc-for list="{{items}}" as="it" hint-placeholder-count="11">
+        <div style="background: #130f12; border: 1px solid #363134; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column">
+          <div style="height: 100px; display: flex; align-items: center; justify-content: center; background: #0c090b">
+            <div role="img" aria-label="Иконка {{it.name}}, {{it.size}}" style="width: {{it.w}}; height: {{it.h}}; box-sizing: border-box; border: 1px dashed #676165; border-radius: 3px; background-color: #1a1618; background-image: linear-gradient(#292528 1px, transparent 1px), linear-gradient(90deg, #292528 1px, transparent 1px); background-size: 22px 22px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #a8a3a6">{{it.size}}</div>
+          </div>
+          <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; border-top: 1px solid #292528">
+            <span style="font-size: 14px; font-weight: 600; color: {{it.c}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.name}}</span>
+            <div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.05em; line-height: 16px; padding: 0 4px; border: 1px solid {{it.c}}; border-radius: 3px; color: {{it.c}}">{{it.r}}</span><span style="font-size: 13px; color: #a8a3a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.cls}}</span></div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #cdc9cb">{{it.p}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <nav aria-label="Страницы" style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <span style="font-size: 13px; color: #a8a3a6"><span style="font-family: 'JetBrains Mono', monospace">1–11</span> из <span style="font-family: 'JetBrains Mono', monospace">11</span></span>
+      <div style="display: flex; gap: 4px">
+        <button disabled aria-label="Предыдущая страница" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #292528; background: transparent; color: #676165; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+        <button aria-current="page" style="min-width: 32px; height: 32px; border-radius: 6px; border: 1px solid #ec4aa0; background: rgba(236,74,160,0.12); color: #ff72b7; font: 600 13px 'JetBrains Mono', monospace">1</button>
+        <button disabled aria-label="Следующая страница" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #292528; background: transparent; color: #676165; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"></path></svg></button>
+      </div>
+    </nav>
+  </sc-if>
+
+  <sc-if value="{{compact}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; flex-direction: column; background: #130f12; border: 1px solid #363134; border-radius: 8px; overflow: hidden">
+      <sc-for list="{{items}}" as="it" hint-placeholder-count="11">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid #211d1f">
+          <div style="flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #0c090b; border-radius: 4px">
+            <div role="img" aria-label="Иконка {{it.name}}, {{it.size}}" style="width: {{it.tw}}; height: {{it.th}}; box-sizing: border-box; border: 1px dashed #676165; border-radius: 2px; background: #1a1618"></div>
+          </div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 14px; font-weight: 600; color: {{it.c}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.name}}</span>
+            <span style="font-size: 13px; color: #a8a3a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><span style="font-weight: 700; color: {{it.c}}">{{it.r}}</span> · {{it.cls}} · {{it.size}}</span>
+          </div>
+          <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #cdc9cb">{{it.p}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":1050}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const compact = !!this.props.compact;
+    const col = { NORMAL: '#C8C8C8', UNIQUE: '#D07940', CURRENCY: '#AA9E82', GEM: '#1BA29B' };
+    const it = (name, cls, r, cw, ch, p) => ({ name, cls, r, p, c: col[r], size: cw + '×' + ch, w: (cw * 22) + 'px', h: (ch * 22) + 'px', tw: (cw * 10) + 'px', th: (ch * 10) + 'px' });
+    const cls = ['Все', 'Body Armour', 'Helmet', 'Ring', 'Belt', 'Currency', 'Map', 'Gem', 'Weapon', 'Shield'];
+    return {
+      compact, full: !compact,
+      pad: compact ? '12px' : '20px 28px', gap: compact ? '12px' : '14px',
+      classes: cls.map((t, i) => ({ t, b: i === 0 ? '#ec4aa0' : '#363134', bg: i === 0 ? 'rgba(236,74,160,0.12)' : 'transparent', fg: i === 0 ? '#ff72b7' : '#cdc9cb' })),
+      items: [
+        it('Vaal Regalia', 'Body Armour', 'NORMAL', 2, 3, '~2 chaos'),
+        it('Astral Plate', 'Body Armour', 'NORMAL', 2, 3, '~1 chaos'),
+        it('Tabula Rasa', 'Body Armour', 'UNIQUE', 2, 3, '~10 chaos'),
+        it('Chaos Orb', 'Currency', 'CURRENCY', 1, 1, '1 chaos'),
+        it('Divine Orb', 'Currency', 'CURRENCY', 1, 1, '~200 chaos'),
+        it('Headhunter', 'Belt', 'UNIQUE', 2, 1, '~38 divine'),
+        it('Mageblood', 'Belt', 'UNIQUE', 2, 1, '~150 divine'),
+        it('Fireball', 'Gem', 'GEM', 1, 1, '~1 chaos'),
+        it('Hubris Circlet', 'Helmet', 'NORMAL', 2, 2, '~1 chaos'),
+        it('Imbued Wand', 'Weapon', 'NORMAL', 1, 3, '~1 chaos'),
+        it('Ezomyte Tower Shield', 'Shield', 'NORMAL', 2, 4, '~1 chaos')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

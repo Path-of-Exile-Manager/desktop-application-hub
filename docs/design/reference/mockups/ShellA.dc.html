@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Вариант A — Рабочее место</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ff72b7}a:hover{color:#ffa4cc}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: {{rootH}}; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #0c090b; color: #f1edef; font-family: Inter, system-ui, sans-serif; font-feature-settings: 'tnum' 1">
+
+  <header style="flex: none; height: 40px; display: flex; align-items: center; gap: 12px; padding-left: 12px; background: #130f12; border-bottom: 1px solid #292528">
+    <div style="display: flex; align-items: center; gap: 8px; width: 232px; flex: none">
+      <span aria-hidden="true" style="width: 20px; height: 20px; box-sizing: border-box; border: 1px dashed #847e82; border-radius: 5px"></span>
+      <span style="font-size: 14px; font-weight: 600">poe-manager</span>
+    </div>
+    <button style="height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid #363134; background: #1a1618; color: #f1edef; font: 500 13px Inter, sans-serif; display: flex; align-items: center; gap: 8px; white-space: nowrap"><span style="width: 8px; height: 8px; border-radius: 4px; background: #61cb7c"></span>Settlers of Kalguur<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8a3a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+    <div style="flex: 1; display: flex; justify-content: center; min-width: 0">
+      <button style="width: 100%; max-width: 420px; height: 28px; padding: 0 8px 0 10px; border-radius: 6px; border: 1px solid #363134; background: #0c090b; color: #a8a3a6; font: 400 13px Inter, sans-serif; display: flex; align-items: center; gap: 8px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"></path></svg><span style="flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Поиск предметов, модулей и команд</span><kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 0 5px; border: 1px solid #4b4649; border-bottom-width: 2px; border-radius: 4px; color: #cdc9cb">Ctrl K</kbd></button>
+    </div>
+    <div style="display: flex; flex: none">
+      <button aria-label="Свернуть окно" style="width: 46px; height: 40px; border: none; background: transparent; color: #a8a3a6; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path></svg></button>
+      <button aria-label="Развернуть окно" style="width: 46px; height: 40px; border: none; background: transparent; color: #a8a3a6; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"></path></svg></button>
+      <button aria-label="Закрыть окно" style="width: 46px; height: 40px; border: none; background: transparent; color: #a8a3a6; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex">
+    <nav aria-label="Модули" style="flex: none; width: {{navW}}; box-sizing: border-box; display: flex; flex-direction: column; background: #130f12; border-right: 1px solid #292528; padding: 12px 8px">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: {{groupGap}}; overflow: hidden">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <sc-if value="{{expanded}}" hint-placeholder-val="{{ true }}">
+              <span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #847e82">{{g.t}}</span>
+            </sc-if>
+            <sc-if value="{{collapsed}}" hint-placeholder-val="{{ false }}">
+              <span aria-hidden="true" style="height: 1px; margin: 4px 10px 6px; background: #363134"></span>
+            </sc-if>
+            <sc-for list="{{g.items}}" as="n" hint-placeholder-count="3">
+              <a href="#" title="{{n.t}}" aria-label="{{n.t}}" style="height: 36px; padding: 0 12px; border-radius: 6px; display: flex; align-items: center; justify-content: {{itemJustify}}; gap: 10px; text-decoration: none; background: {{n.bg}}; color: {{n.fg}}; font-size: 14px; font-weight: {{n.w}}">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{n.ic}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="{{n.icon}}"></path></svg>
+                <sc-if value="{{expanded}}" hint-placeholder-val="{{ true }}"><span style="white-space: nowrap">{{n.t}}</span></sc-if>
+              </a>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-top: 1px solid #292528; padding-top: 8px; display: flex; flex-direction: column; gap: 2px">
+        <a href="#" title="Настройки" aria-label="Настройки" style="height: 36px; padding: 0 12px; border-radius: 6px; display: flex; align-items: center; justify-content: {{itemJustify}}; gap: 10px; text-decoration: none; color: #cdc9cb; font-size: 14px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8a3a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="{{icons.settings}}"></path></svg><sc-if value="{{expanded}}" hint-placeholder-val="{{ true }}"><span>Настройки</span></sc-if></a>
+        <button onClick="{{toggleNav}}" title="{{toggleLabel}}" aria-label="{{toggleLabel}}" aria-expanded="{{expandedStr}}" style="height: 36px; padding: 0 12px; border-radius: 6px; border: none; background: transparent; color: #a8a3a6; font: 400 13px Inter, sans-serif; display: flex; align-items: center; justify-content: {{itemJustify}}; gap: 10px; cursor: pointer"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="{{toggleIcon}}"></path></svg><sc-if value="{{expanded}}" hint-placeholder-val="{{ true }}"><span>Свернуть панель</span></sc-if></button>
+      </div>
+    </nav>
+
+    <main style="flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column">
+      <sc-if value="{{error}}" hint-placeholder-val="{{ false }}">
+        <div role="alert" style="margin: 20px 28px 0; padding: 14px 16px; border-radius: 8px; border: 1px solid rgba(244,119,89,0.4); background: rgba(244,119,89,0.08); display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f47759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9zM15 9l-6 6m0-6 6 6"></path></svg>
+          <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 14px; font-weight: 600; color: #f47759">Окно игры не найдено — горячие клавиши сейчас не работают</span>
+            <span style="font-size: 13px; color: #cdc9cb">Запустите Path of Exile или укажите окно вручную. Ниже — последний пойманный предмет (12 мин назад).</span>
+          </div>
+          <button style="height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #4b4649; background: #211d1f; color: #f1edef; font: 500 14px Inter, sans-serif">Указать окно</button>
+          <button style="height: 32px; padding: 0 12px; border-radius: 6px; border: none; background: transparent; color: #ff72b7; font: 500 14px Inter, sans-serif">Подробнее</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{isPrice}}" hint-placeholder-val="{{ true }}"><dc-import name="ModPrice" hint-size="100%,820px"></dc-import></sc-if>
+      <sc-if value="{{isCraft}}" hint-placeholder-val="{{ false }}"><dc-import name="ModCraft" hint-size="100%,900px"></dc-import></sc-if>
+      <sc-if value="{{isCatalog}}" hint-placeholder-val="{{ false }}"><dc-import name="ModCatalog" hint-size="100%,900px"></dc-import></sc-if>
+    </main>
+
+    <aside aria-label="Текущий предмет" style="flex: none; width: 300px; box-sizing: border-box; background: #130f12; border-left: 1px solid #292528; display: flex; flex-direction: column; overflow: hidden">
+      <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; border-bottom: 1px solid #292528">
+        <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #a8a3a6">Текущий предмет</span>
+        <button aria-label="Скрыть панель" style="width: 28px; height: 28px; border: none; border-radius: 6px; background: transparent; color: #a8a3a6; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3zM15 3v18"></path></svg></button>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #292528">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; line-height: 18px; padding: 0 5px; border: 1px solid #FFFF77; border-radius: 4px; color: #FFFF77">RARE</span><span style="font-size: 13px; color: #a8a3a6">{{caught}}</span></div>
+        <span style="font-size: 18px; font-weight: 600; color: #FFFF77">Doom Shell</span>
+        <span style="font-size: 13px; color: #cdc9cb">Vaal Regalia · iLvl <span style="font-family: 'JetBrains Mono', monospace">84</span> · 6L</span>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600">~120</span><span style="font-size: 14px; color: #cdc9cb">chaos</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a8a3a6">≈ 0.6 div</span></div>
+      </div>
+      <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 7px; border-bottom: 1px solid #292528">
+        <sc-for list="{{mini}}" as="m" hint-placeholder-count="6">
+          <div style="display: flex; gap: 8px; font-size: 13px; line-height: 18px"><span style="flex: none; width: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #a8a3a6">{{m.a}}</span><span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{m.c}}">{{m.t}}</span><span style="flex: none; font-family: 'JetBrains Mono', monospace; color: {{m.tc}}">{{m.tier}}</span></div>
+        </sc-for>
+        <span style="margin-top: 4px; align-self: flex-start; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; line-height: 18px; padding: 0 6px; border: 1px solid #F3413C; border-radius: 4px; color: #F3413C">◆ CORRUPTED</span>
+      </div>
+      <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 13px; color: #a8a3a6">Передать в модуль</span>
+        <sc-for list="{{send}}" as="s" hint-placeholder-count="3">
+          <button style="height: 34px; padding: 0 10px; border-radius: 6px; border: 1px solid #363134; background: {{s.bg}}; color: {{s.fg}}; font: 500 13px Inter, sans-serif; display: flex; align-items: center; gap: 8px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{s.icon}}"></path></svg><span style="flex: 1; text-align: left">{{s.t}}</span><span style="font-size: 12px; color: #847e82">{{s.note}}</span></button>
+        </sc-for>
+      </div>
+    </aside>
+  </div>
+
+  <footer style="flex: none; height: 28px; display: flex; align-items: center; gap: 18px; padding: 0 12px; background: #130f12; border-top: 1px solid #292528; font-size: 12px; white-space: nowrap; overflow: hidden">
+    <sc-for list="{{statuses}}" as="s" hint-placeholder-count="3">
+      <button style="height: 22px; padding: 0 6px; border: none; border-radius: 4px; background: {{s.bg}}; color: {{s.fg}}; font: 500 12px Inter, sans-serif; display: flex; align-items: center; gap: 6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{s.icon}}"></path></svg>{{s.t}}<sc-if value="{{s.progress}}" hint-placeholder-val="{{ false }}"><span style="width: 60px; height: 4px; border-radius: 2px; background: #363134; display: inline-block; position: relative; overflow: hidden"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 64%; background: #fca942"></span></span></sc-if></button>
+    </sc-for>
+    <span style="flex: 1"></span>
+    <span style="color: #847e82">Ctrl + D — проверить предмет · Ctrl + K — команды</span>
+  </footer>
+
+  <sc-if value="{{palette}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; z-index: 20; background: rgba(12,9,11,0.6); display: flex; justify-content: center; align-items: flex-start; padding-top: 88px">
+      <div role="dialog" aria-label="Поиск и команды" style="width: 600px; max-width: calc(100% - 32px); background: #1a1618; border: 1px solid #4b4649; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,0.6); overflow: hidden">
+        <label style="height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid #363134">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8a3a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"></path></svg>
+          <input aria-label="Запрос" value="vaal" style="flex: 1; background: transparent; border: none; outline: none; color: #f1edef; font: 400 16px Inter, sans-serif">
+          <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 0 5px; border: 1px solid #4b4649; border-radius: 4px; color: #a8a3a6">Esc</kbd>
+        </label>
+        <div style="padding: 8px; display: flex; flex-direction: column; gap: 2px">
+          <sc-for list="{{pal}}" as="p" hint-placeholder-count="7">
+            <sc-if value="{{p.head}}" hint-placeholder-val="{{ false }}"><span style="padding: 8px 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #847e82">{{p.t}}</span></sc-if>
+            <sc-if value="{{p.row}}" hint-placeholder-val="{{ true }}">
+              <div style="height: 36px; padding: 0 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px; background: {{p.bg}}; font-size: 14px">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8a3a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{p.icon}}"></path></svg>
+                <span style="flex: 1; color: {{p.c}}"><b style="color: #ff72b7; font-weight: 600">{{p.hl}}</b>{{p.t}}</span>
+                <span style="font-size: 13px; color: #a8a3a6">{{p.note}}</span>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid #363134; font-size: 12px; color: #a8a3a6"><span>↑ ↓ выбрать</span><span>Enter открыть</span><span>Tab — в модуль</span></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["price","craft","catalog"],"default":"price"},"longLabels":{"editor":"boolean","default":false},"collapsed":{"editor":"boolean","default":false},"palette":{"editor":"boolean","default":false},"error":{"editor":"boolean","default":false},"rootH":{"editor":null,"default":"100vh"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const screen = this.props.screen || 'price';
+    const long = !!this.props.longLabels;
+    const error = !!this.props.error;
+    const icons = {
+      tag: 'M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4zM7.5 7.5h.01',
+      history: 'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M12 7v5l4 2',
+      hammer: 'm15 12-8.4 8.4a2.1 2.1 0 1 1-3-3L12 9M17.6 15 22 10.6M20.9 11.7l-1.3-1.3c-.6-.6-.9-1.3-.9-2.1V7l-2.3-2.3A5.9 5.9 0 0 0 12.3 3H9l.9.8A6.4 6.4 0 0 1 12 8.4V10l2 2h.9c.8 0 1.5.3 2.1.8l1.2 1.3',
+      sprout: 'M7 20h10M10 20c5.5-2.5.8-6.4 3-10M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z',
+      map: 'M14.1 5.1 9.9 2.9a2 2 0 0 0-1.8 0L3.6 5.2A1 1 0 0 0 3 6v13.4a1 1 0 0 0 1.4.9l3.7-1.9a2 2 0 0 1 1.8 0l4.2 2.2a2 2 0 0 0 1.8 0l4.5-2.3a1 1 0 0 0 .6-.9V4.6a1 1 0 0 0-1.4-.9l-3.7 1.9a2 2 0 0 1-1.8 0zM15 5.8v15M9 3.2v15',
+      book: 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20',
+      bookmark: 'm19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z',
+      settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
+      monitor: 'M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8 21h8M12 17v4',
+      db: 'M12 8c4.97 0 9-1.34 9-3s-4.03-3-9-3-9 1.34-9 3 4.03 3 9 3zM3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5M3 12c0 1.66 4 3 9 3s9-1.34 9-3',
+      plug: 'M12 22v-5M9 8V2M15 8V2M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z',
+      refresh: 'M21 12a9 9 0 0 1-15 6.7L3 16M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M3 21v-5h5',
+      alert: 'M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+      arrow: 'M5 12h14M12 5l7 7-7 7'
+    };
+    const active = { price: 'price', craft: 'craft', catalog: 'catalog' }[screen];
+    const st = this.state || {};
+    const collapsed = st.collapsed !== undefined ? st.collapsed : !!this.props.collapsed;
+    const item = (id, short, longT, icon) => {
+      const on = id === active;
+      return { t: long ? longT : short, icon: icons[icon], bg: on ? 'rgba(236,74,160,0.12)' : 'transparent', fg: on ? '#f1edef' : '#cdc9cb', ic: on ? '#ff72b7' : '#a8a3a6', w: on ? '600' : '400' };
+    };
+    const okS = (t, icon) => ({ t, icon, fg: '#61cb7c', bg: 'transparent', progress: false });
+    return {
+      rootH: this.props.rootH || '100vh', error, icons,
+      collapsed, expanded: !collapsed, expandedStr: collapsed ? 'false' : 'true',
+      navW: collapsed ? '64px' : '256px', itemJustify: collapsed ? 'center' : 'flex-start', groupGap: collapsed ? '6px' : '14px',
+      toggleNav: () => this.setState({ collapsed: !collapsed }),
+      toggleLabel: collapsed ? 'Развернуть панель' : 'Свернуть панель до иконок',
+      toggleIcon: collapsed ? 'm13 17 5-5-5-5M6 17l5-5-5-5' : 'm11 17-5-5 5-5M18 17l-5-5 5-5',
+      isPrice: screen === 'price', isCraft: screen === 'craft', isCatalog: screen === 'catalog',
+      palette: !!this.props.palette,
+      caught: error ? 'пойман 12 мин назад' : 'пойман в 14:32',
+      groups: [
+        { t: 'Проверка', items: [item('price', 'Price check', 'Проверка цены предмета', 'tag'), item('history', 'История', 'История проверок', 'history')] },
+        { t: 'Крафт', items: [item('craft', 'Ассистент крафта', 'Ассистент крафта', 'hammer'), item('harvest', 'Harvest', 'Подсказки по Harvest', 'sprout'), item('maps', 'Карты', 'Опасные моды карт', 'map')] },
+        { t: 'Данные', items: [item('catalog', 'Справочник', 'Справочник предметов', 'book'), item('bm', 'Закладки', 'Закладки поисков', 'bookmark')] }
+      ],
+      mini: [
+        { a: 'P', t: '+105 to maximum Energy Shield', tier: 'T1', c: '#f1edef', tc: '#ff72b7' },
+        { a: 'P', t: '+87 to maximum Life', tier: 'T2', c: '#f1edef', tc: '#a8a3a6' },
+        { a: 'P', t: '+28% increased Energy Shield', tier: 'T3', c: '#f1edef', tc: '#a8a3a6' },
+        { a: 'S', t: '+38% to Fire Resistance', tier: 'T3', c: '#f1edef', tc: '#a8a3a6' },
+        { a: 'S', t: '+46% to Lightning Resistance', tier: 'T1', c: '#f1edef', tc: '#ff72b7' },
+        { a: 'S', t: '+15% to Cold Resistance · crafted', tier: '—', c: '#B4B4FF', tc: '#847e82' }
+      ],
+      send: [
+        { t: 'Price check', icon: icons.tag, note: screen === 'price' ? 'открыт' : '', bg: screen === 'price' ? '#1a1618' : 'transparent', fg: screen === 'price' ? '#847e82' : '#f1edef' },
+        { t: 'Ассистент крафта', icon: icons.hammer, note: screen === 'craft' ? 'открыт' : '', bg: screen === 'craft' ? '#1a1618' : 'transparent', fg: screen === 'craft' ? '#847e82' : '#f1edef' },
+        { t: 'Закладки', icon: icons.bookmark, note: '', bg: 'transparent', fg: '#f1edef' }
+      ],
+      statuses: error ? [
+        { t: 'Игра не найдена', icon: icons.alert, fg: '#f47759', bg: 'rgba(244,119,89,0.12)', progress: false },
+        { t: 'Данные обновляются · 64%', icon: icons.refresh, fg: '#fca942', bg: 'transparent', progress: true },
+        okS('Расширение подключено', icons.plug)
+      ] : [
+        okS('Игра найдена', icons.monitor),
+        okS('Данные 3.29.3.3 · актуальны', icons.db),
+        okS('Расширение подключено', icons.plug)
+      ],
+      pal: [
+        { head: true, row: false, t: 'Предметы' },
+        { head: false, row: true, hl: 'Vaal', t: ' Regalia', note: 'Body Armour', icon: icons.book, c: '#C8C8C8', bg: '#292528' },
+        { head: false, row: true, hl: 'Vaal', t: ' Orb', note: 'Currency', icon: icons.book, c: '#AA9E82', bg: 'transparent' },
+        { head: true, row: false, t: 'Модули' },
+        { head: false, row: true, hl: '', t: 'Справочник: искать «vaal»', note: 'Enter', icon: icons.book, c: '#f1edef', bg: 'transparent' },
+        { head: true, row: false, t: 'Команды' },
+        { head: false, row: true, hl: '', t: 'Проверить предмет из буфера обмена', note: 'Ctrl + D', icon: icons.tag, c: '#f1edef', bg: 'transparent' },
+        { head: false, row: true, hl: '', t: 'Сменить лигу…', note: '', icon: icons.settings, c: '#f1edef', bg: 'transparent' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

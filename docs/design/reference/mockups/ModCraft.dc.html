@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Модуль Ассистент крафта</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 100%; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: {{gap}}; color: #f1edef; font-family: Inter, system-ui, sans-serif; font-feature-settings: 'tnum' 1">
+
+  <sc-if value="{{full}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Ассистент крафта</h1>
+        <span style="font-size: 13px; color: #a8a3a6">Считает шансы и план. Все действия в игре выполняете вы.</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button style="height: 32px; padding: 0 12px; border-radius: 6px; border: none; background: transparent; color: #ff72b7; font: 500 14px Inter, sans-serif">Изменить цель</button>
+        <button style="height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #4b4649; background: #211d1f; color: #f1edef; font: 500 14px Inter, sans-serif">Взять текущий предмет</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="border: 1px solid #a9246e; background: rgba(236,74,160,0.08); border-radius: 10px; padding: {{bannerPad}}; display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+    <div style="flex: none; width: 36px; height: 36px; border-radius: 18px; background: #ec4aa0; color: #0c090b; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></div>
+    <div style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+      <span style="font-size: {{verdictSize}}; line-height: 1.2; font-weight: 700">Продолжай · шаг 2</span>
+      <span style="font-size: 14px; color: #cdc9cb"><span style="color: #61cb7c; font-weight: 600">Life T2 ✓</span> · <span style="color: #f47759; font-weight: 600">ES T4 ✗</span> — нужен ES T1–T2</span>
+      <span style="font-size: 13px; color: #a8a3a6">Сделайте следующую попытку в игре и нажмите <span style="font-family: 'JetBrains Mono', monospace; color: #cdc9cb">Ctrl + D</span> на предмете.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+      <span style="color: #a8a3a6">Возможные ответы</span>
+      <div style="display: flex; gap: 6px">
+        <span style="line-height: 22px; padding: 0 8px; border-radius: 4px; border: 1px solid #363134; color: #847e82">✓ Цель достигнута</span>
+        <span style="line-height: 22px; padding: 0 8px; border-radius: 4px; background: #ec4aa0; color: #0c090b; font-weight: 600">→ Продолжай</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+    <div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <div style="background: #130f12; border: 1px solid #363134; border-radius: 10px; overflow: hidden">
+        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px"><span style="font-size: 14px; font-weight: 600">Цель</span><span style="font-size: 13px; color: #a8a3a6">Vaal Regalia · iLvl <span style="font-family: 'JetBrains Mono', monospace">84</span></span></div>
+        <sc-for list="{{goal}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 7px 16px; border-top: 1px solid #211d1f">
+            <span style="flex: none; width: 22px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: {{g.bg}}; color: {{g.fg}}">{{g.mark}}</span>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+              <span style="font-size: 14px">{{g.t}}</span>
+              <span style="font-size: 13px; color: #a8a3a6">{{g.need}}</span>
+            </div>
+            <span style="flex: none; font-size: 13px; color: {{g.fg2}}">{{g.now}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background: #130f12; border: 1px solid #363134; border-radius: 10px; overflow: hidden">
+        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px"><span style="font-size: 14px; font-weight: 600">Последняя проверка</span><span style="font-size: 13px; color: #a8a3a6">14:41 · попытка 2</span></div>
+        <sc-for list="{{last}}" as="r" hint-placeholder-count="3">
+          <div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 16px; border-top: 1px solid #211d1f">
+            <span style="flex: none; width: 20px; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #a8a3a6">{{r.a}}</span>
+            <span style="flex: 1; min-width: 0; font-size: 14px; line-height: 20px"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{r.v}}</span><span style="font-family: 'JetBrains Mono', monospace; color: #a8a3a6">{{r.r}}</span>{{r.t}}</span>
+            <span style="flex: none; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #a8a3a6">{{r.tier}}</span>
+            <span style="flex: none; width: 52px; text-align: right; font-size: 13px; font-weight: 600; color: {{r.c}}">{{r.m}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex: 1 1 300px; min-width: 0; background: #130f12; border: 1px solid #363134; border-radius: 10px; overflow: hidden">
+      <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px"><span style="font-size: 14px; font-weight: 600">План</span><span style="font-size: 13px; color: #a8a3a6">предложен ассистентом</span></div>
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid #211d1f; background: {{s.bg}}">
+          <span style="flex: none; width: 26px; height: 26px; box-sizing: border-box; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; border: 1px solid {{s.ring}}; color: {{s.ringText}}; background: {{s.dot}}">{{s.n}}</span>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 14px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.t}}</span>
+            <span style="font-size: 13px; line-height: 18px; color: #a8a3a6; white-space: nowrap">шанс <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #f1edef">{{s.ch}}</span> · попытка <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #f1edef">{{s.c}}</span> · <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #f1edef">{{s.e}}</span></span>
+          </div>
+          <span style="flex: none; font-size: 13px; line-height: 20px; padding: 0 7px; border-radius: 4px; border: 1px solid {{s.chipB}}; color: {{s.chipC}}; white-space: nowrap">{{s.state}}</span>
+        </div>
+      </sc-for>
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 14px 16px; border-top: 1px solid #363134; background: #1a1618">
+        <span style="font-size: 14px">Итого ожидаемо <span style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600">~60 chaos</span></span>
+        <span style="font-size: 13px; color: #a8a3a6">потрачено <span style="font-family: 'JetBrains Mono', monospace">~8</span> · попыток <span style="font-family: 'JetBrains Mono', monospace">2</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #a8a3a6">
+    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zm0-6v-4m0-4h.01"></path></svg>
+    <span>Ассистент ничего не нажимает в игре: одна клавиша — одно ваше действие.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":1250}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const compact = !!this.props.compact;
+    const ok = { mark: '✓', bg: 'rgba(97,203,124,0.16)', fg: '#61cb7c', fg2: '#61cb7c' };
+    const no = { mark: '✗', bg: 'rgba(244,119,89,0.16)', fg: '#f47759', fg2: '#f47759' };
+    const wait = { mark: '·', bg: '#211d1f', fg: '#a8a3a6', fg2: '#a8a3a6' };
+    const step = (n, t, d, ch, c, e, kind) => {
+      const base = { n, t, d, ch, c, e };
+      if (kind === 'done') return Object.assign(base, { state: '✓ выполнен', chipB: '#61cb7c', chipC: '#61cb7c', ring: '#61cb7c', ringText: '#61cb7c', dot: 'transparent', bg: 'transparent' });
+      if (kind === 'now') return Object.assign(base, { state: '→ текущий', chipB: '#ec4aa0', chipC: '#ff72b7', ring: '#ec4aa0', ringText: '#0c090b', dot: '#ec4aa0', bg: 'rgba(236,74,160,0.06)' });
+      return Object.assign(base, { state: 'ожидает', chipB: '#363134', chipC: '#a8a3a6', ring: '#4b4649', ringText: '#a8a3a6', dot: 'transparent', bg: 'transparent' });
+    };
+    return {
+      compact, full: !compact,
+      pad: compact ? '12px' : '20px 28px', gap: compact ? '12px' : '16px', bannerPad: compact ? '12px' : '14px 18px',
+      verdictSize: compact ? '18px' : '20px',
+      goal: [
+        Object.assign({ t: '+# to maximum Energy Shield', need: 'тир T1–T2', now: 'сейчас T4' }, no),
+        Object.assign({ t: '+# to maximum Life', need: 'тир T1–T2', now: 'сейчас T2' }, ok),
+        Object.assign({ t: 'Два сопротивления', need: 'любые, тир ≥ T3', now: 'ждёт шага 3' }, wait)
+      ],
+      last: [
+        { a: 'P', v: '+84', r: '(80–89)', t: ' to maximum Life', tier: 'T2', m: '✓ цель', c: '#61cb7c' },
+        { a: 'P', v: '+64', r: '(59–68)', t: ' to maximum Energy Shield', tier: 'T4', m: '✗ мало', c: '#f47759' },
+        { a: 'S', v: '+21', r: '(18–23)', t: '% to Chaos Resistance', tier: 'T4', m: '', c: '#a8a3a6' }
+      ],
+      steps: [
+        step('1', 'Essence of Greed → гарантированно Life', '', '100%', '~4 c', '1 попытка', 'done'),
+        step('2', 'Реролл до ES T1–T2', '', '~8%', '~4 c', '~12 попыток', 'now'),
+        step('3', 'Верстак: два сопротивления', '', '100%', '~8 c', '1 попытка', 'wait')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Вариант A — сводка</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ff72b7}a:hover{color:#ffa4cc}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1500px; box-sizing: border-box; padding: 72px 80px; background: #0c090b; color: #f1edef; font-family: Inter, system-ui, sans-serif; font-feature-settings: 'tnum' 1; display: flex; flex-direction: column; gap: 44px">
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 1180px">
+    <div style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #a8a3a6">poe-manager · десктопное приложение · выбран вариант A</div>
+    <h1 style="margin: 0; font-size: 48px; line-height: 56px; font-weight: 700; letter-spacing: -0.02em">Рабочее место</h1>
+    <p style="margin: 0; font-size: 17px; line-height: 27px; color: #cdc9cb">Палитра B «Фуксия», шрифты Inter + JetBrains Mono. Экраны — эскиз концепции, не финальный дизайн.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+    <sc-for list="{{about}}" as="a" hint-placeholder-count="4">
+      <div style="background: #130f12; border: 1px solid #363134; border-radius: 10px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 16px; font-weight: 600">{{a.t}}</span>
+        <span style="font-size: 14px; line-height: 22px; color: #cdc9cb">{{a.d}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Предлагаю добавить в систему</h2>
+      <sc-for list="{{adds}}" as="a" hint-placeholder-count="10">
+        <div style="display: flex; gap: 12px; font-size: 14px; line-height: 21px"><span style="flex: none; width: 24px; font-family: 'JetBrains Mono', monospace; color: #a8a3a6">{{a.n}}</span><span style="color: #cdc9cb"><b style="color: #f1edef">{{a.t}}</b> — {{a.d}}</span></div>
+      </sc-for>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600">Решения, принятые по ходу</h2>
+      <sc-for list="{{dec}}" as="d" hint-placeholder-count="7">
+        <div style="display: flex; gap: 12px; font-size: 14px; line-height: 21px"><span style="flex: none; width: 8px; height: 8px; margin-top: 7px; border-radius: 2px; background: #676165"></span><span style="color: #cdc9cb">{{d}}</span></div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      about: [
+        { t: 'Идея', d: 'Полноценный инструмент для второго монитора: модули слева, работа в центре, текущий предмет справа, статусы внизу. Всё видно одновременно.' },
+        { t: 'Навигация и текущий предмет', d: 'Боковая панель с группами «Проверка / Крафт / Данные», сворачивается до иконок и спокойно растёт до 15 модулей. Текущий предмет — постоянная правая панель со сводкой и действием «Передать в модуль». Лига и Ctrl+K — в шапке окна.' },
+        { t: 'Как уживается с игрой', d: 'Обычное окно на втором мониторе. Поверх игры — только подробный оверлей у курсора со всеми модами и кнопкой «Подробнее в окне».' },
+        { t: 'Сильные и слабые стороны', d: 'Привычно, просторно для крафта, статусы всегда на виду, низкий порог входа и простая реализация. Минусы: на одном мониторе нужен Alt+Tab; правая панель забирает 300 px — на 1280 центру тесновато, поэтому её можно скрыть.' }
+      ],
+      adds: [
+        { n: '01', t: 'Заголовок окна', d: 'своя шапка Electron: зона перетаскивания, кнопки окна Windows, заглушка логотипа, место под лигу и поиск. Токен layout.titlebar.height = 40.' },
+        { n: '02', t: 'Пункт боковой навигации', d: 'строка с иконкой и группами; панель сворачивается кнопкой до полосы иконок 64 px (A6), подпись тогда — в подсказке. Подписи держим до ~22 символов, чтобы помещались целиком (A2).' },
+        { n: '03', t: 'Строка статусов', d: 'иконка + текст + состояние ok / warning / danger / progress; по клику — поповер «почему не работает». Токен layout.statusbar.height = 28.' },
+        { n: '04', t: 'Выбор лиги', d: 'выпадающий список с пометкой «лига испытаний / постоянная».' },
+        { n: '05', t: 'Командная палитра Ctrl+K', d: 'модальное окно с группами результатов (предметы, модули, команды), подсветкой совпадения и чипами клавиш. Новый z-слой z.palette.' },
+        { n: '06', t: 'Панель «Текущий предмет»', d: 'боковая панель 300 px со сводкой, модами и действием «Передать в модуль».' },
+        { n: '07', t: 'Сокеты и связи', d: 'компонент + токены game.socket.red / green / blue / white (#D9564A, #6FBF5A, #6F8DE8, #E0E0E0). Каждый сокет подписан буквой.' },
+        { n: '08', t: 'Вердикт ассистента', d: 'крупная плашка «Цель достигнута» / «Продолжай · шаг N» со сводкой условий.' },
+        { n: '09', t: 'Шаг плана и условие цели', d: 'шаг: номер, действие, шанс, цена попытки, ожидаемые попытки, состояние. Условие: ✓ / ✗ + текст.' },
+        { n: '10', t: 'Плитка справочника и ячейка инвентаря', d: 'рамка иконки по сетке инвентаря; токен size.inventory-cell = 26.' },
+        { n: '11', t: 'Токены раскладки', d: 'layout.sidebar.width 256 / 64, layout.panel.width 300.' }
+      ],
+      dec: [
+        'Палитра B + Inter / JetBrains Mono. Компонентов этапа 2 ещё нет, поэтому всё нарисовано по шкалам этапа 1, а новое вынесено в список слева.',
+        'UI-иконки — Lucide (лицензия ISC, единая толщина линии, большой набор). Иконки предметов — заглушки разных пропорций с подписью 1×1 … 2×4.',
+        'Ассистент крафта ведёт свои попытки отдельно от глобального «текущего предмета»: в примере крафтится другая Vaal Regalia (ES T4), а текущим остаётся Doom Shell. Его можно взять основой кнопкой «Взять текущий предмет».',
+        'Никакой автоматизации: ассистент пишет «сделайте шаг в игре и нажмите Ctrl+D» и прямо напоминает, что кликает игрок.',
+        'Клавиши в макетах условные: Ctrl+D — проверка, Ctrl+K — поиск и команды.',
+        'Фоны игры — абстрактные заглушки с подписью. Цены в справочнике и таблице лотов условные.',
+        'Модули сохранили компактную форму (свойство compact) — пригодится, если позже понадобится узкий режим окна.'
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

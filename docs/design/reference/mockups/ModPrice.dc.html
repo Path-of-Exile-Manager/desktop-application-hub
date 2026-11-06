@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Модуль Price check</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 100%; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: {{gap}}; color: #f1edef; font-family: Inter, system-ui, sans-serif; font-feature-settings: 'tnum' 1">
+
+  <sc-if value="{{full}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600">Price check</h1>
+        <span style="font-size: 13px; color: #a8a3a6">Пойман в 14:32 по <span style="font-family: 'JetBrains Mono', monospace; color: #cdc9cb">Ctrl + D</span> · лига Settlers of Kalguur</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button style="height: 32px; padding: 0 12px; border-radius: 6px; border: none; background: transparent; color: #ff72b7; font: 500 14px Inter, sans-serif; display: flex; align-items: center; gap: 6px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>В закладки</button>
+        <button style="height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #4b4649; background: #211d1f; color: #f1edef; font: 500 14px Inter, sans-serif; display: flex; align-items: center; gap: 6px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>В ассистент крафта</button>
+        <button style="height: 32px; padding: 0 12px; border-radius: 6px; border: none; background: #ec4aa0; color: #0c090b; font: 600 14px Inter, sans-serif; display: flex; align-items: center; gap: 6px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>Искать на сайте торговли</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+    <div style="flex: 1 1 360px; min-width: 0; background: #130f12; border: 1px solid #363134; border-radius: 10px">
+      <div style="padding: {{cardPad}}; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.06em; line-height: 18px; padding: 0 6px; border: 1px solid #FFFF77; border-radius: 4px; color: #FFFF77">RARE</span>
+          <span style="font-size: 13px; color: #a8a3a6">Body Armour</span>
+        </div>
+        <span style="font-size: {{nameSize}}; line-height: 1.25; font-weight: 600; color: #FFFF77">Doom Shell</span>
+        <span style="font-size: 14px; color: #cdc9cb">Vaal Regalia · iLvl <span style="font-family: 'JetBrains Mono', monospace">84</span> · Quality <span style="font-family: 'JetBrains Mono', monospace">+20%</span></span>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 6px">
+          <span style="font-size: 14px; color: #a8a3a6">Energy Shield <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #f1edef">512</span></span>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <div role="img" aria-label="Сокеты: B-B-B-B-B-G, 6 связей" style="display: flex; align-items: center">
+              <sc-for list="{{sockets}}" as="s" hint-placeholder-count="6">
+                <sc-if value="{{s.link}}" hint-placeholder-val="{{ true }}"><span style="width: 6px; height: 4px; background: #847e82"></span></sc-if>
+                <span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 10px; border: 2px solid {{s.c}}; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: {{s.c}}">{{s.l}}</span>
+              </sc-for>
+            </div>
+            <span style="font-size: 13px; color: #a8a3a6">6 link</span>
+          </div>
+        </div>
+      </div>
+      <div style="border-top: 1px solid #292528; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 9px">
+        <sc-for list="{{mods}}" as="m" hint-placeholder-count="6">
+          <div style="display: flex; align-items: flex-start; gap: 10px">
+            <sc-if value="{{m.pre}}" hint-placeholder-val="{{ true }}"><span title="Prefix" style="flex: none; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; background: #363134; border-radius: 4px">P</span></sc-if>
+            <sc-if value="{{m.suf}}" hint-placeholder-val="{{ false }}"><span title="Suffix" style="flex: none; width: 18px; height: 18px; margin: 1px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; border: 1px solid #a8a3a6; border-radius: 10px">S</span></sc-if>
+            <span style="flex: 1; min-width: 0; font-size: 14px; line-height: 20px; color: {{m.color}}"><sc-if value="{{m.crafted}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; font-weight: 600; line-height: 16px; padding: 0 5px; border: 1px dashed #B4B4FF; border-radius: 4px; margin-right: 6px">crafted</span></sc-if><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{m.val}}</span><span style="font-family: 'JetBrains Mono', monospace; color: #a8a3a6">{{m.range}}</span>{{m.text}}</span>
+            <span style="flex: none; min-width: 26px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; line-height: 18px; padding: 0 4px; border: 1px solid {{m.tb}}; color: {{m.tc}}; border-radius: 4px">{{m.tier}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-top: 1px solid #292528; padding: {{cardPad}}">
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; line-height: 20px; padding: 0 7px; border: 1px solid #F3413C; background: rgba(243,65,60,0.12); border-radius: 4px; color: #F3413C"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10"><path d="M5 0 10 5 5 10 0 5Z" fill="currentColor"></path></svg>CORRUPTED</span>
+      </div>
+    </div>
+
+    <div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <div style="background: #130f12; border: 1px solid #363134; border-radius: 10px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 13px; color: #a8a3a6">Оценка цены</span>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: {{priceSize}}; line-height: 1.1; font-weight: 600">~120</span>
+          <svg role="img" aria-label="Chaos Orb" width="24" height="24" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="none" stroke="#AA9E82" stroke-width="1.5"></circle><text x="9" y="12.5" text-anchor="middle" font-size="10" font-weight="700" fill="#AA9E82" font-family="sans-serif">c</text></svg>
+          <span style="font-size: 16px; color: #cdc9cb">chaos</span>
+        </div>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #a8a3a6">≈ 0.6 divine</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px">
+          <span style="font-size: 13px; line-height: 22px; padding: 0 8px; border-radius: 4px; background: #211d1f; color: #cdc9cb"><span style="font-family: 'JetBrains Mono', monospace">23</span> похожих в продаже</span>
+          <span style="font-size: 13px; line-height: 22px; padding: 0 8px; border-radius: 4px; background: rgba(97,203,124,0.10); color: #61cb7c">✓ данные свежие · 2 мин</span>
+        </div>
+        <sc-if value="{{compact}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 8px; margin-top: 6px">
+            <button style="flex: 1; height: 32px; border-radius: 6px; border: none; background: #ec4aa0; color: #0c090b; font: 600 13px Inter, sans-serif">На сайт торговли</button>
+            <button aria-label="В ассистент крафта" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #4b4649; background: #211d1f; color: #f1edef; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg></button>
+            <button aria-label="В закладки" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #4b4649; background: #211d1f; color: #f1edef; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg></button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="background: #130f12; border: 1px solid #363134; border-radius: 10px; overflow: hidden">
+        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 14px; font-weight: 600">Похожие в продаже</span><span style="font-size: 13px; color: #a8a3a6">5 из 23 · по цене</span></div>
+        <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 8px; padding: 6px 16px; background: #1a1618; font-size: 13px; color: #a8a3a6">
+          <span>Цена ↑</span><span style="text-align: right">ES</span><span style="text-align: right">Life</span><span style="text-align: right">Выставлен</span>
+        </div>
+        <sc-for list="{{lots}}" as="r" hint-placeholder-count="5">
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 8px; padding: 7px 16px; border-top: 1px solid #211d1f; font-size: 13px; font-family: 'JetBrains Mono', monospace">
+            <span>{{r.p}}</span><span style="text-align: right">{{r.es}}</span><span style="text-align: right">{{r.life}}</span><span style="text-align: right; color: #a8a3a6">{{r.t}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":1150}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const compact = !!this.props.compact;
+    const B = '#6F8DE8', G = '#6FBF5A';
+    const sockets = ['B','B','B','B','B','G'].map((l, i) => ({ l, c: l === 'B' ? B : G, link: i > 0 }));
+    const m = (pre, val, range, text, tier, crafted) => ({ pre, suf: !pre, val, range, text, tier, crafted: !!crafted,
+      color: crafted ? '#B4B4FF' : '#f1edef', tb: tier === 'T1' ? '#ff72b7' : '#363134', tc: tier === 'T1' ? '#ff72b7' : (tier === '—' ? '#847e82' : '#a8a3a6') });
+    return {
+      compact, full: !compact,
+      pad: compact ? '12px' : '24px 28px', gap: compact ? '12px' : '20px', cardPad: compact ? '12px 14px' : '16px 20px',
+      nameSize: compact ? '18px' : '22px', priceSize: compact ? '28px' : '36px',
+      sockets,
+      mods: [
+        m(true, '+105', '(100–109)', ' to maximum Energy Shield', 'T1'),
+        m(true, '+87', '(80–89)', ' to maximum Life', 'T2'),
+        m(true, '+28', '(27–32)', '% increased Energy Shield', 'T3'),
+        m(false, '+38', '(36–41)', '% to Fire Resistance', 'T3'),
+        m(false, '+46', '(46–48)', '% to Lightning Resistance', 'T1'),
+        m(false, '+15', '(15–16)', '% to Cold Resistance', '—', true)
+      ],
+      lots: [
+        { p: '105 chaos', es: '+102', life: '+84', t: '2 ч' },
+        { p: '115 chaos', es: '+106', life: '+81', t: '5 ч' },
+        { p: '120 chaos', es: '+104', life: '+88', t: '1 д' },
+        { p: '125 chaos', es: '+108', life: '+86', t: '3 ч' },
+        { p: '0.7 divine', es: '+109', life: '+89', t: '20 мин' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Заглушка игрового экрана</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: {{bg}}; font-family: Inter, system-ui, sans-serif">
+  <div style="position: absolute; left: 24px; bottom: 24px; padding: 8px 14px; border-radius: 6px; background: rgba(0,0,0,0.65); color: #ffffff; font-size: 15px; font-weight: 600; letter-spacing: 0.02em">ЗАГЛУШКА ИГРОВОГО ФОНА · {{label}} · 1920×1080</div>
+
+  <div style="position: absolute; right: 40px; top: 520px; width: 548px; box-sizing: border-box; padding: 10px; background: rgba(8,6,5,0.9); border: 1px solid #3b3226">
+    <div style="height: 24px; font-size: 13px; color: #b9ab8c; text-align: center">Инвентарь (заглушка)</div>
+    <div style="position: relative; display: grid; grid-template-columns: repeat(12, 44px); grid-auto-rows: 44px">
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="60">
+        <div style="box-sizing: border-box; border: 1px solid #1f1a14; background: rgba(30,40,70,0.25)"></div>
+      </sc-for>
+      <div style="position: absolute; left: 44px; top: 0; width: 88px; height: 132px; box-sizing: border-box; border: 1px solid #FFFF77; background: rgba(255,255,119,0.10); display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #FFFF77">2×3</div>
+      <div style="position: absolute; left: 308px; top: 44px; width: 44px; height: 44px; box-sizing: border-box; border: 1px solid #4a4030; background: rgba(170,158,130,0.15)"></div>
+      <div style="position: absolute; left: 396px; top: 88px; width: 88px; height: 88px; box-sizing: border-box; border: 1px solid #4a4030; background: rgba(136,136,255,0.10)"></div>
+    </div>
+  </div>
+
+  <svg aria-hidden="true" style="position: absolute; left: 1424px; top: 600px" width="22" height="30" viewBox="0 0 22 30"><path d="M1 1 L1 24 L7 18 L11 28 L15 26 L11 17 L19 17 Z" fill="#ffffff" stroke="#000000" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+
+  <div style="position: absolute; left: 960px; top: 300px"><dc-import name="OvA" hint-size="440px,600px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"light":{"editor":"boolean","default":false},"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = !!this.props.light;
+    const dark = 'radial-gradient(ellipse at 30% 35%, rgba(150,80,30,0.5), transparent 45%), radial-gradient(ellipse at 75% 20%, rgba(40,80,110,0.45), transparent 50%), radial-gradient(circle at 45% 70%, rgba(255,160,60,0.25), transparent 20%), linear-gradient(160deg, #17130f, #050606)';
+    const bright = 'radial-gradient(ellipse at 25% 30%, #fffbe8, transparent 45%), radial-gradient(ellipse at 80% 15%, #ffffff, transparent 35%), radial-gradient(ellipse at 60% 80%, #8fae7a, transparent 50%), linear-gradient(160deg, #efe3c4, #c4ad7f)';
+    return {
+      bg: light ? bright : dark, label: light ? 'светлая локация' : 'тёмная локация',
+      cells: Array.from({ length: 60 }, (_, i) => ({ i }))
+    };
+  }
+}
+</script>
+</body>
+</html>
