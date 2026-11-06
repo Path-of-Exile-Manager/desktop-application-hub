@@ -1,0 +1,8 @@
+[package]
+name = "item-parser"
+description = "Разбор текста предмета PoE1, скопированного из игры (Ctrl+C / Ctrl+Alt+C)"
+version.workspace = true
+edition.workspace = true
+
+# Никаких зависимостей от Tauri и Windows: crate должен собираться и в WASM (для расширения).
+[dependencies]
