@@ -215,7 +215,7 @@ async fn run(args: &Args) -> std::io::Result<()> {
                         log(&format!(">>> ACTIVITY_JOIN_REQUEST от {} ({})", user["username"], user["id"]));
                     }
                     (_, "ERROR") => log(&format!("ОШИБКА на {cmd}: {}", frame.body["data"])),
-                    ("SUBSCRIBE", _) => log(&format!("подписка на {evt}: ок")),
+                    ("SUBSCRIBE", _) => log(&format!("подписка на {}: ок", frame.body["data"]["evt"].as_str().unwrap_or("?"))),
                     ("SET_ACTIVITY", _) => log("статус выставлен, Discord ответил без ошибки"),
                     _ => log(&format!("кадр: {}", frame.body)),
                 }
