@@ -1,0 +1,15 @@
+[package]
+name = "discord-presence"
+description = "Discord Rich Presence: IPC с клиентом Discord, статус, приглашения, регистрация запуска"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "net", "io-util", "time", "macros"] }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.56"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }

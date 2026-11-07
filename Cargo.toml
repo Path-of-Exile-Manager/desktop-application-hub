@@ -2,7 +2,7 @@
 # с общим каталогом сборки target/ и общим Cargo.lock.
 [workspace]
 resolver = "3"
-members = ["src-tauri", "crates/item-parser", "crates/game-window", "crates/browser-bridge"]
+members = ["src-tauri", "crates/item-parser", "crates/game-window", "crates/browser-bridge", "crates/discord-presence"]
 
 [workspace.package]
 version = "0.1.0"
