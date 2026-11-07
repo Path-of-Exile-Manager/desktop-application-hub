@@ -6,6 +6,8 @@ edition.workspace = true
 
 [dependencies]
 serde_json = "1"
+# Чтение .env / .env.local в отладочной сборке (DISCORD_CLIENT_ID), как API_URL в src-tauri.
+dotenvy = "0.15"
 tokio = { version = "1", features = ["rt", "net", "io-util", "time", "macros"] }
 
 [target.'cfg(windows)'.dependencies]

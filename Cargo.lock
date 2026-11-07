@@ -625,6 +625,7 @@ dependencies = [
 name = "discord-presence"
 version = "0.1.0"
 dependencies = [
+ "dotenvy",
  "serde_json",
  "tokio",
  "winreg",

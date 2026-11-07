@@ -2,8 +2,9 @@
 //! и запуск по приглашению работают для нашего Discord-приложения без одобрения Discord.
 //!
 //! ```text
-//! cargo run -p discord-presence --example spike -- <client_id> [флаги]
+//! cargo run -p discord-presence --example spike -- [client_id] [флаги]
 //!
+//!   client_id          по умолчанию DISCORD_CLIENT_ID из desktop-application-hub/.env.local или .env
 //!   --type <0|2|3|5>   тип активности: 0 «Играет» (по умолчанию), 2 «Слушает», 3 «Смотрит», 5 «Соревнуется»
 //!   --details <текст>  первая строка (по умолчанию «Торгует в Path of Exile»)
 //!   --state <текст>    вторая строка (по умолчанию нет; к ней Discord дописывает размер группы)
@@ -25,7 +26,7 @@ use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use discord_presence::frame::{self, Opcode};
-use discord_presence::{ipc, register};
+use discord_presence::{config, ipc, register};
 use serde_json::{Value, json};
 
 struct Args {
@@ -65,12 +66,14 @@ fn parse_args(raw: &[String]) -> Result<Args, String> {
             "--no-party" => args.party = false,
             "--unregister" => args.unregister = true,
             other if other.starts_with("--") => log(&format!("неизвестный аргумент (может, его передал Discord): {other}")),
-            other if args.client_id.is_empty() && other.chars().all(|c| c.is_ascii_digit()) => args.client_id = other.to_string(),
+            other if args.client_id.is_empty() && config::is_client_id(other) => args.client_id = other.to_string(),
             other => log(&format!("лишний аргумент (может, его передал Discord): {other}")),
         }
     }
     if args.client_id.is_empty() {
-        return Err("первым аргументом нужен client_id Discord-приложения (число из Developer Portal)".into());
+        args.client_id = config::client_id().ok_or(
+            "нет client_id: задайте DISCORD_CLIENT_ID в desktop-application-hub/.env.local или передайте первым аргументом",
+        )?;
     }
     Ok(args)
 }
