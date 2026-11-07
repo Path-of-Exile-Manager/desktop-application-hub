@@ -28,7 +28,9 @@ $shots = @(
   @{ name = 'example-craft-1440'; w = 1440; h = 900; q = 'dev=1&module=showcase&screen=craft&splash=0' },
   @{ name = 'example-catalog-1440'; w = 1440; h = 900; q = 'dev=1&module=showcase&screen=catalog&splash=0' },
   @{ name = 'developer-1440'; w = 1440; h = 900; q = 'dev=1&module=developer&splash=0' },
-  @{ name = 'developer-1280'; w = 1280; h = 720; q = 'dev=1&module=developer&splash=0' }
+  @{ name = 'developer-1280'; w = 1280; h = 720; q = 'dev=1&module=developer&splash=0' },
+  @{ name = 'developer-discord-1440'; w = 1440; h = 900; q = 'dev=1&module=developer&section=discord&splash=0' },
+  @{ name = 'developer-discord-1280'; w = 1280; h = 720; q = 'dev=1&module=developer&section=discord&splash=0' }
 ) | Where-Object { -not $Only -or $_.name -like "*$Only*" }
 foreach ($s in $shots) {
   $profile = Join-Path $env:TEMP ("pm-chrome-" + [guid]::NewGuid())

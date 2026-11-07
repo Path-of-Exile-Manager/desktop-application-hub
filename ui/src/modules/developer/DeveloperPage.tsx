@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Bug, RefreshCw, RotateCcw, Trash2, Undo2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bug, Eraser, RefreshCw, RotateCcw, Trash2, Undo2 } from "lucide-react";
 import {
   Button,
   Card,
   CardHeader,
+  cx,
   CardSection,
   Dialog,
   Field,
@@ -12,6 +13,7 @@ import {
   Page,
   SegmentedControl,
   StatusBadge,
+  Switch,
   Tabs,
   toast,
   type Status,
@@ -19,6 +21,17 @@ import {
 import { useShell, type Sim, type SimTarget } from "@/app/store";
 import { useGame } from "@/app/game";
 import { useExtension } from "@/app/extension";
+import {
+  ACTIVITY_TYPE_LABEL,
+  clearDiscordLog,
+  overridesActive,
+  reconnectDiscord,
+  useDiscord,
+  type ActivityType,
+  type DiscordLogEntry,
+  type DiscordStatus,
+  type PresenceMode,
+} from "@/app/discord";
 import { checkServerNow, formatCheckedAt, setServerUrl, SOURCE_LABEL, useServer, type ServerStatus } from "@/app/server";
 import { APP_VERSION } from "@/app/startup";
 import { inTauri } from "@/app/window";
@@ -38,21 +51,49 @@ function engine(): string {
 /**
  * Режим разработки — инструменты разработчика. Видна, только пока в Настройках
  * включён «Режим разработчика» (`developerMode` в app/store.ts).
- * Адрес сервера, окружение, сырые данные ядра и действия для отладки.
+ * Раздел «Общее»: адрес сервера, окружение, сырые данные ядра и действия для отладки.
+ * Раздел «Discord»: Rich Presence — переключатели статуса и журнал обмена с клиентом Discord.
  * Служебная страница: блок сырых данных может прокручиваться.
  */
+type Section = "general" | "discord";
+
+/** Раздел можно открыть сразу: `?section=discord` (для скриншотов). */
+const INITIAL_SECTION: Section = new URLSearchParams(location.search).get("section") === "discord" ? "discord" : "general";
+
 export function DeveloperPage() {
   const [replay, setReplay] = useState(0);
+  const [section, setSection] = useState<Section>(INITIAL_SECTION);
   return (
-    <Page title="Режим разработки" subtitle="Инструменты разработчика · выключаются в Настройках">
-      <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
-        <ServerCard />
-        <div className="flex min-w-0 flex-col gap-4">
-          <EnvironmentCard />
-          <ActionsCard onReplay={() => setReplay((n) => n + 1)} />
+    <Page
+      title="Режим разработки"
+      subtitle="Инструменты разработчика · выключаются в Настройках"
+      actions={
+        <SegmentedControl<Section>
+          aria-label="Раздел"
+          value={section}
+          onValueChange={setSection}
+          options={[
+            { value: "general", label: "Общее" },
+            { value: "discord", label: "Discord" },
+          ]}
+        />
+      }
+    >
+      {section === "general" ? (
+        <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
+          <ServerCard />
+          <div className="flex min-w-0 flex-col gap-4">
+            <EnvironmentCard />
+            <ActionsCard onReplay={() => setReplay((n) => n + 1)} />
+          </div>
+          <RawDataCard />
         </div>
-        <RawDataCard />
-      </div>
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
+          <DiscordCard />
+          <RawDataCard initialTab="discord" className="col-span-2" />
+        </div>
+      )}
       {replay > 0 && <SplashReplay key={replay} />}
     </Page>
   );
@@ -163,6 +204,122 @@ function ServerCard() {
   );
 }
 
+const DISCORD_BADGE: Record<DiscordStatus["state"], { status: Status; label: (s: DiscordStatus) => string }> = {
+  connected: { status: "success", label: (s) => `на связи · ${s.user?.globalName ?? s.user?.username ?? "?"}` },
+  connecting: { status: "info", label: () => "подключаемся…" },
+  disconnected: { status: "danger", label: () => "нет связи" },
+  noClientId: { status: "warning", label: () => "client_id не задан" },
+};
+
+function clock(ms: number | null | undefined): string {
+  return ms ? new Date(ms).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
+}
+
+function presenceResult(p: DiscordStatus["presence"]): string {
+  if (p.result === "ok") return `принят · ${clock(p.sentAt)}`;
+  if (p.result) return `ошибка: ${p.result}`;
+  return p.sentAt ? "ждём ответа (или Discord не на связи)" : "—";
+}
+
+/** Discord Rich Presence: связь, переключатели статуса и отладочные переопределения. */
+function DiscordCard() {
+  const status = useDiscord((s) => s.status);
+  const overrides = useDiscord((s) => s.overrides);
+  const setOverride = useDiscord((s) => s.setOverride);
+  const resetOverrides = useDiscord((s) => s.resetOverrides);
+  const enabled = useShell((s) => s.discordPresence);
+  const setEnabled = useShell((s) => s.setDiscordPresence);
+
+  const badge = status ? DISCORD_BADGE[status.state] : null;
+  const noClientId = status?.state === "noClientId";
+  const p = status?.presence;
+
+  async function reconnect() {
+    try {
+      await reconnectDiscord();
+      toast({ status: "info", title: "Переподключаемся к Discord" });
+    } catch (e) {
+      toast({ status: "warning", title: "Не удалось переподключиться", description: String(e) });
+    }
+  }
+
+  return (
+    <Card className="min-w-0">
+      <CardHeader title="Discord" aside={badge && status && <StatusBadge status={badge.status}>{badge.label(status)}</StatusBadge>} />
+      <CardSection className="flex flex-col gap-3">
+        <Switch checked={enabled} onCheckedChange={setEnabled} label="Показывать статус в Discord" />
+        <Choice label="Когда показывать">
+          <SegmentedControl<PresenceMode>
+            aria-label="Когда показывать статус"
+            value={overrides.mode}
+            onValueChange={(v) => setOverride("mode", v)}
+            className="w-full [&>*]:flex-1 [&>*]:justify-center"
+            options={[
+              { value: "auto", label: "По игре" },
+              { value: "show", label: "Всегда" },
+              { value: "hide", label: "Скрыть" },
+            ]}
+          />
+        </Choice>
+        <Choice label="Тип активности">
+          <SegmentedControl<ActivityType>
+            aria-label="Тип активности"
+            value={overrides.activityType}
+            onValueChange={(v) => setOverride("activityType", v)}
+            className="w-full [&>*]:flex-1 [&>*]:justify-center"
+            // «Соревнуется» ядро тоже понимает, но в узкой колонке не помещается — для торгового помощника он не нужен.
+            options={(["playing", "watching", "listening"] as const).map((v) => ({ value: v, label: ACTIVITY_TYPE_LABEL[v] }))}
+          />
+        </Choice>
+        <Switch
+          checked={overrides.partySize}
+          onCheckedChange={(v) => setOverride("partySize", v)}
+          label="Размер группы «(1 из 4)»"
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button icon={RefreshCw} onClick={reconnect} disabled={!inTauri || noClientId}>
+            Переподключиться
+          </Button>
+          {overridesActive(overrides) && (
+            <Button variant="ghost" icon={Undo2} onClick={resetOverrides}>
+              Как по умолчанию
+            </Button>
+          )}
+        </div>
+      </CardSection>
+      <CardSection>
+        <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
+          <Fact label="Client ID">{status?.clientId ?? "не задан (DISCORD_CLIENT_ID в .env.local)"}</Fact>
+          <Fact label="Канал">{status?.pipe?.replace("\\\\.\\pipe\\", "") ?? "—"}</Fact>
+          <Fact label="Аккаунт">
+            <span title={status?.user?.id}>{status?.user ? (status.user.globalName ?? status.user.username) : "—"}</span>
+          </Fact>
+          <Fact label="Игра">{p ? (p.gameRunning ? "Path of Exile запущен" : "не запущена") : "—"}</Fact>
+          <Fact label="Статус">{p ? (p.visible ? "показан" : `скрыт: ${p.hiddenReason ?? "—"}`) : "—"}</Fact>
+          <Fact label="Ответ Discord">{p ? presenceResult(p) : "—"}</Fact>
+          <Fact label="Запуск">
+            {/* Полная команда — в подсказке и в «Состоянии» сырых данных: длинный путь не помещается в колонку. */}
+            <span title={status?.launch.command ?? undefined}>
+              {status?.launch.registered ? "в реестре" : (status?.launch.error ?? "не зарегистрирован")}
+            </span>
+          </Fact>
+          <Fact label="Приглашение">{status?.lastJoin ? `${status.lastJoin.secret} · ${clock(status.lastJoin.at)}` : "ещё не было"}</Fact>
+          {status?.error && <Fact label="Ошибка">{status.error}</Fact>}
+        </dl>
+      </CardSection>
+    </Card>
+  );
+}
+
+function Choice({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-label text-text-primary">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 function EnvironmentCard() {
   return (
     <Card>
@@ -257,7 +414,7 @@ function ActionsCard({ onReplay }: { onReplay: () => void }) {
         open={confirmReset}
         onOpenChange={setConfirmReset}
         title="Сбросить настройки?"
-        description="Горячие клавиши, открытый модуль, вид панелей и адрес сервера вернутся к начальным, режим разработчика выключится. Интерфейс перезагрузится."
+        description="Горячие клавиши, открытый модуль, вид панелей, адрес сервера и статус в Discord вернутся к начальным, режим разработчика выключится. Интерфейс перезагрузится."
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmReset(false)}>
@@ -279,18 +436,19 @@ function ActionsCard({ onReplay }: { onReplay: () => void }) {
   );
 }
 
-function RawDataCard() {
+function RawDataCard({ initialTab = "game", className }: { initialTab?: string; className?: string }) {
   const game = useGame((s) => s.status);
   const server = useServer((s) => s.status);
   const extension = useExtension((s) => s.status);
-  const [tab, setTab] = useState("game");
+  const discord = useDiscord((s) => s.status);
+  const [tab, setTab] = useState(initialTab);
   const json = (v: unknown) => (
     <pre className="h-full overflow-auto font-mono text-caption whitespace-pre-wrap text-text-secondary">
       {v ? JSON.stringify(v, null, 2) : "ещё нет данных"}
     </pre>
   );
   return (
-    <Card className="max-h-full min-h-0 min-w-0 self-stretch">
+    <Card className={cx("max-h-full min-h-0 min-w-0 self-stretch", className)}>
       <CardHeader title="Сырые данные ядра" aside={inTauri ? "события Rust" : "демо (вне Tauri)"} />
       <CardSection className="flex min-h-0 flex-1 flex-col">
         <Tabs
@@ -302,10 +460,78 @@ function RawDataCard() {
             { value: "game", label: "Игра", content: json(game) },
             { value: "server", label: "Сервер", content: json(server) },
             { value: "extension", label: "Расширение", content: json(extension) },
+            { value: "discord", label: "Discord", content: <DiscordRaw status={discord} /> },
           ]}
         />
       </CardSection>
     </Card>
+  );
+}
+
+/** Сырые данные Discord: состояние от ядра или журнал кадров обмена с клиентом Discord. */
+function DiscordRaw({ status }: { status: DiscordStatus | null }) {
+  const [view, setView] = useState<"exchange" | "state">("exchange");
+  if (!status) return <p className="text-caption text-text-secondary">ещё нет данных</p>;
+  const { log, ...state } = status;
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <SegmentedControl<"exchange" | "state">
+          aria-label="Что показать"
+          value={view}
+          onValueChange={setView}
+          options={[
+            { value: "exchange", label: `Обмен · ${log.length}` },
+            { value: "state", label: "Состояние" },
+          ]}
+        />
+        {view === "exchange" && (
+          <Button variant="ghost" icon={Eraser} className="-my-1 h-7 text-label" onClick={clearDiscordLog} disabled={!log.length}>
+            Очистить
+          </Button>
+        )}
+      </div>
+      <div className="min-h-0 flex-1 overflow-auto">
+        {view === "state" ? (
+          <pre className="font-mono text-caption whitespace-pre-wrap text-text-secondary">{JSON.stringify(state, null, 2)}</pre>
+        ) : log.length === 0 ? (
+          <p className="text-caption text-text-secondary">кадров ещё не было</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {/* Новые сверху. */}
+            {log
+              .map((entry, i) => ({ entry, i }))
+              .reverse()
+              .map(({ entry, i }) => (
+                <LogRow key={`${entry.at}-${i}`} entry={entry} />
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Подпись кадра: для FRAME — команда и событие (`SET_ACTIVITY`, `DISPATCH · READY`), иначе opcode. */
+function frameTitle(entry: DiscordLogEntry): string {
+  const body = (entry.body ?? {}) as { cmd?: string; evt?: string | null };
+  if (entry.opcode !== "FRAME" || !body.cmd) return entry.opcode;
+  return body.evt ? `${body.cmd} · ${body.evt}` : body.cmd;
+}
+
+function LogRow({ entry }: { entry: DiscordLogEntry }) {
+  const out = entry.direction === "out";
+  const Icon = out ? ArrowUpRight : ArrowDownLeft;
+  return (
+    <div className="flex flex-col gap-1 border-b border-border-subtle pb-2 last:border-b-0">
+      <div className="flex items-center gap-1.5 text-label">
+        <Icon className={out ? "size-3.5 shrink-0 text-text-accent" : "size-3.5 shrink-0 text-text-secondary"} aria-hidden />
+        <span className="text-text-secondary">{out ? "в Discord" : "от Discord"}</span>
+        <span className="min-w-0 truncate font-mono text-text-primary">{frameTitle(entry)}</span>
+        <span className="ml-auto shrink-0 font-mono text-caption text-text-secondary">{clock(entry.at)}</span>
+      </div>
+      <pre className="font-mono text-caption break-all whitespace-pre-wrap text-text-secondary">{JSON.stringify(entry.body, null, 2)}</pre>
+    </div>
   );
 }
 

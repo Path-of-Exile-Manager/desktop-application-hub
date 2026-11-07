@@ -21,6 +21,7 @@ serde_json = "1"
 item-parser = { path = "../crates/item-parser" }
 game-window = { path = "../crates/game-window" }
 browser-bridge = { path = "../crates/browser-bridge" }
+discord-presence = { path = "../crates/discord-presence" }
 # HTTP-клиент для связи с сервером (BFF): маленький, синхронный — работает в своём потоке.
 ureq = { version = "3", features = ["json"] }
 # Чтение .env / .env.local в отладочной сборке (API_URL).

@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+mod discord;
 mod extension;
 mod game;
 mod server;
@@ -46,6 +47,7 @@ pub fn run() {
             game::start(app.handle());
             server::start(app.handle());
             extension::start(app.handle());
+            discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -56,6 +58,10 @@ pub fn run() {
             server::server_check_now,
             server::server_set_url,
             extension::extension_status,
+            discord::discord_status,
+            discord::discord_configure,
+            discord::discord_reconnect,
+            discord::discord_clear_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

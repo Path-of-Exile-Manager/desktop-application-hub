@@ -31,6 +31,17 @@ impl Opcode {
         }
     }
 
+    /// Имя для журнала обмена.
+    pub fn name(self) -> &'static str {
+        match self {
+            Opcode::Handshake => "HANDSHAKE",
+            Opcode::Frame => "FRAME",
+            Opcode::Close => "CLOSE",
+            Opcode::Ping => "PING",
+            Opcode::Pong => "PONG",
+        }
+    }
+
     pub fn from_code(code: u32) -> Option<Self> {
         Some(match code {
             0 => Opcode::Handshake,

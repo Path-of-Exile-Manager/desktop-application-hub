@@ -2318,6 +2318,7 @@ name = "poe-manager"
 version = "0.1.0"
 dependencies = [
  "browser-bridge",
+ "discord-presence",
  "dotenvy",
  "game-window",
  "item-parser",

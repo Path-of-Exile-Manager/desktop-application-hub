@@ -30,12 +30,15 @@ type ShellState = {
   developerMode: boolean;
   /** Адрес сервера, заданный в режиме разработки (действует, только пока он включён). `null` — API_URL. */
   apiUrlOverride: string | null;
+  /** Показывать статус в Discord (Rich Presence). По умолчанию включено (shared/docs/discord-rich-presence.md). */
+  discordPresence: boolean;
   hotkeys: { check: string[]; palette: string[] };
 
   openModule: (id: string) => void;
   setSim: (target: SimTarget, value: Sim) => void;
   setDeveloperMode: (v: boolean) => void;
   setApiUrlOverride: (url: string | null) => void;
+  setDiscordPresence: (v: boolean) => void;
   setSidebarCollapsed: (v: boolean) => void;
   setPanelHidden: (v: boolean) => void;
   setPaletteOpen: (v: boolean) => void;
@@ -58,6 +61,7 @@ export const useShell = create<ShellState>()(
       sim: { game: "real", server: "real", extension: "real" },
       developerMode: false,
       apiUrlOverride: null,
+      discordPresence: true,
       hotkeys: { check: ["Ctrl", "D"], palette: ["Ctrl", "K"] },
 
       openModule: (activeModule) => set({ activeModule }),
@@ -66,6 +70,7 @@ export const useShell = create<ShellState>()(
       setDeveloperMode: (developerMode) =>
         set(developerMode ? { developerMode } : { developerMode, sim: { game: "real", server: "real", extension: "real" } }),
       setApiUrlOverride: (apiUrlOverride) => set({ apiUrlOverride }),
+      setDiscordPresence: (discordPresence) => set({ discordPresence }),
       setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       setPanelHidden: (panelHidden) => set({ panelHidden }),
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
@@ -86,6 +91,7 @@ export const useShell = create<ShellState>()(
         hotkeys: s.hotkeys,
         developerMode: s.developerMode,
         apiUrlOverride: s.apiUrlOverride,
+        discordPresence: s.discordPresence,
       }),
     },
   ),

@@ -131,6 +131,24 @@ desktop-application/
 - **Проверка:** `cargo test -p browser-bridge`; `node scripts/bridge-smoke.mjs` — exe в режиме моста «как из Chrome»
   (с запущенным приложением или примером `cargo run -p browser-bridge --example fake_app`).
 
+### Discord Rich Presence
+
+План и решения — в общих документах: `docs/discord-rich-presence.md`.
+
+- **Крейт `crates/discord-presence`** (без Tauri): кадры IPC Discord (`opcode + длина + JSON`), поиск канала `\\.\pipe\discord-ipc-0..9`,
+  сессия с переподключением раз в 15 с (`session::run` + `Handle`), активность, ключ запуска `HKCU\Software\Classes\discord-<client_id>`.
+  Прототип без приложения: `cargo run -p discord-presence --example spike`.
+- **`client_id`** — `DISCORD_CLIENT_ID`: окружение при запуске (в отладочной сборке и `.env.local` / `.env`) → значение при сборке.
+  Не задан — Discord-часть выключена (статус `noClientId`).
+- **При запуске приложения** (`src-tauri/src/discord.rs`): ключ запуска по приглашению → этот exe, сессия в фоне.
+  Статус собирается по игре: PoE1 запущен — «Торгует в Path of Exile» с таймером, группа и `join secret` `pm1:open`; нет — статус снят.
+  `game.rs` сообщает об изменении игры (`discord::on_game_status`). Событие `discord-status` (с журналом последних 100 кадров обмена),
+  `discord-join` при нажатии «Присоединиться»; команды `discord_status`, `discord_configure`, `discord_reconnect`, `discord_clear_log`.
+- **Интерфейс** (`ui/src/app/discord.tsx`): переключатель «Показывать статус в Discord» (`discordPresence` в `store.ts`, по умолчанию
+  включён). Страница «Режим разработки» → раздел «Discord»: связь, переопределения (когда показывать, тип активности, размер группы —
+  сбрасываются при выключении режима разработчика), журнал обмена с Discord и состояние в «Сырых данных ядра».
+- **Ещё не сделано:** переключатель в Настройках, единственный экземпляр приложения (второй запуск от Discord), удаление ключа деинсталлятором.
+
 ### Как определяется окно игры (шаг 2)
 
 - Ищем видимые окна класса `POEWindowClass` (`EnumWindows`). PoE1 от PoE2 отличаем по заголовку: «Path of Exile 2» — вторая часть. Если запущены обе — берём PoE1; если только PoE2 — статус «не поддерживается».

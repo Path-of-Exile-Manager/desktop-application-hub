@@ -20,6 +20,7 @@ import { useWindowControls } from "@/app/window";
 import { gameStatusItem, useGameStatus, useGameStatusSync } from "@/app/game";
 import { serverStatusItem, useServerStatus, useServerStatusSync } from "@/app/server";
 import { extensionStatusItem, useExtensionStatus, useExtensionStatusSync } from "@/app/extension";
+import { useDiscordStatusSync } from "@/app/discord";
 import { useStartup } from "@/app/startup";
 import { splashVersion } from "@/app/SplashReplay";
 import { DevBadge } from "@/app/DevBadge";
@@ -41,6 +42,7 @@ export default function App() {
   useGameStatusSync();
   useServerStatusSync();
   useExtensionStatusSync();
+  useDiscordStatusSync();
   const game = useGameStatus();
   const server = useServerStatus();
   const extension = useExtensionStatus();

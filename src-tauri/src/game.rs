@@ -29,10 +29,16 @@ pub fn start(app: &AppHandle) {
             if *last != status {
                 *last = status.clone();
                 drop(last);
+                crate::discord::on_game_status(&app, &status);
                 let _ = app.emit(EVENT, status);
             }
         })
         .expect("spawn game window watcher");
+}
+
+/// Последнее известное состояние для других частей ядра.
+pub fn current(app: &AppHandle) -> GameStatus {
+    app.state::<GameWatcher>().0.lock().unwrap().clone()
 }
 
 /// Текущее состояние окна игры: `invoke("game_status")`.
