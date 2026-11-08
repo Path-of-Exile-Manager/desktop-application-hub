@@ -19,6 +19,14 @@ if (import.meta.env.DEV) {
   if (q.has("panel")) s.setPanelHidden(q.get("panel") === "hidden");
   if (q.get("demo") === "problems") s.setSim("game", "off");
   if (q.get("palette") === "1") s.setPaletteOpen(true);
+  // demo=ancient — заменить учёт Ancient Orb демо-данными (затирает свои!).
+  if (q.get("demo") === "ancient") {
+    const [{ useAncientOrb }, { ancientDemoData }] = await Promise.all([
+      import("./modules/ancient-orb/store"),
+      import("./modules/ancient-orb/demo"),
+    ]);
+    useAncientOrb.getState().restore(ancientDemoData());
+  }
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
