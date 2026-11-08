@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:rust": "cargo test --workspace",
-    "gen:types": "cargo test -p poe-manager --lib export_bindings",
+    "gen:types": "cargo test -p poe-manager -p item-parser --lib export_bindings",
     "check": "tsc && node scripts/check-tokens.mjs && vitest run"
   },
   "dependencies": {

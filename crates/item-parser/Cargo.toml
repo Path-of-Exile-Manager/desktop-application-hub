@@ -6,3 +6,6 @@ edition.workspace = true
 
 # Никаких зависимостей от Tauri и Windows: crate должен собираться и в WASM (для расширения).
 [dependencies]
+serde = { version = "1", features = ["derive"] }
+# TypeScript-типы результата разбора для интерфейса (`pnpm gen:types`).
+ts-rs = { version = "12.0.1", features = ["no-serde-warnings"] }
