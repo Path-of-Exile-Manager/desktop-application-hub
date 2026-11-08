@@ -1,7 +1,8 @@
 import type { ComponentType } from "react";
-import { LayoutGrid, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Dices, LayoutGrid, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
+import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
 import { SettingsPage } from "@/modules/settings/SettingsPage";
 import { DeveloperPage } from "@/modules/developer/DeveloperPage";
 import { ShowcasePage } from "@/showcase/ShowcasePage";
@@ -51,6 +52,15 @@ const PRICE_CHECK: ModuleDef = {
   keywords: "цена проверка",
 };
 
+const ANCIENT_ORB: ModuleDef = {
+  id: "ancient-orb",
+  label: "Ancient Orb",
+  icon: Dices,
+  group: "craft",
+  component: AncientOrbPage,
+  keywords: "ancient древняя сфера казино учёт headhunter mageblood пояса",
+};
+
 const SETTINGS: ModuleDef = {
   id: "settings",
   label: "Настройки",
@@ -78,7 +88,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, ANCIENT_ORB, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
