@@ -1,0 +1,8 @@
+# Настройки Cargo для этого репозитория. Каталог сборки (target-dir) задан выше,
+# в poe-manager/.cargo/config.toml (вне репозитория) — Cargo объединяет оба файла.
+
+[env]
+# ts-rs: TypeScript-типы для интерфейса генерируются из Rust (`pnpm gen:types`) в ui/src/generated.
+TS_RS_EXPORT_DIR = { value = "ui/src/generated", relative = true }
+# u64/i64 в JSON — обычные числа JS (миллисекунды, байты), а не bigint.
+TS_RS_LARGE_INT = "number"

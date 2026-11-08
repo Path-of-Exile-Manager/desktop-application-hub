@@ -7,20 +7,10 @@ import { Button, type StatusItem } from "@/design-system";
 import { inTauri } from "./window";
 import { useShell } from "./store";
 
-// Те же структуры, что отдаёт Rust (src-tauri/src/server.rs, serde camelCase).
+// Типы — из Rust (src-tauri/src/server.rs), сгенерированы ts-rs: `pnpm gen:types`.
+import type { ServerStatus } from "@/generated/ServerStatus";
 
-export type ServerStatus = {
-  state: "unconfigured" | "checking" | "online" | "offline";
-  url: string | null;
-  /** Откуда адрес: режим разработки, переменная окружения при запуске, адрес из сборки. */
-  source: "developer" | "env" | "build" | null;
-  /** Адрес по умолчанию (API_URL) — к нему вернёт «Сбросить». */
-  defaultUrl: string | null;
-  latencyMs: number | null;
-  version: string | null;
-  error: string | null;
-  checkedAt: number | null;
-};
+export type { ServerStatus };
 
 export const SOURCE_LABEL: Record<NonNullable<ServerStatus["source"]>, string> = {
   developer: "задан в режиме разработки",

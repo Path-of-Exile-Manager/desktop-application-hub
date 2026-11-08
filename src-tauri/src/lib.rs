@@ -1,27 +1,43 @@
-use serde::Serialize;
+use std::sync::Arc;
 
+use serde::Serialize;
+use tauri::Manager;
+use ts_rs::TS;
+use uuid::Uuid;
+
+mod api;
+mod device;
 mod discord;
 mod extension;
 mod game;
+mod paths;
 mod server;
 
 /// Что ядро сообщает интерфейсу о себе. `Serialize` позволяет отдать структуру в JS как JSON.
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
 struct AppInfo {
     name: String,
     version: String,
-    parser_version: &'static str,
+    parser_version: String,
+    /// Id устройства (`X-Device-Id`), см. `device.rs`.
+    device_id: Uuid,
+    /// Папка данных приложения.
+    data_dir: String,
 }
 
 /// Команда, которую интерфейс вызывает через `invoke("app_info")`.
 /// Подробнее о командах: https://tauri.app/develop/calling-rust/
 #[tauri::command]
-fn app_info(app: tauri::AppHandle) -> AppInfo {
+fn app_info(app: tauri::AppHandle, api: tauri::State<Arc<api::Api>>, paths: tauri::State<paths::AppPaths>) -> AppInfo {
     let package = app.package_info();
     AppInfo {
         name: package.name.clone(),
         version: package.version.to_string(),
-        parser_version: item_parser::VERSION,
+        parser_version: item_parser::VERSION.to_string(),
+        device_id: api.device_id(),
+        data_dir: paths.root().display().to_string(),
     }
 }
 
@@ -44,8 +60,13 @@ fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            let paths = paths::AppPaths::resolve(app.handle())?;
+            let device_id: Uuid = device::load_or_create(&paths);
+            app.manage(paths);
             game::start(app.handle());
             server::start(app.handle());
+            let handle = app.handle().clone();
+            app.manage(Arc::new(api::Api::new(device_id, move || handle.state::<server::ServerWatcher>().current_url())));
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
@@ -57,6 +78,7 @@ pub fn run() {
             server::server_status,
             server::server_check_now,
             server::server_set_url,
+            api::probe::api_probe,
             extension::extension_status,
             discord::discord_status,
             discord::discord_configure,

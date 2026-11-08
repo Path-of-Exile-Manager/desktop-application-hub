@@ -23,6 +23,11 @@ game-window = { path = "../crates/game-window" }
 browser-bridge = { path = "../crates/browser-bridge" }
 discord-presence = { path = "../crates/discord-presence" }
 # HTTP-клиент для связи с сервером (BFF): маленький, синхронный — работает в своём потоке.
-ureq = { version = "3", features = ["json"] }
+# gzip включён явно: прайс лиги — ~13 МБ JSON, сжатым ~0,7 МБ (Accept-Encoding ставит сам ureq).
+ureq = { version = "3", features = ["json", "gzip"] }
 # Чтение .env / .env.local в отладочной сборке (API_URL).
 dotenvy = "0.15"
+# Id устройства (UUID v7, заголовок X-Device-Id).
+uuid = { version = "1.29.1", features = ["v7", "serde"] }
+# TypeScript-типы для интерфейса из Rust-структур: `pnpm gen:types` → ui/src/generated.
+ts-rs = { version = "12.0.1", features = ["serde-json-impl", "uuid-impl"] }

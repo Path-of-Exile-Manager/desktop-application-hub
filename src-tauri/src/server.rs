@@ -14,6 +14,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
+use ts_rs::TS;
 
 pub const EVENT: &str = "server-status";
 
@@ -22,7 +23,7 @@ const INTERVAL_ONLINE: Duration = Duration::from_secs(15);
 const INTERVAL_OFFLINE: Duration = Duration::from_secs(5);
 const TIMEOUT: Duration = Duration::from_secs(3);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub enum ServerState {
     /// Адрес не задан.
@@ -34,7 +35,7 @@ pub enum ServerState {
 }
 
 /// Откуда взят адрес.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub enum UrlSource {
     /// Задан на странице «Режим разработки».
@@ -45,8 +46,9 @@ pub enum UrlSource {
     Build,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct ServerStatus {
     pub state: ServerState,
     pub url: Option<String>,
@@ -82,6 +84,11 @@ pub struct ServerWatcher {
 impl ServerWatcher {
     fn snapshot(&self) -> ServerStatus {
         self.inner.lock().unwrap().status.clone()
+    }
+
+    /// Текущий адрес сервера — им пользуется клиент api-hub (`api/mod.rs`).
+    pub fn current_url(&self) -> Option<String> {
+        self.inner.lock().unwrap().url.clone()
     }
 }
 
