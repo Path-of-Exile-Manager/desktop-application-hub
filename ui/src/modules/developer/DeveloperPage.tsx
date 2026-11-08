@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowDownLeft, ArrowUpRight, Bug, Eraser, RefreshCw, RotateCcw, Trash2, Undo2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bug, Eraser, RefreshCw, RotateCcw, Send, Trash2, Undo2 } from "lucide-react";
 import {
   Button,
   Card,
@@ -9,15 +9,18 @@ import {
   CardSection,
   Dialog,
   Field,
+  fieldClasses,
   Input,
   Page,
   SegmentedControl,
+  Select,
   StatusBadge,
   Switch,
   Tabs,
   toast,
   type Status,
 } from "@/design-system";
+import { appInfo, describeApiError, probeApi, type AppInfo, type ProbeMethod, type ProbeResult } from "@/app/api";
 import { useShell, type Sim, type SimTarget } from "@/app/store";
 import { useGame } from "@/app/game";
 import { useExtension } from "@/app/extension";
@@ -52,13 +55,16 @@ function engine(): string {
  * Режим разработки — инструменты разработчика. Видна, только пока в Настройках
  * включён «Режим разработчика» (`developerMode` в app/store.ts).
  * Раздел «Общее»: адрес сервера, окружение, сырые данные ядра и действия для отладки.
+ * Раздел «API»: пробный запрос к api-hub через ядро — коды ошибок, ETag, лимиты.
  * Раздел «Discord»: Rich Presence — переключатели статуса и журнал обмена с клиентом Discord.
  * Служебная страница: блок сырых данных может прокручиваться.
  */
-type Section = "general" | "discord";
+type Section = "general" | "api" | "discord";
 
-/** Раздел можно открыть сразу: `?section=discord` (для скриншотов). */
-const INITIAL_SECTION: Section = new URLSearchParams(location.search).get("section") === "discord" ? "discord" : "general";
+const SECTIONS: readonly Section[] = ["general", "api", "discord"];
+
+/** Раздел можно открыть сразу: `?section=api` (для скриншотов). */
+const INITIAL_SECTION: Section = SECTIONS.find((s) => s === new URLSearchParams(location.search).get("section")) ?? "general";
 
 export function DeveloperPage() {
   const [replay, setReplay] = useState(0);
@@ -74,6 +80,7 @@ export function DeveloperPage() {
           onValueChange={setSection}
           options={[
             { value: "general", label: "Общее" },
+            { value: "api", label: "API" },
             { value: "discord", label: "Discord" },
           ]}
         />
@@ -88,6 +95,8 @@ export function DeveloperPage() {
           </div>
           <RawDataCard />
         </div>
+      ) : section === "api" ? (
+        <ApiProbe />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
           <DiscordCard />
@@ -320,13 +329,177 @@ function Choice({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** Готовые запросы: ответ, 304 по ETag и типовые ошибки с кодами. */
+const PROBE_PRESETS: { label: string; method: ProbeMethod; path: string }[] = [
+  { label: "Лиги", method: "GET", path: "/v1/leagues" },
+  { label: "Bootstrap", method: "GET", path: "/v1/bootstrap" },
+  { label: "Цены Standard", method: "GET", path: "/v1/prices/Standard" },
+  { label: "Нет лиги", method: "GET", path: "/v1/prices/NoSuchLeague" },
+  { label: "Без входа", method: "GET", path: "/v1/me" },
+];
+
+function probeBadge(r: ProbeResult): { status: Status; label: string } {
+  if (r.notModified) return { status: "info", label: "304 · не изменилось" };
+  if (r.error) return { status: r.error.kind === "rateLimited" ? "warning" : "danger", label: r.status ? `HTTP ${r.status}` : r.error.kind };
+  return { status: "success", label: `HTTP ${r.status}` };
+}
+
+function formatBytes(n: number | null): string {
+  if (n == null) return "—";
+  if (n < 1024) return `${n} Б`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} КБ`;
+  return `${(n / 1024 / 1024).toFixed(2)} МБ`;
+}
+
+/** Пробный запрос к api-hub. Идёт через ядро (`api_probe`): с X-Device-Id, gzip, конвертом и паузой после 429. */
+function ApiProbe() {
+  const serverUrl = useServer((s) => s.status?.url ?? null);
+  const [method, setMethod] = useState<ProbeMethod>("GET");
+  const [path, setPath] = useState("/v1/leagues");
+  const [etag, setEtag] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<ProbeResult | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+
+  async function send(e?: FormEvent) {
+    e?.preventDefault();
+    setBusy(true);
+    setFailure(null);
+    try {
+      setResult(await probeApi({ method, path, ifNoneMatch: etag || null, body: method === "POST" ? body : null }));
+    } catch (err) {
+      setResult(null);
+      setFailure(String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const badge = result ? probeBadge(result) : null;
+
+  return (
+    <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
+      <Card className="min-w-0">
+        <CardHeader title="Запрос к API" aside={serverUrl ?? "адрес не задан"} />
+        <CardSection>
+          <form onSubmit={send} className="flex flex-col gap-3">
+            <div className="flex gap-2">
+              <Select
+                aria-label="Метод"
+                value={method}
+                onValueChange={(v) => setMethod(v as ProbeMethod)}
+                options={(["GET", "POST", "DELETE"] as const).map((m) => ({ value: m, label: m }))}
+                className="w-28 shrink-0"
+              />
+              <Input aria-label="Путь" value={path} onChange={(e) => setPath(e.target.value)} spellCheck={false} className="font-mono" />
+            </div>
+            <Field label="If-None-Match" hint="ETag прошлого ответа: при совпадении сервер ответит 304.">
+              {(p) => (
+                <Input id={p.id} aria-describedby={p.describedBy} value={etag} onChange={(e) => setEtag(e.target.value)} spellCheck={false} className="font-mono" />
+              )}
+            </Field>
+            {method === "POST" && (
+              <Field label="Тело (JSON)">
+                {(p) => (
+                  <textarea
+                    id={p.id}
+                    aria-describedby={p.describedBy}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    spellCheck={false}
+                    rows={6}
+                    className={cx(fieldClasses, "h-auto py-2 font-mono")}
+                  />
+                )}
+              </Field>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" variant="primary" icon={Send} disabled={busy || !inTauri}>
+                Отправить
+              </Button>
+              {result?.etag && (
+                <Button variant="ghost" onClick={() => setEtag(result.etag ?? "")}>
+                  Подставить ETag
+                </Button>
+              )}
+            </div>
+          </form>
+        </CardSection>
+        <CardSection className="flex flex-wrap gap-2">
+          {PROBE_PRESETS.map((preset) => (
+            <Button
+              key={preset.label}
+              variant="secondary"
+              className="h-7 text-label"
+              onClick={() => {
+                setMethod(preset.method);
+                setPath(preset.path);
+                setEtag("");
+              }}
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </CardSection>
+      </Card>
+
+      <Card className="col-span-2 max-h-full min-h-0 min-w-0 self-stretch">
+        <CardHeader title="Ответ" aside={badge && <StatusBadge status={badge.status}>{badge.label}</StatusBadge>} />
+        {failure && (
+          <CardSection>
+            <p className="text-label text-status-danger-fg">{failure}</p>
+          </CardSection>
+        )}
+        {result && (
+          <CardSection>
+            <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
+              <Fact label="Время">{result.elapsedMs != null ? `${result.elapsedMs} мс` : "—"}</Fact>
+              <Fact label="Размер">{formatBytes(result.bytes)}</Fact>
+              <Fact label="ETag">{result.etag ?? "—"}</Fact>
+              <Fact label="Лимит">{result.rateLimitRemaining != null ? `осталось ${result.rateLimitRemaining}` : "—"}</Fact>
+              {result.error && (
+                <>
+                  <Fact label="Ошибка">
+                    {result.error.kind} · {describeApiError(result.error)}
+                  </Fact>
+                  {result.error.retryAfterSecs != null && <Fact label="Повтор">через {result.error.retryAfterSecs} с</Fact>}
+                </>
+              )}
+            </dl>
+          </CardSection>
+        )}
+        <CardSection className="flex min-h-0 flex-1 flex-col">
+          <pre className="min-h-0 flex-1 overflow-auto font-mono text-caption whitespace-pre-wrap text-text-secondary">
+            {result?.error
+              ? JSON.stringify(result.error.errors, null, 2)
+              : result?.result
+                ? result.truncated
+                  ? `${result.result}\n…обрезано`
+                  : result.result
+                : inTauri
+                  ? "ещё нет ответа"
+                  : "запросы идут через ядро — откройте в Tauri"}
+          </pre>
+        </CardSection>
+      </Card>
+    </div>
+  );
+}
+
 function EnvironmentCard() {
+  const [info, setInfo] = useState<AppInfo | null>(null);
+  useEffect(() => {
+    appInfo().then(setInfo, () => setInfo(null));
+  }, []);
   return (
     <Card>
       <CardHeader title="Окружение" />
       <CardSection>
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
           <Fact label="Версия">{APP_VERSION}</Fact>
+          <Fact label="Устройство">{info?.deviceId ?? "—"}</Fact>
+          <Fact label="Данные">{info?.dataDir ?? "—"}</Fact>
           <Fact label="Запуск">{inTauri ? "Tauri" : "браузер (без ядра)"}</Fact>
           <Fact label="Интерфейс">{import.meta.env.DEV ? "dev-сервер Vite" : "production-сборка"}</Fact>
           <Fact label="Движок">{engine()}</Fact>
