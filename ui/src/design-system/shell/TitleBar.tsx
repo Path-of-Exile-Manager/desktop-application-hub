@@ -102,7 +102,15 @@ export function WindowControls({ maximized, onMinimize, onToggleMaximize, onClos
 export type League = {
   id: string;
   name: string;
-  kind: "challenge" | "permanent";
+  kind: "challenge" | "permanent" | "event";
+  /** Цены по лиге не собираются: серая точка и пометка «без цен». */
+  noPrices?: boolean;
+};
+
+const KIND_LABEL: Record<League["kind"], string> = {
+  challenge: "лига испытаний",
+  permanent: "постоянная",
+  event: "событие",
 };
 
 export type LeagueSelectProps = {
@@ -123,7 +131,7 @@ export function LeagueSelect({ leagues, value, onValueChange }: LeagueSelectProp
           "text-label font-medium whitespace-nowrap text-text-primary transition-colors hover:bg-bg-hover",
         )}
       >
-        <span aria-hidden className="size-2 rounded-full bg-status-success-fg" />
+        <span aria-hidden className={cx("size-2 rounded-full", current?.noPrices ? "bg-icon-default" : "bg-status-success-fg")} />
         {current?.name ?? "Лига не выбрана"}
         <ChevronDown aria-hidden size={14} className="text-icon-default" />
       </DropdownMenu.Trigger>
@@ -133,7 +141,10 @@ export function LeagueSelect({ leagues, value, onValueChange }: LeagueSelectProp
             {leagues.map((l) => (
               <DropdownMenu.RadioItem key={l.id} value={l.id} className={cx(menuItemClasses, "pr-2")}>
                 <span className="flex-1">{l.name}</span>
-                <span className="text-caption text-text-muted">{l.kind === "challenge" ? "лига испытаний" : "постоянная"}</span>
+                <span className="text-caption text-text-muted">
+                  {KIND_LABEL[l.kind]}
+                  {l.noPrices && " · без цен"}
+                </span>
                 <span className="inline-flex w-4 justify-center">
                   <DropdownMenu.ItemIndicator>
                     <Check aria-hidden size={16} className="text-icon-accent" />

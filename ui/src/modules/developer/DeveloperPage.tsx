@@ -21,6 +21,7 @@ import {
   toast,
   type Status,
 } from "@/design-system";
+import { useLeagues } from "@/app/leagues";
 import { checkDatasetNow, iconUrl, itemName, searchCatalog, useDataset, type CatalogItem } from "@/app/dataset";
 import { appInfo, describeApiError, probeApi, type AppInfo, type ProbeMethod, type ProbeResult } from "@/app/api";
 import { useShell, type Sim, type SimTarget } from "@/app/store";
@@ -696,6 +697,7 @@ function RawDataCard({ initialTab = "game", className }: { initialTab?: string; 
   const server = useServer((s) => s.status);
   const extension = useExtension((s) => s.status);
   const discord = useDiscord((s) => s.status);
+  const leagues = useLeagues((s) => s.status);
   const [tab, setTab] = useState(initialTab);
   const json = (v: unknown) => (
     <pre className="h-full overflow-auto font-mono text-caption whitespace-pre-wrap text-text-secondary">
@@ -715,6 +717,7 @@ function RawDataCard({ initialTab = "game", className }: { initialTab?: string; 
             { value: "game", label: "Игра", content: json(game) },
             { value: "server", label: "Сервер", content: json(server) },
             { value: "extension", label: "Расширение", content: json(extension) },
+            { value: "leagues", label: "Лиги", content: json(leagues) },
             { value: "discord", label: "Discord", content: <DiscordRaw status={discord} /> },
           ]}
         />
