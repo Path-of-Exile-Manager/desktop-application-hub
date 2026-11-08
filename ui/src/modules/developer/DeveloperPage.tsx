@@ -11,6 +11,7 @@ import {
   Field,
   fieldClasses,
   Input,
+  ItemIcon,
   Page,
   SegmentedControl,
   Select,
@@ -20,6 +21,7 @@ import {
   toast,
   type Status,
 } from "@/design-system";
+import { checkDatasetNow, iconUrl, itemName, searchCatalog, useDataset, type CatalogItem } from "@/app/dataset";
 import { appInfo, describeApiError, probeApi, type AppInfo, type ProbeMethod, type ProbeResult } from "@/app/api";
 import { useShell, type Sim, type SimTarget } from "@/app/store";
 import { useGame } from "@/app/game";
@@ -55,13 +57,14 @@ function engine(): string {
  * Режим разработки — инструменты разработчика. Видна, только пока в Настройках
  * включён «Режим разработчика» (`developerMode` в app/store.ts).
  * Раздел «Общее»: адрес сервера, окружение, сырые данные ядра и действия для отладки.
+ * Раздел «Справочник»: состояние набора данных, поиск по нему и иконки.
  * Раздел «API»: пробный запрос к api-hub через ядро — коды ошибок, ETag, лимиты.
  * Раздел «Discord»: Rich Presence — переключатели статуса и журнал обмена с клиентом Discord.
  * Служебная страница: блок сырых данных может прокручиваться.
  */
-type Section = "general" | "api" | "discord";
+type Section = "general" | "api" | "catalog" | "discord";
 
-const SECTIONS: readonly Section[] = ["general", "api", "discord"];
+const SECTIONS: readonly Section[] = ["general", "api", "catalog", "discord"];
 
 /** Раздел можно открыть сразу: `?section=api` (для скриншотов). */
 const INITIAL_SECTION: Section = SECTIONS.find((s) => s === new URLSearchParams(location.search).get("section")) ?? "general";
@@ -81,6 +84,7 @@ export function DeveloperPage() {
           options={[
             { value: "general", label: "Общее" },
             { value: "api", label: "API" },
+            { value: "catalog", label: "Справочник" },
             { value: "discord", label: "Discord" },
           ]}
         />
@@ -97,6 +101,8 @@ export function DeveloperPage() {
         </div>
       ) : section === "api" ? (
         <ApiProbe />
+      ) : section === "catalog" ? (
+        <CatalogProbe />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
           <DiscordCard />
@@ -481,6 +487,82 @@ function ApiProbe() {
                   ? "ещё нет ответа"
                   : "запросы идут через ядро — откройте в Tauri"}
           </pre>
+        </CardSection>
+      </Card>
+    </div>
+  );
+}
+
+/** Справочник: состояние набора данных (ядро, `dataset-status`) и поиск по нему с иконками. */
+function CatalogProbe() {
+  const status = useDataset((d) => d.status);
+  const [query, setQuery] = useState("Божественная сфера");
+  const [items, setItems] = useState<CatalogItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      searchCatalog(query, 30).then((found) => !cancelled && setItems(found));
+    }, 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, status?.datasetId]);
+
+  return (
+    <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
+      <Card className="min-w-0">
+        <CardHeader
+          title="Набор данных"
+          aside={status && <StatusBadge status={status.state === "ready" ? (status.error ? "warning" : "success") : status.state === "missing" ? "danger" : "info"}>{status.state}</StatusBadge>}
+        />
+        <CardSection>
+          <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
+            <Fact label="Набор">{status?.datasetId ?? "—"}</Fact>
+            <Fact label="Собран">{status?.generatedAt ? new Date(status.generatedAt).toLocaleString("ru-RU") : "—"}</Fact>
+            <Fact label="Источник">{status?.source === "network" ? "скачан сейчас" : status?.source === "cache" ? "с диска" : "—"}</Fact>
+            <Fact label="Предметов">{status?.counts ? `${status.counts.items} (уникальных ${status.counts.uniques})` : "—"}</Fact>
+            <Fact label="С иконкой">{status?.counts?.withIcon ?? "—"}</Fact>
+            <Fact label="Классов">{status?.counts?.classes ?? "—"}</Fact>
+            <Fact label="Проверено">{formatCheckedAt(status?.checkedAt ?? null)}</Fact>
+            {status?.error && <Fact label="Ошибка">{status.error}</Fact>}
+          </dl>
+        </CardSection>
+        <CardSection>
+          <Button icon={RefreshCw} onClick={checkDatasetNow} disabled={!inTauri || status?.syncing}>
+            {status?.syncing ? "Проверяем…" : "Проверить сейчас"}
+          </Button>
+        </CardSection>
+      </Card>
+
+      <Card className="col-span-2 max-h-full min-h-0 min-w-0 self-stretch">
+        <CardHeader title="Поиск по справочнику" aside={`${items.length} найдено`} />
+        <CardSection>
+          <Input aria-label="Название предмета" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Сфера хаоса, Kaom's Heart…" />
+        </CardSection>
+        <CardSection className="min-h-0 flex-1 overflow-auto">
+          {items.length === 0 ? (
+            <p className="text-caption text-text-secondary">{inTauri ? "ничего не найдено" : "поиск идёт через ядро — откройте в Tauri"}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {items.map((item) => (
+                <li key={item.id} className="flex items-center gap-3">
+                  <ItemIcon variant="thumb" size={[item.size.w, item.size.h]} src={iconUrl(item.iconSha256)} alt={itemName(item)} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-body text-text-primary">
+                      {itemName(item)}
+                      {item.name.ru && <span className="text-text-secondary"> · {item.name.en}</span>}
+                    </p>
+                    <p className="truncate font-mono text-caption text-text-secondary">
+                      {item.kind} · {item.rarity} · {item.classId}
+                      {item.tradeId && ` · trade: ${item.tradeId}`} · {item.id}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardSection>
       </Card>
     </div>

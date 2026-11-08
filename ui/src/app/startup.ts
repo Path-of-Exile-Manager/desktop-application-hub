@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SplashStep } from "@/design-system";
 import pkg from "../../../package.json";
+import { firstDatasetResult } from "./dataset";
 import { useGame } from "./game";
 import { useServer, type ServerStatus } from "./server";
 
@@ -8,7 +9,7 @@ import { useServer, type ServerStatus } from "./server";
 export const APP_VERSION: string = pkg.version;
 
 /**
- * Шаги запуска. «Подключение к API» и «Поиск окна игры» — настоящие, остальные ПОКА ЗАГЛУШКИ:
+ * Шаги запуска. «Подключение к API», «Проверка набора данных» и «Поиск окна игры» — настоящие, остальные ПОКА ЗАГЛУШКИ:
  * просто ждут и возвращают текст для экрана запуска.
  * Реальная логика (bootstrap BFF, манифест набора данных — см. docs/architecture.md) подставляется в `run`
  * без изменений экрана: шаг — это асинхронная функция, которая возвращает подпись или бросает ошибку.
@@ -62,9 +63,13 @@ const TASKS: StartupTask[] = [
   {
     id: "dataset",
     label: "Проверка набора данных",
+    // Настоящий шаг: справочник из кэша поднимается сразу, первая загрузка ждёт сеть (src-tauri/src/dataset).
+    // Нет ни кэша, ни сети — шаг красный, вместо модулей экран «Нужно подключение».
     run: async () => {
-      await wait(460); // TODO: сравнить id набора и манифест с локальным кэшем
-      return "3.29.3.3";
+      const [status] = await Promise.all([firstDatasetResult(15000), wait(300)]);
+      if (!status) return "загружается…";
+      if (status.state === "missing") throw new Error("нужно подключение");
+      return status.error ? `${status.datasetId} · офлайн` : (status.datasetId ?? "—");
     },
   },
   {

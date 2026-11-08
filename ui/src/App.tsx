@@ -21,6 +21,7 @@ import { gameStatusItem, useGameStatus, useGameStatusSync } from "@/app/game";
 import { serverStatusItem, useServerStatus, useServerStatusSync } from "@/app/server";
 import { extensionStatusItem, useExtensionStatus, useExtensionStatusSync } from "@/app/extension";
 import { useDiscordStatusSync } from "@/app/discord";
+import { datasetStatusItem, NeedConnection, useDataset, useDatasetStatusSync } from "@/app/dataset";
 import { useStartup } from "@/app/startup";
 import { splashVersion } from "@/app/SplashReplay";
 import { DevBadge } from "@/app/DevBadge";
@@ -43,9 +44,13 @@ export default function App() {
   useServerStatusSync();
   useExtensionStatusSync();
   useDiscordStatusSync();
+  useDatasetStatusSync();
   const game = useGameStatus();
   const server = useServerStatus();
   const extension = useExtensionStatus();
+  const dataset = useDataset((d) => d.status);
+  // Без справочника модули работать не могут; настройки и режим разработки — могут (там чинят адрес сервера).
+  const needConnection = dataset?.state === "missing" && active.id !== DEVELOPER_MODULE_ID && active.id !== "settings";
 
   useHotkey(s.hotkeys.palette.join("+"), () => s.setPaletteOpen(true), startup.phase === "done");
 
@@ -132,9 +137,9 @@ export default function App() {
             />
           )
         }
-        statusbar={<StatusBar items={[gameStatusItem(game), serverStatusItem(server), extensionStatusItem(extension)]} hint={`${s.hotkeys.palette.join(" + ")} — поиск и команды`} />}
+        statusbar={<StatusBar items={[gameStatusItem(game), serverStatusItem(server), datasetStatusItem(dataset), extensionStatusItem(extension)]} hint={`${s.hotkeys.palette.join(" + ")} — поиск и команды`} />}
       >
-        <ActivePage key={active.id} />
+        {needConnection && dataset ? <NeedConnection status={dataset} /> : <ActivePage key={active.id} />}
       </AppShell>
       <CommandPalette open={s.paletteOpen} onOpenChange={s.setPaletteOpen} items={paletteItems} groups={["Модули", "Команды"]} />
       {startup.phase !== "done" && <SplashScreen steps={startup.steps} version={splashVersion(s.developerMode)} leaving={startup.phase === "leaving"} />}
