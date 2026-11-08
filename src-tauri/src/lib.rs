@@ -6,6 +6,7 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 mod api;
+mod appraise;
 mod dataset;
 mod device;
 mod discord;
@@ -76,6 +77,7 @@ pub fn run() {
             dataset::start(app.handle(), &app_root);
             leagues::start(app.handle(), &app_root);
             prices::start(app.handle(), &app_root);
+            app.manage(appraise::LastAppraisal::default());
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
@@ -101,6 +103,8 @@ pub fn run() {
             prices::price_get,
             prices::price_variants,
             prices::price_history,
+            appraise::item_appraise,
+            appraise::item_last_appraisal,
             extension::extension_status,
             discord::discord_status,
             discord::discord_configure,

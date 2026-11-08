@@ -6,8 +6,6 @@ use std::collections::HashMap;
 use super::model::{CatalogItem, ItemClass, Manifest};
 use super::store::DatasetStore;
 
-// Классы и поиск по точному названию понадобятся сопоставлению предмета (Ф5).
-#[allow(dead_code)]
 pub struct Catalog {
     pub manifest: Manifest,
     pub items: Vec<CatalogItem>,
@@ -52,7 +50,6 @@ impl Catalog {
         self.by_id.get(id).map(|&i| &self.items[i])
     }
 
-    #[allow(dead_code)]
     /// Все записи с таким названием (русским или английским), без учёта регистра и «ё».
     pub fn find_by_name(&self, name: &str) -> Vec<&CatalogItem> {
         self.by_name.get(&normalize(name)).map(|list| list.iter().map(|&i| &self.items[i]).collect()).unwrap_or_default()
@@ -61,6 +58,41 @@ impl Catalog {
     /// По id сайта торговли: `divine` → Divine Orb (курс), `chaos`.
     pub fn by_trade_id(&self, trade_id: &str) -> Option<&CatalogItem> {
         self.by_trade_id.get(trade_id).map(|&i| &self.items[i])
+    }
+
+    /// База, название которой содержится в имени волшебного предмета («Hale Vaal Regalia of the Fox»):
+    /// самое длинное совпадение среди обычных записей, целыми словами.
+    pub fn find_base_in(&self, name: &str) -> Vec<&CatalogItem> {
+        let haystack = format!(" {} ", normalize(name));
+        let mut best: Vec<&CatalogItem> = Vec::new();
+        let mut best_len = 0;
+        for item in &self.items {
+            if item.rarity != super::model::ItemRarity::Normal {
+                continue;
+            }
+            for candidate in [Some(item.name.en.as_str()), item.name.ru.as_deref()].into_iter().flatten() {
+                let needle = normalize(candidate);
+                if needle.len() >= best_len && haystack.contains(&format!(" {needle} ")) {
+                    if needle.len() > best_len {
+                        best.clear();
+                        best_len = needle.len();
+                    }
+                    if !best.iter().any(|b| b.id == item.id) {
+                        best.push(item);
+                    }
+                }
+            }
+        }
+        best
+    }
+
+    /// Id класса по названию из текста предмета («Body Armours», «Доспехи»).
+    pub fn class_id_by_name(&self, name: &str) -> Option<&str> {
+        let name = normalize(name);
+        self.classes
+            .iter()
+            .find(|c| normalize(&c.name.en) == name || c.name.ru.as_deref().map(normalize).as_deref() == Some(name.as_str()))
+            .map(|c| c.id.as_str())
     }
 
     /// Поиск для интерфейса: сначала точные совпадения названия, затем начинающиеся с запроса,

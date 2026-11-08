@@ -24,7 +24,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use ts_rs::TS;
 
 use crate::api::{Api, ApiCode, Call, Reply};
-pub use catalog::Catalog;
+pub use catalog::{normalize, Catalog};
 use model::{Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, SCHEMA_VERSION};
 pub use store::sha256_hex;
 use store::{verify, DatasetStore};

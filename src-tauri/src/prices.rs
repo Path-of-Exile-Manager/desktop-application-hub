@@ -174,6 +174,11 @@ impl PricesService {
         let _ = self.wake.lock().unwrap().send(());
     }
 
+    /// Все цены предмета в текущей лиге.
+    pub fn variants(&self, item_id: &str) -> Vec<Price> {
+        self.board().map(|b| b.variants(item_id).into_iter().cloned().collect()).unwrap_or_default()
+    }
+
     fn board(&self) -> Option<Arc<Board>> {
         self.inner.lock().unwrap().board.clone()
     }

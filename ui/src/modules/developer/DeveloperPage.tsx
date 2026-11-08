@@ -24,6 +24,7 @@ import {
   toast,
   type Status,
 } from "@/design-system";
+import { appraiseText, SAMPLE_ITEMS, type Appraisal } from "@/app/appraise";
 import { useCurrentLeague, useLeagues } from "@/app/leagues";
 import { formatAge, isFresh, priceHistory, priceVariants, refreshPrices, toDivine, usePrices, type HistoryRange, type Price as LeaguePrice, type PriceHistory } from "@/app/prices";
 import { checkDatasetNow, iconUrl, itemName, searchCatalog, useDataset, type CatalogItem } from "@/app/dataset";
@@ -62,15 +63,16 @@ function engine(): string {
  * Режим разработки — инструменты разработчика. Видна, только пока в Настройках
  * включён «Режим разработчика» (`developerMode` в app/store.ts).
  * Раздел «Общее»: адрес сервера, окружение, сырые данные ядра и действия для отладки.
+ * Раздел «Предмет»: оценка текста предмета — разбор, справочник, ключ варианта, цена.
  * Раздел «Цены»: прайс текущей лиги, варианты предмета с ценами и история.
  * Раздел «Справочник»: состояние набора данных, поиск по нему и иконки.
  * Раздел «API»: пробный запрос к api-hub через ядро — коды ошибок, ETag, лимиты.
  * Раздел «Discord»: Rich Presence — переключатели статуса и журнал обмена с клиентом Discord.
  * Служебная страница: блок сырых данных может прокручиваться.
  */
-type Section = "general" | "api" | "catalog" | "prices" | "discord";
+type Section = "general" | "api" | "catalog" | "prices" | "item" | "discord";
 
-const SECTIONS: readonly Section[] = ["general", "api", "catalog", "prices", "discord"];
+const SECTIONS: readonly Section[] = ["general", "api", "catalog", "prices", "item", "discord"];
 
 /** Раздел можно открыть сразу: `?section=api` (для скриншотов). */
 const INITIAL_SECTION: Section = SECTIONS.find((s) => s === new URLSearchParams(location.search).get("section")) ?? "general";
@@ -92,6 +94,7 @@ export function DeveloperPage() {
             { value: "api", label: "API" },
             { value: "catalog", label: "Справочник" },
             { value: "prices", label: "Цены" },
+            { value: "item", label: "Предмет" },
             { value: "discord", label: "Discord" },
           ]}
         />
@@ -112,6 +115,8 @@ export function DeveloperPage() {
         <CatalogProbe />
       ) : section === "prices" ? (
         <PricesProbe />
+      ) : section === "item" ? (
+        <ItemProbe />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
           <DiscordCard />
@@ -503,6 +508,138 @@ function ApiProbe() {
 }
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
+
+/** Оценка текста предмета: разбор, запись справочника, ключ варианта и цена (ядро, `item_appraise`). */
+function ItemProbe() {
+  const status = usePrices((p) => p.status);
+  const [text, setText] = useState(SAMPLE_ITEMS[0].text);
+  const [result, setResult] = useState<Appraisal | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function run(value = text) {
+    setBusy(true);
+    setFailure(null);
+    try {
+      setResult(await appraiseText(value));
+    } catch (e) {
+      setResult(null);
+      setFailure(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const item = result?.item;
+  const matched = result?.catalogItem;
+  const price = result?.price;
+  const divine = price ? toDivine(price.chaosValue, status?.divineChaos) : null;
+
+  return (
+    <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
+      <Card className="min-w-0">
+        <CardHeader title="Текст предмета" aside="Ctrl+Alt+C в игре" />
+        <CardSection className="flex flex-col gap-3">
+          <textarea
+            aria-label="Текст предмета"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            spellCheck={false}
+            rows={14}
+            className={cx(fieldClasses, "h-auto py-2 font-mono text-caption")}
+          />
+          <Button variant="primary" icon={Send} onClick={() => run()} disabled={busy || !inTauri}>
+            Оценить
+          </Button>
+        </CardSection>
+        <CardSection className="flex flex-wrap gap-2">
+          {SAMPLE_ITEMS.map((sample) => (
+            <Button
+              key={sample.label}
+              variant="secondary"
+              className="h-7 text-label"
+              onClick={() => {
+                setText(sample.text);
+                void run(sample.text);
+              }}
+            >
+              {sample.label}
+            </Button>
+          ))}
+        </CardSection>
+      </Card>
+
+      <Card className="col-span-2 max-h-full min-h-0 min-w-0 self-stretch">
+        <CardHeader
+          title="Оценка"
+          aside={result && (price ? <StatusBadge status={result.priceMatch === "exact" ? "success" : "warning"}>{result.priceMatch === "exact" ? "точная цена" : "ближайший вариант"}</StatusBadge> : <StatusBadge status="danger">нет цены</StatusBadge>)}
+        />
+        {failure && (
+          <CardSection>
+            <p className="text-label text-status-danger-fg">{failure}</p>
+          </CardSection>
+        )}
+        {result && item && (
+          <CardSection className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              {matched && <ItemIcon variant="thumb" size={[matched.size.w, matched.size.h]} src={iconUrl(matched.iconSha256)} alt={itemName(matched)} />}
+              <div className="min-w-0">
+                <p className="truncate text-body-lg font-semibold text-text-primary">{matched ? itemName(matched) : item.name}</p>
+                <p className="truncate font-mono text-caption text-text-secondary">{matched?.id ?? "не найден в справочнике"}</p>
+              </div>
+              {price && (
+                <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
+                  <Price price={{ amount: price.chaosValue, currency: "chaos" }} approx size="lg" />
+                  {divine !== null && <span className="font-mono text-label text-text-secondary">≈ {divine.toFixed(2)} divine</span>}
+                </div>
+              )}
+            </div>
+            <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
+              <Fact label="Язык">{item.language}</Fact>
+              <Fact label="Класс">{item.itemClass}</Fact>
+              <Fact label="Редкость">{item.rarity}</Fact>
+              <Fact label="Имя / база">
+                {item.name}
+                {item.baseType && ` / ${item.baseType}`}
+              </Fact>
+              <Fact label="Свойства">
+                {[
+                  item.itemLevel != null && `ilvl ${item.itemLevel}`,
+                  item.gemLevel != null && `уровень ${item.gemLevel}`,
+                  item.quality != null && `качество ${item.quality}`,
+                  item.sockets && `гнёзда ${item.sockets.text} (${item.sockets.links}L)`,
+                  item.mapTier != null && `тир ${item.mapTier}`,
+                  item.blight,
+                  item.influences.length > 0 && item.influences.join("+"),
+                  item.corrupted && "осквернён",
+                  item.foulborn && "foulborn",
+                  item.foil && "foil",
+                  item.unidentified && "не опознан",
+                  item.synthesised && "синтезирован",
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "—"}
+              </Fact>
+              <Fact label="Ключ предмета">{result.variantKey === "" ? "(обычный)" : (result.variantKey ?? "—")}</Fact>
+              <Fact label="Ключ цены">{price ? price.variantKey || "(обычный)" : "—"}</Fact>
+              <Fact label="Свойств">{item.mods.length}</Fact>
+            </dl>
+            {result.notes.length > 0 && (
+              <ul className="flex flex-col gap-1 text-label text-text-secondary">
+                {result.notes.map((n) => (
+                  <li key={n}>· {n}</li>
+                ))}
+              </ul>
+            )}
+          </CardSection>
+        )}
+        <CardSection className="min-h-0 flex-1 overflow-auto">
+          <pre className="font-mono text-caption whitespace-pre-wrap text-text-secondary">{result ? JSON.stringify(result.item, null, 2) : inTauri ? "вставьте текст и нажмите «Оценить»" : "разбор идёт в ядре — откройте в Tauri"}</pre>
+        </CardSection>
+      </Card>
+    </div>
+  );
+}
 
 /** Цены: прайс текущей лиги (ядро, `prices-status`), варианты предмета и история по источникам. */
 function PricesProbe() {
