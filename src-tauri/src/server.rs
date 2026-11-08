@@ -213,9 +213,14 @@ fn watch(app: AppHandle, wake: Receiver<()>) {
                 let reconnected = status.state == ServerState::Online && inner.status.state != ServerState::Online;
                 inner.status = status.clone();
                 drop(inner);
-                // Связь появилась — проверить набор данных сразу, не дожидаясь часа или минуты.
-                if reconnected && let Some(dataset) = app.try_state::<crate::dataset::DatasetService>() {
-                    dataset.wake();
+                // Связь появилась — обновить набор данных и лиги сразу, не дожидаясь часа или минуты.
+                if reconnected {
+                    if let Some(dataset) = app.try_state::<crate::dataset::DatasetService>() {
+                        dataset.wake();
+                    }
+                    if let Some(leagues) = app.try_state::<crate::leagues::LeaguesService>() {
+                        leagues.wake();
+                    }
                 }
                 publish(&app, status);
                 interval

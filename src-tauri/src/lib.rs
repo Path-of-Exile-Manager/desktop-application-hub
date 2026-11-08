@@ -12,6 +12,7 @@ mod discord;
 mod extension;
 mod game;
 mod icons;
+mod leagues;
 mod paths;
 mod server;
 
@@ -72,6 +73,7 @@ pub fn run() {
             let handle = app.handle().clone();
             app.manage(Arc::new(api::Api::new(device_id, move || handle.state::<server::ServerWatcher>().current_url())));
             dataset::start(app.handle(), &app_root);
+            leagues::start(app.handle(), &app_root);
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
@@ -88,6 +90,8 @@ pub fn run() {
             dataset::dataset_check_now,
             dataset::catalog_search,
             dataset::catalog_item,
+            leagues::leagues_status,
+            leagues::leagues_refresh,
             extension::extension_status,
             discord::discord_status,
             discord::discord_configure,
