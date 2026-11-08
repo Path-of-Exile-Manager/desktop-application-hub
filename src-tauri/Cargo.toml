@@ -30,4 +30,6 @@ dotenvy = "0.15"
 # Id устройства (UUID v7, заголовок X-Device-Id).
 uuid = { version = "1.29.1", features = ["v7", "serde"] }
 # TypeScript-типы для интерфейса из Rust-структур: `pnpm gen:types` → ui/src/generated.
-ts-rs = { version = "12.0.1", features = ["serde-json-impl", "uuid-impl"] }
+ts-rs = { version = "12.0.1", features = ["serde-json-impl", "uuid-impl", "no-serde-warnings"] }
+# Проверка файлов набора данных и иконок: они адресуются по sha256 содержимого.
+sha2 = "0.10"

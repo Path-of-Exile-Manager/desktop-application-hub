@@ -6,10 +6,12 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 mod api;
+mod dataset;
 mod device;
 mod discord;
 mod extension;
 mod game;
+mod icons;
 mod paths;
 mod server;
 
@@ -59,14 +61,17 @@ fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .register_asynchronous_uri_scheme_protocol(icons::SCHEME, icons::handle)
         .setup(|app| {
             let paths = paths::AppPaths::resolve(app.handle())?;
             let device_id: Uuid = device::load_or_create(&paths);
+            let app_root = paths.root().to_path_buf();
             app.manage(paths);
             game::start(app.handle());
             server::start(app.handle());
             let handle = app.handle().clone();
             app.manage(Arc::new(api::Api::new(device_id, move || handle.state::<server::ServerWatcher>().current_url())));
+            dataset::start(app.handle(), &app_root);
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
@@ -79,6 +84,10 @@ pub fn run() {
             server::server_check_now,
             server::server_set_url,
             api::probe::api_probe,
+            dataset::dataset_status,
+            dataset::dataset_check_now,
+            dataset::catalog_search,
+            dataset::catalog_item,
             extension::extension_status,
             discord::discord_status,
             discord::discord_configure,

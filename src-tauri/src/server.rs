@@ -209,8 +209,14 @@ fn watch(app: AppHandle, wake: Receiver<()>) {
                     }
                 }
                 let interval = if status.state == ServerState::Online { INTERVAL_ONLINE } else { INTERVAL_OFFLINE };
+                // Из «нет связи» или «проверяем» (запуск, смена адреса) — в «на связи».
+                let reconnected = status.state == ServerState::Online && inner.status.state != ServerState::Online;
                 inner.status = status.clone();
                 drop(inner);
+                // Связь появилась — проверить набор данных сразу, не дожидаясь часа или минуты.
+                if reconnected && let Some(dataset) = app.try_state::<crate::dataset::DatasetService>() {
+                    dataset.wake();
+                }
                 publish(&app, status);
                 interval
             }

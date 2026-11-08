@@ -191,6 +191,29 @@ impl Api {
         Err(self.failure(&call, status, &body))
     }
 
+    /// Файл по абсолютному адресу (набор данных, иконка — из хранилища, не из api-hub): тело как есть,
+    /// без конверта и без `X-Device-Id` — это чужой домен. Не 2xx — ошибка `http`.
+    pub fn download(&self, url: &str, timeout: Duration) -> Result<Vec<u8>, ApiError> {
+        let mut response = self
+            .agent
+            .get(url)
+            .config()
+            .timeout_global(Some(timeout))
+            .build()
+            .call()
+            .map_err(|e| error::from_transport(&e, timeout.as_secs()))?;
+        let status = response.status().as_u16();
+        if !(200..300).contains(&status) {
+            return Err(with_status(ApiError::new(ApiErrorKind::Http, format!("файл не скачан: HTTP {status}")), status));
+        }
+        response
+            .body_mut()
+            .with_config()
+            .limit(BODY_LIMIT)
+            .read_to_vec()
+            .map_err(|e| with_status(error::from_transport(&e, timeout.as_secs()), status))
+    }
+
     /// Запрос и чтение тела, без разбора: общая часть `send` и пробного запроса.
     fn exchange(&self, call: &Call) -> Result<(u16, Meta, Vec<u8>), ApiError> {
         let route = call.route();

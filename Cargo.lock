@@ -2324,6 +2324,7 @@ dependencies = [
  "item-parser",
  "serde",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "ts-rs",
