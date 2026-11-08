@@ -24,6 +24,7 @@ import { extensionStatusItem, useExtensionStatus, useExtensionStatusSync } from 
 import { useDiscordStatusSync } from "@/app/discord";
 import { datasetStatusItem, NeedConnection, useDataset, useDatasetStatusSync } from "@/app/dataset";
 import { LeaguePicker, useLeaguesStatusSync } from "@/app/leagues";
+import { useCaptureSync } from "@/app/appraise";
 import { pricesStatusItem, usePrices, usePricesSync, useCurrencyIcons } from "@/app/prices";
 import { useStartup } from "@/app/startup";
 import { splashVersion } from "@/app/SplashReplay";
@@ -50,6 +51,7 @@ export default function App() {
   useDatasetStatusSync();
   useLeaguesStatusSync();
   usePricesSync();
+  useCaptureSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
   const game = useGameStatus();

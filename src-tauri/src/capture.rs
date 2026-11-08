@@ -1,0 +1,198 @@
+//! Захват предмета из игры: горячая клавиша → Ctrl+Alt+C в игру → текст из буфера обмена → оценка.
+//!
+//! Горячая клавиша регистрируется только пока окно PoE1 в фокусе (`on_game_status` из `game.rs`):
+//! иначе она перехватывала бы, например, Ctrl+D в браузере. Какая клавиша — задаёт интерфейс
+//! (`capture_set_hotkey`, по умолчанию Ctrl+D из настроек).
+//!
+//! Буфер обмена пользователя не портится: прежний текст запоминается и возвращается после захвата.
+
+use std::sync::Mutex;
+use std::thread;
+use std::time::{Duration, Instant};
+
+use game_window::{GameKind, GameState, GameStatus};
+use serde::Serialize;
+use tauri::{AppHandle, Emitter, Manager, State};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+use ts_rs::TS;
+
+use crate::appraise;
+
+/// Событие ошибки захвата (игра не скопировала предмет, текст не разобран).
+pub const EVENT_FAILED: &str = "item-capture-failed";
+
+/// Сколько ждать, пока игра положит текст в буфер.
+const CLIPBOARD_TIMEOUT: Duration = Duration::from_millis(600);
+const CLIPBOARD_POLL: Duration = Duration::from_millis(20);
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CaptureFailure {
+    pub message: String,
+}
+
+struct Inner {
+    /// Клавиша из настроек: `Ctrl+D`.
+    hotkey: Option<Shortcut>,
+    /// Зарегистрирована сейчас (игра в фокусе).
+    registered: Option<Shortcut>,
+    game_focused: bool,
+    busy: bool,
+}
+
+pub struct CaptureService(Mutex<Inner>);
+
+pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+    tauri_plugin_global_shortcut::Builder::new()
+        .with_handler(|app, _shortcut, event| {
+            if event.state == ShortcutState::Pressed {
+                trigger(app);
+            }
+        })
+        .build()
+}
+
+pub fn start(app: &AppHandle, game: &GameStatus) {
+    let hotkey = "Ctrl+D".parse::<Shortcut>().ok();
+    app.manage(CaptureService(Mutex::new(Inner { hotkey, registered: None, game_focused: false, busy: false })));
+    on_game_status(app, game);
+}
+
+fn poe1_focused(status: &GameStatus) -> bool {
+    status.state == GameState::Running && status.window.as_ref().is_some_and(|w| w.kind == GameKind::Poe1 && w.focused)
+}
+
+/// Игра получила или потеряла фокус — включить или снять горячую клавишу.
+pub fn on_game_status(app: &AppHandle, status: &GameStatus) {
+    let Some(service) = app.try_state::<CaptureService>() else { return };
+    let mut inner = service.0.lock().unwrap();
+    inner.game_focused = poe1_focused(status);
+    sync_registration(app, &mut inner);
+}
+
+fn sync_registration(app: &AppHandle, inner: &mut Inner) {
+    let wanted = if inner.game_focused { inner.hotkey } else { None };
+    if inner.registered == wanted {
+        return;
+    }
+    let shortcuts = app.global_shortcut();
+    if let Some(old) = inner.registered.take() {
+        let _ = shortcuts.unregister(old);
+    }
+    if let Some(new) = wanted {
+        match shortcuts.register(new) {
+            Ok(()) => inner.registered = Some(new),
+            Err(e) => eprintln!("[capture] горячая клавиша не зарегистрирована: {e}"),
+        }
+    }
+}
+
+/// Нажата горячая клавиша — захват в своём потоке; повторное нажатие во время захвата игнорируется.
+fn trigger(app: &AppHandle) {
+    let service = app.state::<CaptureService>();
+    {
+        let mut inner = service.0.lock().unwrap();
+        if inner.busy {
+            return;
+        }
+        inner.busy = true;
+    }
+    let app = app.clone();
+    thread::spawn(move || {
+        let result = capture_from_game().and_then(|text| appraise::appraise(&app, &text));
+        match result {
+            Ok(appraisal) => appraise::publish(&app, appraisal),
+            Err(message) => {
+                let _ = app.emit(EVENT_FAILED, CaptureFailure { message });
+            }
+        }
+        app.state::<CaptureService>().0.lock().unwrap().busy = false;
+    });
+}
+
+/// Ctrl+Alt+C в игру и текст предмета из буфера; прежний текст буфера возвращается.
+fn capture_from_game() -> Result<String, String> {
+    let mut clipboard = arboard::Clipboard::new().map_err(|e| format!("буфер обмена недоступен: {e}"))?;
+    let previous = clipboard.get_text().ok();
+    // Пустой буфер — чтобы отличить свежий текст игры от старого.
+    let _ = clipboard.clear();
+
+    send_copy_advanced();
+
+    let started = Instant::now();
+    let text = loop {
+        if let Ok(text) = clipboard.get_text()
+            && is_item_text(&text) {
+                break Some(text);
+            }
+        if started.elapsed() > CLIPBOARD_TIMEOUT {
+            break None;
+        }
+        thread::sleep(CLIPBOARD_POLL);
+    };
+
+    match &previous {
+        Some(old) => {
+            let _ = clipboard.set_text(old.clone());
+        }
+        None => {
+            let _ = clipboard.clear();
+        }
+    }
+    text.ok_or_else(|| "игра не скопировала предмет — наведите курсор на предмет".into())
+}
+
+fn is_item_text(text: &str) -> bool {
+    let first = text.trim_start();
+    first.starts_with("Item Class: ") || first.starts_with("Класс предмета: ")
+}
+
+/// Ctrl+Alt+C (расширенное описание предмета) через SendInput.
+#[cfg(windows)]
+fn send_copy_advanced() {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{
+        SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP, VIRTUAL_KEY, VK_C, VK_CONTROL, VK_MENU,
+    };
+    let key = |vk: VIRTUAL_KEY, up: bool| INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 {
+            ki: KEYBDINPUT { wVk: vk, wScan: 0, dwFlags: if up { KEYEVENTF_KEYUP } else { KEYBD_EVENT_FLAGS(0) }, time: 0, dwExtraInfo: 0 },
+        },
+    };
+    let inputs = [key(VK_CONTROL, false), key(VK_MENU, false), key(VK_C, false), key(VK_C, true), key(VK_MENU, true), key(VK_CONTROL, true)];
+    unsafe {
+        SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+    }
+}
+
+#[cfg(not(windows))]
+fn send_copy_advanced() {}
+
+/// Горячая клавиша захвата из настроек: `["Ctrl", "D"]`.
+#[tauri::command]
+pub fn capture_set_hotkey(app: AppHandle, service: State<CaptureService>, keys: Vec<String>) -> Result<(), String> {
+    let text = keys.join("+");
+    let shortcut = text.parse::<Shortcut>().map_err(|e| format!("клавиша «{text}» не поддерживается: {e}"))?;
+    let mut inner = service.0.lock().unwrap();
+    inner.hotkey = Some(shortcut);
+    sync_registration(&app, &mut inner);
+    Ok(())
+}
+
+/// Оценить предмет, который уже лежит в буфере обмена (скопирован в игре вручную).
+#[tauri::command]
+pub async fn capture_from_clipboard(app: AppHandle) -> Result<appraise::Appraisal, String> {
+    let handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let text = arboard::Clipboard::new().and_then(|mut c| c.get_text()).map_err(|_| "в буфере обмена нет текста".to_string())?;
+        if !is_item_text(&text) {
+            return Err("в буфере обмена не предмет Path of Exile".to_string());
+        }
+        let appraisal = appraise::appraise(&handle, &text)?;
+        appraise::publish(&handle, appraisal.clone());
+        Ok(appraisal)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}

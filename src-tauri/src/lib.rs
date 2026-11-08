@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 mod api;
 mod appraise;
+mod capture;
 mod dataset;
 mod device;
 mod discord;
@@ -64,6 +65,7 @@ fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(capture::plugin())
         .register_asynchronous_uri_scheme_protocol(icons::SCHEME, icons::handle)
         .setup(|app| {
             let paths = paths::AppPaths::resolve(app.handle())?;
@@ -78,6 +80,7 @@ pub fn run() {
             leagues::start(app.handle(), &app_root);
             prices::start(app.handle(), &app_root);
             app.manage(appraise::LastAppraisal::default());
+            capture::start(app.handle(), &game::current(app.handle()));
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
@@ -105,6 +108,8 @@ pub fn run() {
             prices::price_history,
             appraise::item_appraise,
             appraise::item_last_appraisal,
+            capture::capture_set_hotkey,
+            capture::capture_from_clipboard,
             extension::extension_status,
             discord::discord_status,
             discord::discord_configure,

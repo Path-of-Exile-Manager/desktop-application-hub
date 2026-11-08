@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowDownLeft, ArrowUpRight, Bug, Eraser, RefreshCw, RotateCcw, Send, Trash2, Undo2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bug, ClipboardPaste, Eraser, RefreshCw, RotateCcw, Send, Trash2, Undo2 } from "lucide-react";
 import {
   Button,
   Card,
@@ -24,7 +24,7 @@ import {
   toast,
   type Status,
 } from "@/design-system";
-import { appraiseText, SAMPLE_ITEMS, type Appraisal } from "@/app/appraise";
+import { appraiseClipboard, appraiseText, SAMPLE_ITEMS, useAppraisal } from "@/app/appraise";
 import { useCurrentLeague, useLeagues } from "@/app/leagues";
 import { formatAge, isFresh, priceHistory, priceVariants, refreshPrices, toDivine, usePrices, type HistoryRange, type Price as LeaguePrice, type PriceHistory } from "@/app/prices";
 import { checkDatasetNow, iconUrl, itemName, searchCatalog, useDataset, type CatalogItem } from "@/app/dataset";
@@ -512,18 +512,19 @@ const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.wa
 /** Оценка текста предмета: разбор, запись справочника, ключ варианта и цена (ядро, `item_appraise`). */
 function ItemProbe() {
   const status = usePrices((p) => p.status);
+  const hotkey = useShell((s) => s.hotkeys.check);
   const [text, setText] = useState(SAMPLE_ITEMS[0].text);
-  const [result, setResult] = useState<Appraisal | null>(null);
+  // Последняя оценка — откуда угодно: этот текст, буфер обмена или горячая клавиша в игре.
+  const result = useAppraisal((s) => s.last);
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function run(value = text) {
+  async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setFailure(null);
     try {
-      setResult(await appraiseText(value));
+      await action();
     } catch (e) {
-      setResult(null);
       setFailure(String(e));
     } finally {
       setBusy(false);
@@ -538,7 +539,7 @@ function ItemProbe() {
   return (
     <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
       <Card className="min-w-0">
-        <CardHeader title="Текст предмета" aside="Ctrl+Alt+C в игре" />
+        <CardHeader title="Текст предмета" aside={`в игре: ${hotkey.join(" + ")} или Ctrl+Alt+C`} />
         <CardSection className="flex flex-col gap-3">
           <textarea
             aria-label="Текст предмета"
@@ -548,9 +549,14 @@ function ItemProbe() {
             rows={14}
             className={cx(fieldClasses, "h-auto py-2 font-mono text-caption")}
           />
-          <Button variant="primary" icon={Send} onClick={() => run()} disabled={busy || !inTauri}>
-            Оценить
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="primary" icon={Send} onClick={() => run(() => appraiseText(text))} disabled={busy || !inTauri}>
+              Оценить
+            </Button>
+            <Button icon={ClipboardPaste} onClick={() => run(appraiseClipboard)} disabled={busy || !inTauri}>
+              Из буфера обмена
+            </Button>
+          </div>
         </CardSection>
         <CardSection className="flex flex-wrap gap-2">
           {SAMPLE_ITEMS.map((sample) => (
@@ -560,7 +566,7 @@ function ItemProbe() {
               className="h-7 text-label"
               onClick={() => {
                 setText(sample.text);
-                void run(sample.text);
+                void run(() => appraiseText(sample.text));
               }}
             >
               {sample.label}

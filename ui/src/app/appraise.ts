@@ -1,15 +1,54 @@
+import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { create } from "zustand";
+import { toast } from "@/design-system";
 import type { Appraisal } from "@/generated/Appraisal";
+import type { CaptureFailure } from "@/generated/CaptureFailure";
+import { useShell } from "./store";
 import { inTauri } from "./window";
 
 // Оценка предмета по тексту из игры: разбор, справочник, ключ варианта, цена — в ядре
-// (src-tauri/src/appraise.rs, crates/item-parser). Типы — из Rust, `pnpm gen:types`.
+// (src-tauri/src/appraise.rs, crates/item-parser). Захват по горячей клавише — src-tauri/src/capture.rs.
+// Типы — из Rust, `pnpm gen:types`.
 
 export type { Appraisal };
+
+/** Последняя оценка: захват по горячей клавише, из буфера или текста. */
+export const useAppraisal = create<{ last: Appraisal | null; at: number | null }>(() => ({ last: null, at: null }));
+
+/** Горячая клавиша — ядру, оценки и ошибки захвата — в стор. Ставится один раз в корне приложения. */
+export function useCaptureSync() {
+  const hotkey = useShell((s) => s.hotkeys.check);
+  const hotkeyText = hotkey.join("+");
+
+  useEffect(() => {
+    if (!inTauri) return;
+    const unlisteners: Promise<() => void>[] = [
+      listen<Appraisal>("item-appraised", (e) => useAppraisal.setState({ last: e.payload, at: Date.now() })),
+      listen<CaptureFailure>("item-capture-failed", (e) => toast({ status: "warning", title: "Предмет не захвачен", description: e.payload.message })),
+    ];
+    invoke<Appraisal | null>("item_last_appraisal").then((last) => last && useAppraisal.setState({ last, at: Date.now() }));
+    return () => unlisteners.forEach((p) => p.then((fn) => fn()));
+  }, []);
+
+  useEffect(() => {
+    if (!inTauri) return;
+    invoke("capture_set_hotkey", { keys: hotkeyText.split("+") }).catch((e) =>
+      toast({ status: "warning", title: "Горячая клавиша не назначена", description: String(e) }),
+    );
+  }, [hotkeyText]);
+}
 
 export function appraiseText(text: string): Promise<Appraisal> {
   if (!inTauri) return Promise.reject(new Error("разбор идёт в ядре — откройте в Tauri"));
   return invoke<Appraisal>("item_appraise", { text });
+}
+
+/** Оценить предмет, скопированный в игре вручную (Ctrl+Alt+C), из буфера обмена. */
+export function appraiseClipboard(): Promise<Appraisal> {
+  if (!inTauri) return Promise.reject(new Error("буфер обмена читает ядро — откройте в Tauri"));
+  return invoke<Appraisal>("capture_from_clipboard");
 }
 
 /**

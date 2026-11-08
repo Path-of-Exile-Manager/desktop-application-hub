@@ -33,3 +33,7 @@ uuid = { version = "1.29.1", features = ["v7", "serde"] }
 ts-rs = { version = "12.0.1", features = ["serde-json-impl", "uuid-impl", "no-serde-warnings"] }
 # Проверка файлов набора данных и иконок: они адресуются по sha256 содержимого.
 sha2 = "0.10"
+# Захват предмета: горячая клавиша (только пока игра в фокусе), Ctrl+Alt+C через SendInput, буфер обмена.
+tauri-plugin-global-shortcut = "2"
+arboard = { version = "3", default-features = false }
+windows = { version = "0.62", features = ["Win32_UI_Input_KeyboardAndMouse"] }
