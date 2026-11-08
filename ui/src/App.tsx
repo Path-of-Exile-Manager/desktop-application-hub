@@ -3,6 +3,7 @@ import { PanelRightClose, PanelRightOpen, Wrench } from "lucide-react";
 import {
   AppShell,
   CommandPalette,
+  CurrencyIconsProvider,
   CurrentItemPanel,
   DesignSystemProvider,
   IconButton,
@@ -23,6 +24,7 @@ import { extensionStatusItem, useExtensionStatus, useExtensionStatusSync } from 
 import { useDiscordStatusSync } from "@/app/discord";
 import { datasetStatusItem, NeedConnection, useDataset, useDatasetStatusSync } from "@/app/dataset";
 import { LeaguePicker, useLeaguesStatusSync } from "@/app/leagues";
+import { pricesStatusItem, usePrices, usePricesSync, useCurrencyIcons } from "@/app/prices";
 import { useStartup } from "@/app/startup";
 import { splashVersion } from "@/app/SplashReplay";
 import { DevBadge } from "@/app/DevBadge";
@@ -47,6 +49,9 @@ export default function App() {
   useDiscordStatusSync();
   useDatasetStatusSync();
   useLeaguesStatusSync();
+  usePricesSync();
+  const currencyIcons = useCurrencyIcons();
+  const prices = usePrices((p) => p.status);
   const game = useGameStatus();
   const server = useServerStatus();
   const extension = useExtensionStatus();
@@ -92,6 +97,7 @@ export default function App() {
 
   return (
     <DesignSystemProvider>
+      <CurrencyIconsProvider icons={currencyIcons}>
       <AppShell
         titlebar={
           <TitleBar
@@ -140,12 +146,13 @@ export default function App() {
             />
           )
         }
-        statusbar={<StatusBar items={[gameStatusItem(game), serverStatusItem(server), datasetStatusItem(dataset), extensionStatusItem(extension)]} hint={`${s.hotkeys.palette.join(" + ")} — поиск и команды`} />}
+        statusbar={<StatusBar items={[gameStatusItem(game), serverStatusItem(server), datasetStatusItem(dataset), pricesStatusItem(prices), extensionStatusItem(extension)].filter((i) => i !== null)} hint={`${s.hotkeys.palette.join(" + ")} — поиск и команды`} />}
       >
         {needConnection && dataset ? <NeedConnection status={dataset} /> : <ActivePage key={active.id} />}
       </AppShell>
       <CommandPalette open={s.paletteOpen} onOpenChange={s.setPaletteOpen} items={paletteItems} groups={["Модули", "Команды"]} />
       {startup.phase !== "done" && <SplashScreen steps={startup.steps} version={splashVersion(s.developerMode)} leaving={startup.phase === "leaving"} />}
+      </CurrencyIconsProvider>
     </DesignSystemProvider>
   );
 }

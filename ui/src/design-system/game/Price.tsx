@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { cx } from "../lib/cx";
 import { StatusBadge } from "../components/Badge";
 import type { CurrencyId, PriceAmount } from "./types";
@@ -15,6 +15,13 @@ export function formatAmount(amount: number): string {
   return amount.toLocaleString("ru-RU", { maximumFractionDigits: amount < 10 ? 2 : 0 }).replace(",", ".");
 }
 
+/** Картинки валют для всего дерева: приложение берёт их из справочника, без провайдера — круги с буквой. */
+const CurrencyIconsContext = createContext<Partial<Record<CurrencyId, string>>>({});
+
+export function CurrencyIconsProvider({ icons, children }: { icons: Partial<Record<CurrencyId, string>>; children: ReactNode }) {
+  return <CurrencyIconsContext.Provider value={icons}>{children}</CurrencyIconsContext.Provider>;
+}
+
 export type CurrencyIconProps = {
   currency: CurrencyId;
   /** Картинка из игры. Пока её нет — круг с буквой цветом валюты (components.md, п. 7). */
@@ -23,8 +30,10 @@ export type CurrencyIconProps = {
   className?: string;
 };
 
-export function CurrencyIcon({ currency, src, size = 18, className }: CurrencyIconProps) {
+export function CurrencyIcon({ currency, src: own, size = 18, className }: CurrencyIconProps) {
   const { name, letter } = CURRENCY[currency];
+  const icons = useContext(CurrencyIconsContext);
+  const src = own ?? icons[currency];
   if (src) return <img src={src} alt={name} width={size} height={size} className={cx("shrink-0", className)} />;
   return (
     <svg role="img" aria-label={name} width={size} height={size} viewBox="0 0 18 18" className={cx("shrink-0 text-game-rarity-currency", className)}>

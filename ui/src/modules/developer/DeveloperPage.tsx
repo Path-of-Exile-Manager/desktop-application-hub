@@ -10,6 +10,9 @@ import {
   Dialog,
   Field,
   fieldClasses,
+  FreshnessTag,
+  Price,
+  PriceChart,
   Input,
   ItemIcon,
   Page,
@@ -21,7 +24,8 @@ import {
   toast,
   type Status,
 } from "@/design-system";
-import { useLeagues } from "@/app/leagues";
+import { useCurrentLeague, useLeagues } from "@/app/leagues";
+import { formatAge, isFresh, priceHistory, priceVariants, refreshPrices, toDivine, usePrices, type HistoryRange, type Price as LeaguePrice, type PriceHistory } from "@/app/prices";
 import { checkDatasetNow, iconUrl, itemName, searchCatalog, useDataset, type CatalogItem } from "@/app/dataset";
 import { appInfo, describeApiError, probeApi, type AppInfo, type ProbeMethod, type ProbeResult } from "@/app/api";
 import { useShell, type Sim, type SimTarget } from "@/app/store";
@@ -58,14 +62,15 @@ function engine(): string {
  * Режим разработки — инструменты разработчика. Видна, только пока в Настройках
  * включён «Режим разработчика» (`developerMode` в app/store.ts).
  * Раздел «Общее»: адрес сервера, окружение, сырые данные ядра и действия для отладки.
+ * Раздел «Цены»: прайс текущей лиги, варианты предмета с ценами и история.
  * Раздел «Справочник»: состояние набора данных, поиск по нему и иконки.
  * Раздел «API»: пробный запрос к api-hub через ядро — коды ошибок, ETag, лимиты.
  * Раздел «Discord»: Rich Presence — переключатели статуса и журнал обмена с клиентом Discord.
  * Служебная страница: блок сырых данных может прокручиваться.
  */
-type Section = "general" | "api" | "catalog" | "discord";
+type Section = "general" | "api" | "catalog" | "prices" | "discord";
 
-const SECTIONS: readonly Section[] = ["general", "api", "catalog", "discord"];
+const SECTIONS: readonly Section[] = ["general", "api", "catalog", "prices", "discord"];
 
 /** Раздел можно открыть сразу: `?section=api` (для скриншотов). */
 const INITIAL_SECTION: Section = SECTIONS.find((s) => s === new URLSearchParams(location.search).get("section")) ?? "general";
@@ -86,6 +91,7 @@ export function DeveloperPage() {
             { value: "general", label: "Общее" },
             { value: "api", label: "API" },
             { value: "catalog", label: "Справочник" },
+            { value: "prices", label: "Цены" },
             { value: "discord", label: "Discord" },
           ]}
         />
@@ -104,6 +110,8 @@ export function DeveloperPage() {
         <ApiProbe />
       ) : section === "catalog" ? (
         <CatalogProbe />
+      ) : section === "prices" ? (
+        <PricesProbe />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
           <DiscordCard />
@@ -489,6 +497,147 @@ function ApiProbe() {
                   : "запросы идут через ядро — откройте в Tauri"}
           </pre>
         </CardSection>
+      </Card>
+    </div>
+  );
+}
+
+const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
+
+/** Цены: прайс текущей лиги (ядро, `prices-status`), варианты предмета и история по источникам. */
+function PricesProbe() {
+  const status = usePrices((p) => p.status);
+  const league = useCurrentLeague();
+  const [query, setQuery] = useState("Divine Orb");
+  const [items, setItems] = useState<CatalogItem[]>([]);
+  const [item, setItem] = useState<CatalogItem | null>(null);
+  const [variants, setVariants] = useState<LeaguePrice[]>([]);
+  const [selected, setSelected] = useState<LeaguePrice | null>(null);
+  const [range, setRange] = useState<HistoryRange>("week");
+  const [history, setHistory] = useState<PriceHistory | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => searchCatalog(query, 8).then((found) => !cancelled && setItems(found)), 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, status?.count]);
+
+  useEffect(() => {
+    setSelected(null);
+    if (!item) return setVariants([]);
+    priceVariants(item.id).then((list) => setVariants(list.sort((a, b) => a.variantKey.localeCompare(b.variantKey))));
+  }, [item, status?.newestUpdate, status?.league]);
+
+  useEffect(() => {
+    setHistory(null);
+    setHistoryError(null);
+    if (!selected || !league) return;
+    priceHistory(league.id, selected.priceKeyId, range).then(setHistory, (e) => setHistoryError(String(e)));
+  }, [selected, range, league]);
+
+  return (
+    <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
+        <Card>
+          <CardHeader title="Прайс лиги" aside={status && <StatusBadge status={status.state === "ready" ? (status.error ? "warning" : "success") : status.state === "missing" ? "danger" : "info"}>{status.state}</StatusBadge>} />
+          <CardSection>
+            <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
+              <Fact label="Лига">{status?.league ?? "—"}</Fact>
+              <Fact label="Цен">{status?.count.toLocaleString("ru-RU") ?? "—"}</Fact>
+              <Fact label="Обновлены">{status?.newestUpdate ? `${formatAge(status.newestUpdate)} назад` : "—"}</Fact>
+              <Fact label="Divine">{status?.divineChaos ? `${status.divineChaos.toFixed(1)} chaos` : "—"}</Fact>
+              <Fact label="Источник">{status?.source === "network" ? "сервер" : status?.source === "cache" ? "с диска" : "—"}</Fact>
+              <Fact label="Проверено">{formatCheckedAt(status?.checkedAt ?? null)}</Fact>
+              {status?.error && <Fact label="Ошибка">{status.error}</Fact>}
+            </dl>
+          </CardSection>
+          <CardSection>
+            <Button icon={RefreshCw} onClick={refreshPrices} disabled={!inTauri || status?.syncing}>
+              {status?.syncing ? "Обновляем…" : "Обновить сейчас"}
+            </Button>
+          </CardSection>
+        </Card>
+        <Card>
+          <CardHeader title="Предмет" />
+          <CardSection className="flex flex-col gap-2">
+            <Input aria-label="Предмет для цены" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Сфера хаоса, Mageblood…" />
+            {items.map((found) => (
+              <Button key={found.id} variant={found.id === item?.id ? "primary" : "ghost"} className="h-auto justify-start py-1 text-left" onClick={() => setItem(found)}>
+                <ItemIcon variant="thumb" size={[found.size.w, found.size.h]} src={iconUrl(found.iconSha256)} alt={itemName(found)} />
+                <span className="min-w-0 truncate">{itemName(found)}</span>
+              </Button>
+            ))}
+          </CardSection>
+        </Card>
+      </div>
+
+      <Card className="col-span-2 max-h-full min-h-0 min-w-0 self-stretch">
+        <CardHeader title={item ? itemName(item) : "Цены предмета"} aside={item ? `${variants.length} вариантов с ценой` : undefined} />
+        <CardSection className="min-h-0 flex-1 overflow-auto">
+          {!item ? (
+            <p className="text-caption text-text-secondary">выберите предмет слева</p>
+          ) : variants.length === 0 ? (
+            <p className="text-caption text-text-secondary">в лиге {status?.league ?? "—"} цены нет</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {variants.map((v) => {
+                const divine = toDivine(v.chaosValue, status?.divineChaos);
+                return (
+                  <li key={v.priceKeyId}>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(v)}
+                      className={cx("flex w-full flex-col gap-1 rounded-md border px-3 py-2 text-left transition-colors hover:bg-bg-hover", selected?.priceKeyId === v.priceKeyId ? "border-border-focus" : "border-border-subtle")}
+                    >
+                      <span className="flex flex-wrap items-center gap-3">
+                        <span className="font-mono text-label text-text-secondary">{v.variantKey || "обычный"}</span>
+                        <Price price={{ amount: v.chaosValue, currency: "chaos" }} approx size="md" />
+                        {divine !== null && <span className="font-mono text-label text-text-secondary">≈ {divine.toFixed(2)} divine</span>}
+                        {!v.reliable && <StatusBadge status="warning">ненадёжно</StatusBadge>}
+                        <FreshnessTag fresh={isFresh(v.updatedAt)}>{formatAge(v.updatedAt)} назад</FreshnessTag>
+                      </span>
+                      <span className="font-mono text-caption text-text-secondary">
+                        {v.sources
+                          .map((s) => `${SOURCE_NAME[s.source] ?? s.source}: ${s.chaosValue.toFixed(1)}${s.listingCount !== null ? ` (${s.listingCount} лотов)` : ""}${s.lowConfidence ? " low" : ""} · ${formatAge(s.observedAt)}`)
+                          .join("  |  ")}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardSection>
+        {selected && (
+          <CardSection className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-label text-text-secondary">История · {selected.variantKey || "обычный"}</span>
+              <SegmentedControl<HistoryRange>
+                aria-label="Период истории"
+                value={range}
+                onValueChange={setRange}
+                options={[
+                  { value: "week", label: "Неделя" },
+                  { value: "all", label: "Всё время" },
+                ]}
+              />
+            </div>
+            {historyError ? (
+              <p className="text-label text-status-danger-fg">{historyError}</p>
+            ) : !history ? (
+              <p className="text-caption text-text-secondary">загрузка…</p>
+            ) : (
+              <PriceChart
+                timeFormat={range === "week" ? "hour" : "day"}
+                series={history.series.map((s) => ({ id: s.source, label: SOURCE_NAME[s.source] ?? s.source, points: s.points.map((p) => ({ t: Date.parse(p.at), v: p.chaosValue })) }))}
+              />
+            )}
+          </CardSection>
+        )}
       </Card>
     </div>
   );
