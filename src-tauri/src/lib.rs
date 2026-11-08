@@ -14,6 +14,7 @@ mod game;
 mod icons;
 mod leagues;
 mod paths;
+mod prices;
 mod server;
 
 /// Что ядро сообщает интерфейсу о себе. `Serialize` позволяет отдать структуру в JS как JSON.
@@ -74,6 +75,7 @@ pub fn run() {
             app.manage(Arc::new(api::Api::new(device_id, move || handle.state::<server::ServerWatcher>().current_url())));
             dataset::start(app.handle(), &app_root);
             leagues::start(app.handle(), &app_root);
+            prices::start(app.handle(), &app_root);
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
@@ -90,8 +92,15 @@ pub fn run() {
             dataset::dataset_check_now,
             dataset::catalog_search,
             dataset::catalog_item,
+            dataset::catalog_by_trade_ids,
             leagues::leagues_status,
             leagues::leagues_refresh,
+            prices::prices_status,
+            prices::prices_set_league,
+            prices::prices_refresh,
+            prices::price_get,
+            prices::price_variants,
+            prices::price_history,
             extension::extension_status,
             discord::discord_status,
             discord::discord_configure,

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use super::model::{CatalogItem, ItemClass, Manifest};
 use super::store::DatasetStore;
 
-// Поиск по названию и tradeId нужен сопоставлению предмета (Ф5) и курсу divine (Ф4).
+// Классы и поиск по точному названию понадобятся сопоставлению предмета (Ф5).
 #[allow(dead_code)]
 pub struct Catalog {
     pub manifest: Manifest,
@@ -58,7 +58,6 @@ impl Catalog {
         self.by_name.get(&normalize(name)).map(|list| list.iter().map(|&i| &self.items[i]).collect()).unwrap_or_default()
     }
 
-    #[allow(dead_code)]
     /// По id сайта торговли: `divine` → Divine Orb (курс), `chaos`.
     pub fn by_trade_id(&self, trade_id: &str) -> Option<&CatalogItem> {
         self.by_trade_id.get(trade_id).map(|&i| &self.items[i])

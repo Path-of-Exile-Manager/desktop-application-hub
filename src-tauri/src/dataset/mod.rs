@@ -241,6 +241,13 @@ pub fn catalog_search(service: State<DatasetService>, query: String, limit: Opti
     service.catalog().map(|c| c.search(&query, limit).into_iter().cloned().collect()).unwrap_or_default()
 }
 
+/// Записи справочника по id сайта торговли (`chaos`, `divine`…): иконки валют, курс.
+#[tauri::command]
+pub fn catalog_by_trade_ids(service: State<DatasetService>, trade_ids: Vec<String>) -> Vec<CatalogItem> {
+    let Some(catalog) = service.catalog() else { return Vec::new() };
+    trade_ids.iter().filter_map(|id| catalog.by_trade_id(id).cloned()).collect()
+}
+
 /// Запись справочника по id.
 #[tauri::command]
 pub fn catalog_item(service: State<DatasetService>, id: String) -> Option<CatalogItem> {
