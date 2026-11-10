@@ -34,8 +34,10 @@ type ViewState = {
   showNightmare: boolean;
   showAffix: boolean;
   groupByAffix: boolean;
+  /** Столбик наборов свёрнут пользователем (ещё сворачивается сам, когда справа тесно). */
+  railCollapsed: boolean;
   setActivePreset: (id: string) => void;
-  setView: (view: Partial<Pick<ViewState, "showNightmare" | "showAffix" | "groupByAffix">>) => void;
+  setView: (view: Partial<Pick<ViewState, "showNightmare" | "showAffix" | "groupByAffix" | "railCollapsed">>) => void;
 };
 
 export const useMapRegexView = create<ViewState>()(
@@ -45,6 +47,7 @@ export const useMapRegexView = create<ViewState>()(
       showNightmare: true,
       showAffix: false,
       groupByAffix: false,
+      railCollapsed: false,
       setActivePreset: (id) => set({ activePresetId: id }),
       setView: (view) => set(view),
     }),

@@ -38,7 +38,7 @@ const INCLUSIONS = [
 ];
 
 const ROW = "flex h-7 items-center justify-between gap-2";
-const SELECT = "h-7 w-24 shrink-0";
+const SELECT = "h-7 w-[6.5rem] shrink-0";
 const MODE_SELECT = "h-7 w-[7.5rem] shrink-0";
 
 const of = (index: MapSearchIndex, group: MapProperty["group"], kind: MapProperty["kind"]) =>

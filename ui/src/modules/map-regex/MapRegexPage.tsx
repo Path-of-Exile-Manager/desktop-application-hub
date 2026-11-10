@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import { ClipboardCopy, CloudDownload, Ellipsis, Import, LoaderCircle, Monitor, Pencil, Plus, RefreshCw, Trash, TriangleAlert, type LucideIcon } from "lucide-react";
-import { Button, Chip, EmptyState, IconButton, Menu, Page, SegmentedControl, Select, toast, type MenuEntry } from "@/design-system";
+import { useLayoutEffect, useMemo, useState } from "react";
+import { CloudDownload, LoaderCircle, Monitor, RefreshCw, TriangleAlert, type LucideIcon } from "lucide-react";
+import { Button, Chip, EmptyState, Page, SegmentedControl, Select, toast } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
 import { activeOptions, applyParsed, dropKeys, resetAll, resetChoices, staleKeys, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
@@ -8,6 +8,7 @@ import { ExpressionCard, ModColumn, StaleBanner } from "./parts";
 import { MapOptions } from "./options";
 import { ConfirmDialog, ImportExpressionDialog, ImportPresetsDialog, PresetDialog } from "./dialogs";
 import { exportPresets } from "./backup";
+import { PresetRail, PresetStrip, RAIL_WIDTH, type RailActions } from "./rail";
 import { createPreset, deletePreset, DRAFT_ID, importPresets, updatePreset, useActivePreset, useMapRegexPresets, useMapRegexView, usePresetsSync } from "./store";
 import { useMapSearch } from "./useMapSearch";
 
@@ -16,7 +17,34 @@ const LANGS: { value: GameLang; label: string }[] = [
   { value: "EN", label: "EN" },
 ];
 
-type OpenDialog = { kind: "new" } | { kind: "rename" } | { kind: "delete" } | { kind: "reset-all" } | { kind: "import" } | { kind: "import-presets" } | null;
+type OpenDialog =
+  | { kind: "new" }
+  | { kind: "rename"; id: string }
+  | { kind: "delete"; id: string }
+  | { kind: "reset-all" }
+  | { kind: "import" }
+  | { kind: "import-presets" }
+  | null;
+
+/** Сколько нужно содержимому справа (четыре карточки параметров карт), чтобы столбик наборов стоял рядом. */
+const CONTENT_MIN_WIDTH = 880;
+const GAP = 16;
+
+/** Ширина элемента; обновляется при изменении размера. Ref — функция: элемент появляется не сразу
+ *  (пока данные грузятся, на его месте заглушка), замер начинается, когда он смонтирован. */
+function useWidth<T extends HTMLElement>() {
+  const [el, ref] = useState<T | null>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    if (!el) return;
+    const measure = () => setWidth(el.getBoundingClientRect().width);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [el]);
+  return { ref, width };
+}
 
 const WANT_MODES = [
   { value: "ANY", label: "Любой" },
@@ -37,6 +65,8 @@ export function MapRegexPage() {
   const showAffix = useMapRegexView((s) => s.showAffix);
   const groupByAffix = useMapRegexView((s) => s.groupByAffix);
   const setView = useMapRegexView((s) => s.setView);
+  const railCollapsed = useMapRegexView((s) => s.railCollapsed);
+  const draft = useMapRegexPresets((s) => s.draft);
   const view = useMemo(() => ({ showNightmare, showAffix, groupByAffix }), [showNightmare, showAffix, groupByAffix]);
 
   const index = search.status === "ready" ? search.index : null;
@@ -63,7 +93,6 @@ export function MapRegexPage() {
 
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const close = () => setDialog(null);
-  const isDraft = preset.id === DRAFT_ID;
   const hasChoices = Object.keys(preset.mods).length > 0;
   const hasOptions = JSON.stringify(resetAll(preset)) !== JSON.stringify(resetChoices(preset));
 
@@ -77,17 +106,24 @@ export function MapRegexPage() {
     }
   };
 
-  const menu: MenuEntry[] = [
-    { label: "Новый набор", icon: Plus, onSelect: () => setDialog({ kind: "new" }) },
-    { label: "Переименовать", icon: Pencil, onSelect: () => setDialog({ kind: "rename" }) },
-    { type: "separator" },
-    { label: "Импорт наборов…", icon: Import, onSelect: () => setDialog({ kind: "import-presets" }) },
-    { label: "Экспорт наборов", icon: ClipboardCopy, disabled: !presets?.length, onSelect: () => void exportAll() },
-    { type: "separator" },
-    { label: "Удалить набор", icon: Trash, disabled: isDraft, onSelect: () => setDialog({ kind: "delete" }) },
-  ];
-
-  const options = (presets?.length ? presets : [preset]).map((p) => ({ value: p.id, label: p.name, hint: p.id === DRAFT_ID ? "не сохранён" : undefined }));
+  // Столбик наборов: рядом, если справа хватает места; иначе полоса с буквами, раскрывается поверх.
+  const { ref: rowRef, width: rowWidth } = useWidth<HTMLDivElement>();
+  const roomy = rowWidth >= RAIL_WIDTH + GAP + CONTENT_MIN_WIDTH;
+  const [overlay, setOverlay] = useState(false);
+  const railPresets = presets?.length ? presets : [draft];
+  const byId = (id: string) => railPresets.find((p) => p.id === id);
+  const railActions: RailActions = {
+    onSelect: (id) => {
+      setActivePreset(id);
+      setOverlay(false);
+    },
+    onNew: () => setDialog({ kind: "new" }),
+    onRename: (id) => setDialog({ kind: "rename", id }),
+    onDelete: (id) => setDialog({ kind: "delete", id }),
+    onImport: () => setDialog({ kind: "import-presets" }),
+    onExport: presets?.length ? () => void exportAll() : null,
+  };
+  const target = dialog && "id" in dialog ? byId(dialog.id) : undefined;
 
   return (
     <Page
@@ -95,8 +131,6 @@ export function MapRegexPage() {
       subtitle="Моды карт → строка поиска во вкладке сундука"
       actions={
         <>
-          <Select aria-label="Набор" value={preset.id} onValueChange={setActivePreset} options={options} className="w-48" disabled={!presets} />
-          <Menu align="end" items={menu} trigger={<IconButton icon={Ellipsis} label="Действия с набором" disabled={!presets} />} />
           <SegmentedControl
             aria-label="Язык клиента игры"
             value={preset.lang}
@@ -107,7 +141,20 @@ export function MapRegexPage() {
       }
     >
       {search.status === "ready" && expression && index && presets ? (
-        <>
+        <div ref={rowRef} className="relative flex min-h-0 flex-1" style={{ gap: GAP }}>
+          {roomy && !railCollapsed ? (
+            <PresetRail presets={railPresets} activeId={preset.id} index={index} actions={railActions} onCollapse={() => setView({ railCollapsed: true })} />
+          ) : (
+            <PresetStrip presets={railPresets} activeId={preset.id} actions={railActions} onExpand={() => (roomy ? setView({ railCollapsed: false }) : setOverlay(true))} />
+          )}
+          {overlay && !roomy && (
+            <>
+              <div className="absolute inset-0 z-10" aria-hidden onClick={() => setOverlay(false)} />
+              <PresetRail presets={railPresets} activeId={preset.id} index={index} actions={railActions} floating onCollapse={() => setOverlay(false)} />
+            </>
+          )}
+
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <ExpressionCard
             expression={expression}
             index={index}
@@ -170,7 +217,8 @@ export function MapRegexPage() {
               />
             </div>
           )}
-        </>
+          </div>
+        </div>
       ) : (
         <NotReady state={search.status === "ready" ? { status: "loading" } : search} />
       )}
@@ -203,13 +251,15 @@ export function MapRegexPage() {
         />
       )}
       {dialog?.kind === "new" && <PresetDialog name={null} onSave={(name) => void createPreset(name, preset.lang)} onClose={close} />}
-      {dialog?.kind === "rename" && <PresetDialog name={preset.name} onSave={(name) => change((p) => ({ ...p, name }))} onClose={close} />}
-      {dialog?.kind === "delete" && (
+      {dialog?.kind === "rename" && target && (
+        <PresetDialog name={target.name} onSave={(name) => updatePreset(target.id, (p) => ({ ...p, name }))} onClose={close} />
+      )}
+      {dialog?.kind === "delete" && target && target.id !== DRAFT_ID && (
         <ConfirmDialog
-          title={`Удалить набор «${preset.name}»?`}
+          title={`Удалить набор «${target.name}»?`}
           description={presets && presets.length > 1 ? "Набор удалится на всех устройствах вашего аккаунта." : "Это последний набор: на вкладке останется пустой «Мой первый набор»."}
           confirmLabel="Удалить набор"
-          onConfirm={() => void deletePreset(preset.id)}
+          onConfirm={() => void deletePreset(target.id)}
           onClose={close}
         />
       )}
