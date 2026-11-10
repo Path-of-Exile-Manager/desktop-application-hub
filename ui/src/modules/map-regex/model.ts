@@ -116,6 +116,19 @@ export function normalizePreset(raw: unknown): MapRegexPreset | null {
   };
 }
 
+/** Отметить мод в колонке; повторная отметка снимает. Мод бывает только в одной колонке. */
+export function toggleMod(preset: MapRegexPreset, modId: string, choice: ModChoice): MapRegexPreset {
+  const mods = { ...preset.mods };
+  if (mods[modId] === choice) delete mods[modId];
+  else mods[modId] = choice;
+  return { ...preset, mods };
+}
+
+/** Текст для поиска по списку: без регистра, «ё» = «е», «й» = «и» (как поиск игры). */
+export function searchKey(text: string): string {
+  return text.toLowerCase().replace(/ё/g, "е").replace(/й/g, "и");
+}
+
 /** Порядок групп свойств на экране и в выражении. */
 export const GROUP_ORDER: readonly MapPropertyGroup[] = ["YIELD", "QUALITY", "STATE", "RARITY", "TYPE"];
 
