@@ -36,6 +36,8 @@ use records::COLLECTIONS;
 use store::{DirtyRow, Store};
 
 pub const EVENT: &str = "sync-status";
+/// Данные пользователя изменились (здесь, из расширения или с сервера) — экранам перечитать.
+pub const DATA_EVENT: &str = "user-data-changed";
 
 const INTERVAL: Duration = Duration::from_secs(5 * 60);
 /// Пауза после изменения здесь: серия правок уходит одной пачкой.
@@ -313,6 +315,7 @@ fn apply(app: &AppHandle, pull: &Pull) -> Result<(), Failure> {
         store.set_state(KEY_CURSOR, Some(&pull.revision.to_string())).map_err(Failure::Error)?;
     }
     if bridge_changed {
+        let _ = app.emit(DATA_EVENT, ());
         crate::extension::data_changed(app);
     }
     Ok(())
@@ -430,6 +433,7 @@ fn changed(app: &AppHandle, collection: &str) {
     let service = app.state::<SyncService>();
     let _ = service.wake.send(Wake::Soon);
     publish(app, |_| {});
+    let _ = app.emit(DATA_EVENT, ());
     if bridge::COLLECTIONS.contains(&collection) {
         crate::extension::data_changed(app);
     }

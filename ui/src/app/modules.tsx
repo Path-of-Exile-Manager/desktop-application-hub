@@ -1,9 +1,12 @@
 import type { ComponentType } from "react";
-import { Dices, Eye, LayoutGrid, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Bookmark, Dices, Eye, History, LayoutGrid, Pin, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
 import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
+import { BookmarksPage } from "@/modules/user-data/BookmarksPage";
+import { HistoryPage } from "@/modules/user-data/HistoryPage";
+import { PinsPage } from "@/modules/user-data/PinsPage";
 import { SettingsPage } from "@/modules/settings/SettingsPage";
 import { DeveloperPage } from "@/modules/developer/DeveloperPage";
 import { ShowcasePage } from "@/showcase/ShowcasePage";
@@ -62,6 +65,13 @@ const WATCHLIST: ModuleDef = {
   keywords: "отслеживание избранное цены список",
 };
 
+/** Данные сайта торговли — общие с расширением браузера (Ф10). */
+const TRADE_DATA: ModuleDef[] = [
+  { id: "bookmarks", label: "Закладки", icon: Bookmark, group: "data", component: BookmarksPage, keywords: "папки поиски сайт торговли trade" },
+  { id: "history", label: "История", icon: History, group: "data", component: HistoryPage, keywords: "поиски сайт торговли trade" },
+  { id: "pins", label: "Закреплённые", icon: Pin, group: "data", component: PinsPage, keywords: "пины лоты сайт торговли trade" },
+];
+
 const ANCIENT_ORB: ModuleDef = {
   id: "ancient-orb",
   label: "Ancient Orb",
@@ -98,7 +108,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, WATCHLIST, ANCIENT_ORB, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, ANCIENT_ORB, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
