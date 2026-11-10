@@ -16,6 +16,8 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Manager};
 
 use super::records;
+use super::sort_key;
+use super::store::Store;
 use super::{changed, RejectedRecord, SyncService};
 
 /// Коллекции, которые видит расширение (настройки и watchlist — только у десктопа).
@@ -43,6 +45,33 @@ fn text(v: &Value, key: &str) -> String {
 fn fingerprint<'a>(title: &str, bookmarks: impl Iterator<Item = &'a Value>) -> String {
     let searches: BTreeSet<String> = bookmarks.map(|b| format!("{}:{}", text(b, "tradeType"), text(b, "slug"))).collect();
     format!("{}|{}", title.trim().to_lowercase(), searches.into_iter().collect::<Vec<_>>().join(","))
+}
+
+/// Ключ порядка папки или закладки из расширения совпал с ключом соседа (профили, ещё не видевшие
+/// друг друга, выдают новым записям одни и те же `P`, `g`…) — поставить запись сразу за соседом.
+/// Иначе её не сдвинуть: между двумя равными ключами места нет (`sort_key::between` откажет).
+fn unique_sort_key(store: &Store, collection: &str, id: &str, mut value: Value) -> Value {
+    if collection != "folders" && collection != "bookmarks" {
+        return value;
+    }
+    let key = text(&value, "sortKey");
+    let folder = text(&value, "folderId");
+    let siblings: Vec<String> = store
+        .list(collection)
+        .unwrap_or_default()
+        .iter()
+        .filter(|r| text(r, "id") != id && (collection == "folders" || text(r, "folderId") == folder))
+        .map(|r| text(r, "sortKey"))
+        .collect();
+    if !siblings.contains(&key) {
+        return value;
+    }
+    // Ближайший больший ключ — граница сверху: между ним и нашим других соседей нет.
+    let next = siblings.iter().filter(|k| **k > key).min();
+    if let Ok(fresh) = sort_key::between(Some(&key), next.map(String::as_str)) {
+        value["sortKey"] = json!(fresh);
+    }
+    value
 }
 
 /// Все записи для расширения. Если снимок не влезает в кадр — без самых старых пинов.
@@ -135,6 +164,7 @@ pub fn apply(app: &AppHandle, mut changes: Vec<Change>, first: bool) -> Vec<Reje
                             rejected.push(RejectedRecord { collection: change.collection, id: change.id, reason: "id записи не совпадает".into() });
                             continue;
                         }
+                        let value = unique_sort_key(&store, collection, &change.id, value);
                         if store.get(collection, &change.id).as_ref() == Some(&value) {
                             continue;
                         }
