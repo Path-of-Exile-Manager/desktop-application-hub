@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardSection, Checkbox, Field, HotkeyInput, Page, Switch } from "@/design-system";
 import { useShell } from "@/app/store";
+import { AccountCard } from "./AccountCard";
 
 /**
  * Настройки. Только то, что уже работает; новые разделы добавляются вместе с функциями.
@@ -27,6 +28,8 @@ export function SettingsPage() {
         </Card>
 
         <div className="flex min-w-0 flex-col gap-4">
+          <AccountCard />
+
           <Card>
             <CardHeader title="Интерфейс" />
             <CardSection>

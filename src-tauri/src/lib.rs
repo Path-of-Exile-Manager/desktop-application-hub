@@ -5,6 +5,7 @@ use tauri::Manager;
 use ts_rs::TS;
 use uuid::Uuid;
 
+mod account;
 mod api;
 mod appraise;
 mod capture;
@@ -67,6 +68,7 @@ fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(capture::plugin())
+        .plugin(tauri_plugin_opener::init())
         .register_asynchronous_uri_scheme_protocol(icons::SCHEME, icons::handle)
         .setup(|app| {
             let paths = paths::AppPaths::resolve(app.handle())?;
@@ -80,6 +82,7 @@ pub fn run() {
             dataset::start(app.handle(), &app_root);
             leagues::start(app.handle(), &app_root);
             prices::start(app.handle(), &app_root);
+            account::start(app.handle(), &app.state::<paths::AppPaths>());
             app.manage(appraise::LastAppraisal::default());
             capture::start(app.handle(), &game::current(app.handle()));
             overlay::create(app.handle())?;
@@ -92,6 +95,15 @@ pub fn run() {
             open_devtools,
             game::game_status,
             server::server_status,
+            account::account_status,
+            account::account_login_start,
+            account::account_login_cancel,
+            account::account_logout,
+            account::account_profile,
+            account::account_devices,
+            account::account_revoke_device,
+            account::account_export,
+            account::account_delete,
             server::server_check_now,
             server::server_set_url,
             api::probe::api_probe,

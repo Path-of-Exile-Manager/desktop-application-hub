@@ -38,3 +38,6 @@ sha2 = "0.10"
 tauri-plugin-global-shortcut = "2"
 arboard = { version = "3", default-features = false }
 windows = { version = "0.62", features = ["Win32_Foundation", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging"] }
+# Аккаунт: refresh-токен — в диспетчере учётных данных Windows, вход — в системном браузере.
+keyring = { version = "3", features = ["windows-native"] }
+tauri-plugin-opener = "2"

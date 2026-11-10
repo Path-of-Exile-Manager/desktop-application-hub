@@ -224,6 +224,9 @@ fn watch(app: AppHandle, wake: Receiver<()>) {
                     if let Some(prices) = app.try_state::<crate::prices::PricesService>() {
                         prices.wake();
                     }
+                    if let Some(account) = app.try_state::<crate::account::AccountService>() {
+                        account.wake();
+                    }
                 }
                 publish(&app, status);
                 interval
