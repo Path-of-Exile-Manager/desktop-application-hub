@@ -139,6 +139,35 @@ export async function createPreset(name: string, lang: GameLang): Promise<void> 
   }
 }
 
+/**
+ * Записать импортированные наборы по порядку в конец списка; `replace` — сначала удалить все текущие.
+ * Активным становится набор `activeIndex`. Возвращает, сколько записано.
+ */
+export async function importPresets(drafts: Omit<MapRegexPreset, "id" | "sortKey" | "createdAt">[], replace: boolean, activeIndex: number): Promise<number> {
+  if (!inTauri || !drafts.length) return 0;
+  const existing = useMapRegexPresets.getState().presets ?? [];
+  if (replace) {
+    for (const p of existing) {
+      clearTimeout(pending.get(p.id));
+      pending.delete(p.id);
+      await deleteRecord(COLLECTION, p.id);
+    }
+  }
+  let last = replace ? null : (existing.at(-1)?.sortKey ?? null);
+  const saved: MapRegexPreset[] = [];
+  for (const draft of drafts) {
+    const sortKey = await sortKeyBetween(last, null);
+    const record = normalizePreset(await putRecord(COLLECTION, { ...draft, sortKey, createdAt: new Date().toISOString() }));
+    if (!record) continue;
+    saved.push(record);
+    last = sortKey;
+  }
+  useMapRegexPresets.setState({ presets: [...(replace ? [] : existing), ...saved].sort(bySortKey) });
+  const active = saved[activeIndex] ?? saved[0];
+  if (active) useMapRegexView.getState().setActivePreset(active.id);
+  return saved.length;
+}
+
 /** Удалить набор. Удалили последний — на экране снова черновик. Черновик не удаляется: его нет в базе. */
 export async function deletePreset(id: string): Promise<void> {
   if (id === DRAFT_ID || !inTauri) return;

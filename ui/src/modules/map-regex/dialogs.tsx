@@ -1,5 +1,7 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { Button, Dialog, Field, Input, StatusIcon, cx, fieldClasses } from "@/design-system";
+import { useMemo, useRef, useState, type FormEvent } from "react";
+import { Copy, FileUp } from "lucide-react";
+import { Button, Dialog, Field, IconButton, Input, RadioGroup, StatusIcon, cx, fieldClasses, toast } from "@/design-system";
+import { parseBackup, type BackupImport } from "./backup";
 import { modText, NAME_MAX, type GameLang, type MapRegexPreset, type MapSearchIndex } from "./model";
 import { parseExpression, type ParsedExpression } from "./regex";
 
@@ -158,6 +160,126 @@ export function ImportExpressionDialog({ preset, index, onApply, onClose }: Dial
                   {parsed.unmatched.length > SHOWN_UNMATCHED && <span>и ещё {parsed.unmatched.length - SHOWN_UNMATCHED}</span>}
                 </span>
               </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+/** Команда для консоли сайта: данные лежат в его localStorage. */
+const SITE_COMMAND = "copy(localStorage.getItem('atlas-regex-v1'))";
+
+/** Наборы сайта «Атлас» (файл или JSON из консоли) или наша копия → новые наборы. */
+export function ImportPresetsDialog({ existing, onImport, onClose }: DialogBase & {
+  /** Сколько наборов сейчас (0 — выбора «заменить» нет). */
+  existing: number;
+  onImport: (backup: BackupImport, replace: boolean) => void;
+}) {
+  const [text, setText] = useState("");
+  const [mode, setMode] = useState<"add" | "replace">("add");
+  const file = useRef<HTMLInputElement>(null);
+  const parsed = useMemo(() => (text.trim() ? parseBackup(text) : null), [text]);
+  const ok = parsed !== null && typeof parsed !== "string";
+
+  const pickFile = async (f: File | undefined) => {
+    if (!f) return;
+    setText(await f.text());
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={closeOn(onClose)}
+      title="Импорт наборов"
+      description="Наборы с сайта «Атлас — конструктор RegEx» или копия наборов этой вкладки."
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Отмена
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!ok}
+            onClick={() => {
+              if (ok) onImport(parsed, mode === "replace" && existing > 0);
+              onClose();
+            }}
+          >
+            Импортировать
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <Button icon={FileUp} onClick={() => file.current?.click()}>
+            Выбрать файл…
+          </Button>
+          <span className="text-label text-text-secondary">atlas-regex-backup.json или копия вкладки</span>
+          <input ref={file} type="file" accept=".json,application/json" hidden onChange={(e) => void pickFile(e.target.files?.[0])} />
+        </div>
+        <textarea
+          spellCheck={false}
+          aria-label="JSON наборов"
+          placeholder='{"current":"…","presets":[…]}'
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className={cx(fieldClasses, "h-24 resize-none py-2 font-mono text-label")}
+        />
+        <p className="flex flex-wrap items-center gap-1.5 text-label text-text-secondary">
+          Или на сайте: F12 → Console →
+          <code className="rounded-sm bg-bg-hover px-1.5 py-0.5 font-mono text-text-primary">{SITE_COMMAND}</code>
+          <IconButton
+            icon={Copy}
+            label="Скопировать команду"
+            className="size-6"
+            iconSize={12}
+            onClick={() => void navigator.clipboard.writeText(SITE_COMMAND).then(() => toast({ status: "success", title: "Команда скопирована" }))}
+          />
+          — и вставьте сюда.
+        </p>
+        {parsed !== null && (
+          <div className="flex flex-col gap-1.5 text-label text-text-secondary">
+            {typeof parsed === "string" ? (
+              <p className="flex items-center gap-2">
+                <StatusIcon status="danger" />
+                {parsed}
+              </p>
+            ) : (
+              <>
+                <p className="flex items-start gap-2">
+                  <StatusIcon status="success" />
+                  <span>
+                    {parsed.source === "site" ? "Сайт «Атлас»" : "Копия вкладки"}: наборов {parsed.presets.length} —{" "}
+                    {parsed.presets
+                      .slice(0, 6)
+                      .map((p) => `«${p.name}»`)
+                      .join(", ")}
+                    {parsed.presets.length > 6 ? ` и ещё ${parsed.presets.length - 6}` : ""}
+                  </span>
+                </p>
+                {parsed.unknownMods > 0 && (
+                  <p className="flex items-center gap-2">
+                    <StatusIcon status="warning" />
+                    Не распознано модов сайта: {parsed.unknownMods} — их нет в таблице соответствия.
+                  </p>
+                )}
+                {existing > 0 && (
+                  <RadioGroup
+                    aria-label="Что сделать с текущими наборами"
+                    value={mode}
+                    onValueChange={(v) => setMode(v as "add" | "replace")}
+                    orientation="horizontal"
+                    options={[
+                      { value: "add", label: "Добавить к текущим" },
+                      { value: "replace", label: `Заменить все (${existing})` },
+                    ]}
+                    className="mt-1"
+                  />
+                )}
+              </>
             )}
           </div>
         )}

@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
-import { CloudDownload, Ellipsis, LoaderCircle, Monitor, Pencil, Plus, RefreshCw, Trash, TriangleAlert, type LucideIcon } from "lucide-react";
+import { ClipboardCopy, CloudDownload, Ellipsis, Import, LoaderCircle, Monitor, Pencil, Plus, RefreshCw, Trash, TriangleAlert, type LucideIcon } from "lucide-react";
 import { Button, Chip, EmptyState, IconButton, Menu, Page, SegmentedControl, Select, toast, type MenuEntry } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
 import { activeOptions, applyParsed, resetAll, resetChoices, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
 import { ExpressionCard, ModColumn } from "./parts";
 import { MapOptions } from "./options";
-import { ConfirmDialog, ImportExpressionDialog, PresetDialog } from "./dialogs";
-import { createPreset, deletePreset, DRAFT_ID, updatePreset, useActivePreset, useMapRegexPresets, useMapRegexView, usePresetsSync } from "./store";
+import { ConfirmDialog, ImportExpressionDialog, ImportPresetsDialog, PresetDialog } from "./dialogs";
+import { exportPresets } from "./backup";
+import { createPreset, deletePreset, DRAFT_ID, importPresets, updatePreset, useActivePreset, useMapRegexPresets, useMapRegexView, usePresetsSync } from "./store";
 import { useMapSearch } from "./useMapSearch";
 
 const LANGS: { value: GameLang; label: string }[] = [
@@ -15,7 +16,7 @@ const LANGS: { value: GameLang; label: string }[] = [
   { value: "EN", label: "EN" },
 ];
 
-type OpenDialog = { kind: "new" } | { kind: "rename" } | { kind: "delete" } | { kind: "reset-all" } | { kind: "import" } | null;
+type OpenDialog = { kind: "new" } | { kind: "rename" } | { kind: "delete" } | { kind: "reset-all" } | { kind: "import" } | { kind: "import-presets" } | null;
 
 const WANT_MODES = [
   { value: "ANY", label: "Любой" },
@@ -65,9 +66,22 @@ export function MapRegexPage() {
   const hasChoices = Object.keys(preset.mods).length > 0;
   const hasOptions = JSON.stringify(resetAll(preset)) !== JSON.stringify(resetChoices(preset));
 
+  const exportAll = async () => {
+    if (!presets?.length) return;
+    try {
+      await navigator.clipboard.writeText(exportPresets(presets));
+      toast({ status: "success", title: `Наборы скопированы: ${presets.length}`, description: "Сохраните текст в файл — восстановить можно через «Импорт наборов»." });
+    } catch (e) {
+      toast({ status: "danger", title: "Не удалось скопировать", description: String(e) });
+    }
+  };
+
   const menu: MenuEntry[] = [
     { label: "Новый набор", icon: Plus, onSelect: () => setDialog({ kind: "new" }) },
     { label: "Переименовать", icon: Pencil, onSelect: () => setDialog({ kind: "rename" }) },
+    { type: "separator" },
+    { label: "Импорт наборов…", icon: Import, onSelect: () => setDialog({ kind: "import-presets" }) },
+    { label: "Экспорт наборов", icon: ClipboardCopy, disabled: !presets?.length, onSelect: () => void exportAll() },
     { type: "separator" },
     { label: "Удалить набор", icon: Trash, disabled: isDraft, onSelect: () => setDialog({ kind: "delete" }) },
   ];
@@ -170,6 +184,18 @@ export function MapRegexPage() {
               description: parsed.unmatched.length ? `Не распознано: ${parsed.unmatched.length}.` : undefined,
             });
           }}
+          onClose={close}
+        />
+      )}
+      {dialog?.kind === "import-presets" && (
+        <ImportPresetsDialog
+          existing={presets?.length ?? 0}
+          onImport={(backup, replace) =>
+            void importPresets(backup.presets, replace, backup.activeIndex).then(
+              (count) => toast({ status: "success", title: `Импортировано наборов: ${count}`, description: backup.unknownMods ? `Не распознано модов: ${backup.unknownMods}.` : undefined }),
+              (e: unknown) => toast({ status: "danger", title: "Импорт не завершён", description: String(e) }),
+            )
+          }
           onClose={close}
         />
       )}
