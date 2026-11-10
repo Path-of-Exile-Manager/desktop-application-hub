@@ -135,6 +135,33 @@ export function applyParsed(preset: MapRegexPreset, parsed: ParsedExpression): M
   };
 }
 
+/** Ключи набора, которых нет в текущем наборе данных: мод или свойство ушли из игры (или сменили текст). */
+export function staleKeys(preset: MapRegexPreset, index: MapSearchIndex): { mods: string[]; properties: string[] } {
+  const known = (id: string) => index.propertyById.has(id);
+  const properties = [...Object.keys(preset.numbers), ...Object.keys(preset.flags), ...preset.rarity.keys].filter((id) => !known(id));
+  return { mods: Object.keys(preset.mods).filter((id) => !index.modById.has(id)).sort(), properties: [...new Set(properties)].sort() };
+}
+
+/** Убрать из набора ключи (пропавшие моды и свойства). */
+export function dropKeys(preset: MapRegexPreset, keys: string[]): MapRegexPreset {
+  const drop = new Set(keys);
+  const keep = <T,>(record: Record<string, T>) => Object.fromEntries(Object.entries(record).filter(([id]) => !drop.has(id)));
+  return {
+    ...preset,
+    mods: keep(preset.mods),
+    numbers: keep(preset.numbers),
+    flags: keep(preset.flags),
+    rarity: { ...preset.rarity, keys: preset.rarity.keys.filter((id) => !drop.has(id)) },
+  };
+}
+
+/** Ключ без текста → читаемо: `map:players-have-…:nightmare` → «players have … (Nightmare)». */
+export function humanizeKey(key: string): string {
+  const nightmare = key.endsWith(":nightmare");
+  const words = key.replace(/^map:/, "").replace(/:nightmare$/, "").replace(/-/g, " ");
+  return nightmare ? `${words} (Nightmare)` : words;
+}
+
 /** «Сбросить выбор»: только моды, параметры карт остаются. */
 export function resetChoices(preset: MapRegexPreset): MapRegexPreset {
   return { ...preset, mods: {} };

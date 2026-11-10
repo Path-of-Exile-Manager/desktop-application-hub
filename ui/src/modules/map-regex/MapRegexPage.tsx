@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { ClipboardCopy, CloudDownload, Ellipsis, Import, LoaderCircle, Monitor, Pencil, Plus, RefreshCw, Trash, TriangleAlert, type LucideIcon } from "lucide-react";
 import { Button, Chip, EmptyState, IconButton, Menu, Page, SegmentedControl, Select, toast, type MenuEntry } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
-import { activeOptions, applyParsed, resetAll, resetChoices, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
+import { activeOptions, applyParsed, dropKeys, resetAll, resetChoices, staleKeys, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
-import { ExpressionCard, ModColumn } from "./parts";
+import { ExpressionCard, ModColumn, StaleBanner } from "./parts";
 import { MapOptions } from "./options";
 import { ConfirmDialog, ImportExpressionDialog, ImportPresetsDialog, PresetDialog } from "./dialogs";
 import { exportPresets } from "./backup";
@@ -45,6 +45,7 @@ export function MapRegexPage() {
   // Параметры карт не помещаются над колонками без прокрутки окна — показываются вместо них.
   const [tab, setTab] = useState<"mods" | "options">("mods");
   const optionsCount = index ? activeOptions(preset, index) : 0;
+  const stale = useMemo(() => (index ? staleKeys(preset, index) : { mods: [], properties: [] }), [preset, index]);
 
   const change = (fn: (p: MapRegexPreset) => MapRegexPreset) => updatePreset(preset.id, fn);
   const toggle = (choice: ModChoice) => (modId: string) => change((p) => toggleMod(p, modId, choice));
@@ -116,6 +117,8 @@ export function MapRegexPage() {
             onResetChoices={hasChoices ? () => change(resetChoices) : null}
             onResetAll={hasChoices || hasOptions ? () => setDialog({ kind: "reset-all" }) : null}
           />
+
+          <StaleBanner mods={stale.mods} properties={stale.properties} onRemove={(keys) => change((p) => dropKeys(p, keys))} />
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <SegmentedControl

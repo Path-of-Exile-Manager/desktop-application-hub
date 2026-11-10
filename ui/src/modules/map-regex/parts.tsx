@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Check, ClipboardPaste, Copy, Eraser, RotateCcw, SearchX } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Eraser, RotateCcw, SearchX, Trash2, X } from "lucide-react";
 import {
   AffixBadge,
   Badge,
+  Banner,
   Button,
+  IconButton,
   Card,
   CardHeader,
   EmptyState,
@@ -13,7 +15,7 @@ import {
   cx,
   usePageSize,
 } from "@/design-system";
-import { describeIssue, modText, searchKey, type GameLang, type MapRegexPreset, type MapSearchIndex, type MapSearchMod, type ModChoice } from "./model";
+import { describeIssue, humanizeKey, modText, searchKey, type GameLang, type MapRegexPreset, type MapSearchIndex, type MapSearchMod, type ModChoice } from "./model";
 import { EXPRESSION_MAX, isError, type Expression } from "./regex";
 
 export function ExpressionCard({
@@ -37,7 +39,8 @@ export function ExpressionCard({
   const { text, issues } = expression;
   const tooLong = text.length > EXPRESSION_MAX;
   // Одна строка — самая важная проблема; остальные в подсказке: блок не отнимает место у списков.
-  const sorted = [...issues].sort((a, b) => Number(isError(b)) - Number(isError(a)));
+  // Пропавшие моды показывает свой блок с кнопками (StaleBanner) — здесь их не повторяем.
+  const sorted = issues.filter((issue) => issue.kind !== "unknown-mods").sort((a, b) => Number(isError(b)) - Number(isError(a)));
   const first = sorted[0];
   const all = sorted.map((issue) => describeIssue(issue, index, lang)).join("\n");
 
@@ -85,6 +88,46 @@ export function ExpressionCard({
         )}
       </div>
     </Card>
+  );
+}
+
+const SHOWN_STALE = 3;
+
+/**
+ * Ключи набора, которых больше нет в наборе данных: мод или свойство ушли из игры (или сменили текст —
+ * тогда это новое семейство с другим ключом). В выражение они не идут; убрать — по одному или все.
+ */
+export function StaleBanner({ mods, properties, onRemove }: { mods: string[]; properties: string[]; onRemove: (keys: string[]) => void }) {
+  const all = [...mods, ...properties];
+  if (!all.length) return null;
+  const shown = all.slice(0, SHOWN_STALE);
+  const rest = all.slice(SHOWN_STALE);
+  return (
+    <Banner
+      status="warning"
+      title={`Больше не встречается в игре: ${all.length}`}
+      className="shrink-0"
+      actions={
+        <Button variant="secondary" icon={Trash2} onClick={() => onRemove(all)}>
+          Убрать все
+        </Button>
+      }
+    >
+      <span className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden">
+        <span className="shrink-0">В выражение не попадают.</span>
+        {shown.map((key) => (
+          <span key={key} className="inline-flex max-w-56 min-w-0 items-center gap-1 rounded-sm bg-bg-hover py-0.5 pr-0.5 pl-1.5 text-label text-text-primary" title={key}>
+            <span className="truncate">{mods.includes(key) ? humanizeKey(key) : `параметр «${key}»`}</span>
+            <IconButton icon={X} label={`Убрать ${humanizeKey(key)}`} tooltip={false} className="size-5" iconSize={12} onClick={() => onRemove([key])} />
+          </span>
+        ))}
+        {rest.length > 0 && (
+          <span className="shrink-0 text-label text-text-muted" title={rest.map(humanizeKey).join("\n")}>
+            и ещё {rest.length}
+          </span>
+        )}
+      </span>
+    </Banner>
   );
 }
 
@@ -137,7 +180,8 @@ export function ModColumn({
   }, [page, pageCount]);
 
   const visible = rows.slice((page - 1) * pageSize, page * pageSize);
-  const count = Object.values(preset.mods).filter((choice) => choice === side).length;
+  // Пропавшие из игры моды не считаются: в выражение они не идут (их показывает StaleBanner).
+  const count = Object.entries(preset.mods).filter(([id, choice]) => choice === side && index.modById.has(id)).length;
 
   return (
     <Card className="min-h-0 min-w-0">
