@@ -1,15 +1,20 @@
 //! Справочник в памяти: предметы и классы текущего набора с индексами по id, названию
-//! (русскому и английскому) и id сайта торговли.
+//! (русскому и английскому) и id сайта торговли; данные поиска карт, если они есть в наборе.
 
 use std::collections::HashMap;
 
-use super::model::{CatalogItem, ItemClass, Manifest};
+use super::model::{CatalogItem, ItemClass, Manifest, MapSearch};
 use super::store::DatasetStore;
+
+pub const MAP_SEARCH_FILE: &str = "map-search.json";
 
 pub struct Catalog {
     pub manifest: Manifest,
     pub items: Vec<CatalogItem>,
     pub classes: Vec<ItemClass>,
+    /// `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан. Файл необязательный:
+    /// его поломка (в том числе новый формат) не должна отнимать справочник и цены.
+    pub map_search: Option<Result<MapSearch, String>>,
     by_id: HashMap<String, usize>,
     /// Нормализованное название (ru и en) → предметы: одно имя бывает у нескольких записей
     /// (уникальный на разных базах).
@@ -25,10 +30,17 @@ impl Catalog {
             serde_json::from_slice(&store.read_file(id, &manifest, "items.json")?).map_err(|e| format!("items.json не разобран: {e}"))?;
         let classes: Vec<ItemClass> =
             serde_json::from_slice(&store.read_file(id, &manifest, "classes.json")?).map_err(|e| format!("classes.json не разобран: {e}"))?;
-        Ok(Self::new(manifest, items, classes))
+        let map_search = has_file(&manifest, MAP_SEARCH_FILE)
+            .then(|| store.read_file(id, &manifest, MAP_SEARCH_FILE).and_then(|bytes| parse_map_search(&bytes)));
+        Ok(Self::new(manifest, items, classes, map_search))
     }
 
-    pub fn new(manifest: Manifest, items: Vec<CatalogItem>, classes: Vec<ItemClass>) -> Self {
+    pub fn new(mut manifest: Manifest, items: Vec<CatalogItem>, classes: Vec<ItemClass>, map_search: Option<Result<MapSearch, String>>) -> Self {
+        // По самому файлу: манифесты в кэше, записанные до появления этих счётчиков, их потеряли.
+        if let Some(Ok(search)) = &map_search {
+            manifest.counts.map_mods = search.mods.len() as u32;
+            manifest.counts.map_properties = search.properties.len() as u32;
+        }
         let mut by_id = HashMap::with_capacity(items.len());
         let mut by_name: HashMap<String, Vec<usize>> = HashMap::with_capacity(items.len() * 2);
         let mut by_trade_id = HashMap::new();
@@ -43,7 +55,7 @@ impl Catalog {
                 by_trade_id.insert(trade_id.clone(), i);
             }
         }
-        Self { manifest, items, classes, by_id, by_name, by_trade_id }
+        Self { manifest, items, classes, map_search, by_id, by_name, by_trade_id }
     }
 
     pub fn get(&self, id: &str) -> Option<&CatalogItem> {
@@ -127,6 +139,14 @@ impl Catalog {
         ranked.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| self.items[a.1].name.en.len().cmp(&self.items[b.1].name.en.len())));
         ranked.into_iter().take(limit).map(|(_, i)| &self.items[i]).collect()
     }
+}
+
+pub fn has_file(manifest: &Manifest, name: &str) -> bool {
+    manifest.files.iter().any(|f| f.name == name)
+}
+
+pub fn parse_map_search(bytes: &[u8]) -> Result<MapSearch, String> {
+    serde_json::from_slice(bytes).map_err(|e| format!("{MAP_SEARCH_FILE} не разобран: {e}"))
 }
 
 /// Нижний регистр, «ё» → «е», лишние пробелы схлопнуты.

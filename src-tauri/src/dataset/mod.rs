@@ -25,7 +25,8 @@ use ts_rs::TS;
 
 use crate::api::{Api, ApiCode, Call, Reply};
 pub use catalog::{normalize, Catalog};
-use model::{Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, SCHEMA_VERSION};
+use catalog::{has_file, parse_map_search, MAP_SEARCH_FILE};
+use model::{Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, MapSearch, SCHEMA_VERSION};
 pub use store::sha256_hex;
 use store::{verify, DatasetStore};
 
@@ -209,9 +210,11 @@ fn sync(api: &Api, store: &DatasetStore, current: Option<&str>) -> Result<Option
     let file = |name: &str| files.iter().find(|(n, _)| n == name).map(|(_, b)| b.as_slice()).ok_or_else(|| format!("в наборе нет {name}"));
     let items: Vec<CatalogItem> = serde_json::from_slice(file("items.json")?).map_err(|e| format!("items.json не разобран: {e}"))?;
     let classes: Vec<ItemClass> = serde_json::from_slice(file("classes.json")?).map_err(|e| format!("classes.json не разобран: {e}"))?;
+    // Необязательный файл: не разобран — набор всё равно ставим, ошибку увидит вкладка.
+    let map_search = has_file(&manifest, MAP_SEARCH_FILE).then(|| file(MAP_SEARCH_FILE).and_then(parse_map_search));
 
     store.install(&manifest, &files).map_err(|e| format!("набор не сохранён: {e}"))?;
-    Ok(Some(Catalog::new(manifest, items, classes)))
+    Ok(Some(Catalog::new(manifest, items, classes, map_search)))
 }
 
 fn publish(app: &AppHandle, service: &DatasetService) {
@@ -252,4 +255,12 @@ pub fn catalog_by_trade_ids(service: State<DatasetService>, trade_ids: Vec<Strin
 #[tauri::command]
 pub fn catalog_item(service: State<DatasetService>, id: String) -> Option<CatalogItem> {
     service.catalog().and_then(|c| c.get(&id).cloned())
+}
+
+/// Моды и свойства карт для вкладки «RegEx карт». `null` — справочника ещё нет или в наборе нет
+/// `map-search.json` (старый набор — обновить набор данных); ошибка — файл есть, но не прочитан
+/// (формат новее приложения — обновить приложение).
+#[tauri::command]
+pub fn catalog_map_search(service: State<DatasetService>) -> Result<Option<MapSearch>, String> {
+    service.catalog().and_then(|c| c.map_search.clone()).transpose()
 }

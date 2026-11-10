@@ -1,5 +1,5 @@
 //! Форматы набора данных — как их публикует воркер (`dataset-build`) и отдаёт api-hub:
-//! манифест (`GET /v1/bootstrap`), `items.json`, `classes.json`.
+//! манифест (`GET /v1/bootstrap`), `items.json`, `classes.json`, `map-search.json`.
 //! Значения перечислений — контракт хранения бэкенда (UPPER_SNAKE). Незнакомое значение
 //! не роняет разбор всего файла: становится `Unknown` / `Other`.
 
@@ -52,6 +52,9 @@ pub struct ManifestCounts {
     pub uniques: u32,
     pub with_icon: u32,
     pub without_russian_name: u32,
+    /// Из `map-search.json`; 0 — файла нет или он не прочитан.
+    pub map_mods: u32,
+    pub map_properties: u32,
 }
 
 /// Ответ `GET /v1/bootstrap`.
@@ -231,4 +234,120 @@ pub struct ItemClass {
     pub name: LocalizedName,
     /// Группа: `Flask`, `Currency`, `Skill Gem`…
     pub category: String,
+}
+
+/// `map-search.json`: моды карт и свойства карты со строками поиска сундука — данные вкладки
+/// «RegEx карт». В наборе есть не всегда (наборы до `20261108.1`).
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct MapSearch {
+    /// Семейства модов карт (тиры одного эффекта), по `id`.
+    pub mods: Vec<MapSearchMod>,
+    pub properties: Vec<MapProperty>,
+}
+
+/// Строки текста на языках игры: мод из нескольких строк, строка свойства.
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct LocalizedLines {
+    pub en: Vec<String>,
+    pub ru: Option<Vec<String>>,
+}
+
+/// Короткая строка для поиска сундука на одном языке.
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct SearchToken {
+    /// Фрагмент регулярки: `m resistances$`. `null` — уникального нет, ищут строку целиком.
+    pub token: Option<String>,
+    /// Ключи других записей, которые токен тоже находит (обычный ↔ nightmare). Пусто — точный.
+    #[serde(default)]
+    pub overlaps: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct LocalizedSearchToken {
+    pub en: SearchToken,
+    pub ru: Option<SearchToken>,
+}
+
+/// Семейство мода карты.
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct MapSearchMod {
+    /// `map:<slug текста эффекта>[:nightmare]` — постоянный ключ, на него ссылаются наборы пользователя.
+    pub id: String,
+    pub affix: MapModAffix,
+    pub tier: MapModTier,
+    /// Строки эффекта, диапазоны сведены по тирам: `Players have -(5-12)% to all maximum Resistances`.
+    pub lines: LocalizedLines,
+    pub search: LocalizedSearchToken,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, TS)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
+pub enum MapModAffix {
+    Prefix,
+    Suffix,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, TS)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
+pub enum MapModTier {
+    Regular,
+    /// Усиленный мод (`uber_tier_map`).
+    Nightmare,
+    #[serde(other)]
+    Unknown,
+}
+
+/// Свойство карты: число с порогом (количество, качество…) или признак (осквернённая, тип карты…).
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct MapProperty {
+    /// `quantity`, `pack-size`, `quality-rarity`, `corrupted`, `rarity-rare`, `type-shaper`…
+    pub id: String,
+    pub group: MapPropertyGroup,
+    pub kind: MapPropertyKind,
+    /// Подпись в интерфейсе: «Количество предметов».
+    pub label: LocalizedName,
+    /// Строки, как в игре: `Item Quantity: +#%`.
+    pub lines: LocalizedLines,
+    /// Порядок внутри группы.
+    pub sort_order: i32,
+    /// У `NUMBER` токен стоит перед числом: блок `"<token>.*<не меньше N>%"`.
+    pub search: LocalizedSearchToken,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, TS)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
+pub enum MapPropertyGroup {
+    /// Количество и награды.
+    Yield,
+    /// Виды качества карты (резцы Мейвена).
+    Quality,
+    /// Осквернённая, неопознанная.
+    State,
+    Rarity,
+    /// Тип карты: Создатель, Древний, Завоеватель…
+    Type,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, TS)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
+pub enum MapPropertyKind {
+    Number,
+    Flag,
+    #[serde(other)]
+    Unknown,
 }
