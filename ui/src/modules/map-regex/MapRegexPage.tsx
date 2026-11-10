@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CloudDownload, LoaderCircle, Monitor, RefreshCw, TriangleAlert, type LucideIcon } from "lucide-react";
 import { Button, Chip, EmptyState, Page, SegmentedControl, Select, toast } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
-import { toggleMod, type GameLang, type ModChoice, type WantMode } from "./model";
+import { activeOptions, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
 import { ExpressionCard, ModColumn } from "./parts";
+import { MapOptions } from "./options";
 import { DRAFT_ID, updatePreset, useActivePreset, useMapRegexPresets, useMapRegexView, usePresetsSync } from "./store";
 import { useMapSearch } from "./useMapSearch";
 
@@ -37,7 +38,12 @@ export function MapRegexPage() {
   const index = search.status === "ready" ? search.index : null;
   const expression = useMemo(() => (index ? buildExpression(preset, index) : null), [preset, index]);
 
-  const toggle = (choice: ModChoice) => (modId: string) => updatePreset(preset.id, (p) => toggleMod(p, modId, choice));
+  // Параметры карт не помещаются над колонками без прокрутки окна — показываются вместо них.
+  const [tab, setTab] = useState<"mods" | "options">("mods");
+  const optionsCount = index ? activeOptions(preset, index) : 0;
+
+  const change = (fn: (p: MapRegexPreset) => MapRegexPreset) => updatePreset(preset.id, fn);
+  const toggle = (choice: ModChoice) => (modId: string) => change((p) => toggleMod(p, modId, choice));
 
   const copy = async () => {
     if (!expression?.text) return;
@@ -73,37 +79,55 @@ export function MapRegexPage() {
           <ExpressionCard expression={expression} index={index} lang={preset.lang} onCopy={() => void copy()} />
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <Chip selected={showNightmare} onSelectedChange={(v) => setView({ showNightmare: v })}>
-              Nightmare
-            </Chip>
-            <Chip selected={showAffix} onSelectedChange={(v) => setView({ showAffix: v })}>
-              Префикс / суффикс
-            </Chip>
-            <Chip selected={groupByAffix} onSelectedChange={(v) => setView({ groupByAffix: v })}>
-              По типу
-            </Chip>
+            <SegmentedControl
+              aria-label="Что настраивать"
+              value={tab}
+              onValueChange={setTab}
+              options={[
+                { value: "mods", label: "Моды" },
+                { value: "options", label: optionsCount ? `Параметры карт · ${optionsCount}` : "Параметры карт" },
+              ]}
+            />
+            {tab === "mods" && (
+              <>
+                <span className="mx-1 h-5 w-px bg-border-subtle" aria-hidden />
+                <Chip selected={showNightmare} onSelectedChange={(v) => setView({ showNightmare: v })}>
+                  Nightmare
+                </Chip>
+                <Chip selected={showAffix} onSelectedChange={(v) => setView({ showAffix: v })}>
+                  Префикс / суффикс
+                </Chip>
+                <Chip selected={groupByAffix} onSelectedChange={(v) => setView({ groupByAffix: v })}>
+                  По типу
+                </Chip>
+              </>
+            )}
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
-            <ModColumn side="AVOID" title="Исключить" preset={preset} index={index} view={view} onToggle={toggle("AVOID")} />
-            <ModColumn
-              side="WANT"
-              title="Нужные"
-              preset={preset}
-              index={index}
-              view={view}
-              onToggle={toggle("WANT")}
-              aside={
-                <Select
-                  aria-label="Совпадение нужных модов"
-                  value={preset.wantMode}
-                  onValueChange={(wantMode) => updatePreset(preset.id, (p) => ({ ...p, wantMode: wantMode as WantMode }))}
-                  options={WANT_MODES}
-                  className="h-7 w-28"
-                />
-              }
-            />
-          </div>
+          {tab === "options" ? (
+            <MapOptions preset={preset} index={index} onChange={change} />
+          ) : (
+            <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
+              <ModColumn side="AVOID" title="Исключить" preset={preset} index={index} view={view} onToggle={toggle("AVOID")} />
+              <ModColumn
+                side="WANT"
+                title="Нужные"
+                preset={preset}
+                index={index}
+                view={view}
+                onToggle={toggle("WANT")}
+                aside={
+                  <Select
+                    aria-label="Совпадение нужных модов"
+                    value={preset.wantMode}
+                    onValueChange={(wantMode) => change((p) => ({ ...p, wantMode: wantMode as WantMode }))}
+                    options={WANT_MODES}
+                    className="h-7 w-28"
+                  />
+                }
+              />
+            </div>
+          )}
         </>
       ) : (
         <NotReady state={search.status === "ready" ? { status: "loading" } : search} />

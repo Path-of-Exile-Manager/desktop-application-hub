@@ -124,6 +124,37 @@ export function toggleMod(preset: MapRegexPreset, modId: string, choice: ModChoi
   return { ...preset, mods };
 }
 
+/** Порог свойства-числа; `null` — не учитывать. */
+export function setNumber(preset: MapRegexPreset, propertyId: string, value: number | null): MapRegexPreset {
+  const numbers = { ...preset.numbers };
+  if (value === null) delete numbers[propertyId];
+  else numbers[propertyId] = value;
+  return { ...preset, numbers };
+}
+
+/** Признак состояния или типа карты; `null` — «любые». */
+export function setFlag(preset: MapRegexPreset, propertyId: string, value: Inclusion | null): MapRegexPreset {
+  const flags = { ...preset.flags };
+  if (value === null) delete flags[propertyId];
+  else flags[propertyId] = value;
+  return { ...preset, flags };
+}
+
+export function toggleRarity(preset: MapRegexPreset, propertyId: string): MapRegexPreset {
+  const keys = preset.rarity.keys.includes(propertyId) ? preset.rarity.keys.filter((k) => k !== propertyId) : [...preset.rarity.keys, propertyId];
+  return { ...preset, rarity: { ...preset.rarity, keys } };
+}
+
+/** Сколько параметров карты сейчас попадает в выражение. */
+export function activeOptions(preset: MapRegexPreset, index: MapSearchIndex): number {
+  let count = Object.keys(preset.numbers).length + (preset.rarity.keys.length ? 1 : 0);
+  for (const [id] of Object.entries(preset.flags)) {
+    const group = index.propertyById.get(id)?.group;
+    if (group === "STATE" || (group === "TYPE" && preset.useTypes)) count++;
+  }
+  return count;
+}
+
 /** Текст для поиска по списку: без регистра, «ё» = «е», «й» = «и» (как поиск игры). */
 export function searchKey(text: string): string {
   return text.toLowerCase().replace(/ё/g, "е").replace(/й/g, "и");
