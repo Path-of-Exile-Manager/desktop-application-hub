@@ -267,6 +267,46 @@ function entryName(index: MapSearchIndex, id: string, lang: GameLang): string {
   return property ? `«${propertyLabel(property)}»` : id;
 }
 
+/**
+ * Моды, которые не отмечены, но всё равно попадут под строку поиска отмеченного мода (его токен находит
+ * и их — обычно Nightmare-близнеца): id → выбор и через какие моды.
+ */
+export function impliedChoices(preset: MapRegexPreset, index: MapSearchIndex): Map<string, { choice: ModChoice; via: string[] }> {
+  const implied = new Map<string, { choice: ModChoice; via: string[] }>();
+  for (const [id, choice] of Object.entries(preset.mods)) {
+    const mod = index.modById.get(id);
+    if (!mod) continue;
+    const overlaps = (preset.lang === "RU" ? mod.search.ru : mod.search.en)?.overlaps ?? [];
+    for (const other of overlaps) {
+      if (preset.mods[other] !== undefined || !index.modById.has(other)) continue;
+      const entry = implied.get(other) ?? { choice, via: [] };
+      entry.via.push(id);
+      implied.set(other, entry);
+    }
+  }
+  return implied;
+}
+
+/** Отметить моды той же стороной (пересечение «захватит их» — пусть это будет видно в наборе). */
+export function markMods(preset: MapRegexPreset, ids: string[], choice: ModChoice): MapRegexPreset {
+  return { ...preset, mods: { ...preset.mods, ...Object.fromEntries(ids.map((id) => [id, choice])) } };
+}
+
+/** Снять отметку мода. */
+export function unmarkMod(preset: MapRegexPreset, id: string): MapRegexPreset {
+  const mods = { ...preset.mods };
+  delete mods[id];
+  return { ...preset, mods };
+}
+
+/** Короткое имя записи для списков: текст мода или подпись свойства (пропавший — ключ). */
+export function entryLabel(index: MapSearchIndex, id: string, lang: GameLang): string {
+  const mod = index.modById.get(id);
+  if (mod) return modText(mod, lang);
+  const property = index.propertyById.get(id);
+  return property ? property.label.en : humanizeKey(id);
+}
+
 /** Предупреждение или ошибка выражения словами. */
 export function describeIssue(issue: ExpressionIssue, index: MapSearchIndex, lang: GameLang): string {
   const names = (ids: string[]) => ids.map((id) => entryName(index, id, lang)).join(", ");
@@ -279,10 +319,15 @@ export function describeIssue(issue: ExpressionIssue, index: MapSearchIndex, lan
       return `Нет короткой строки поиска — взята строка целиком: ${names(issue.ids)}.`;
     case "no-text":
       return `Нет текста на языке игры — пропущено: ${names(issue.ids)}.`;
-    case "overlap":
-      return issue.choice === "AVOID"
-        ? `Исключение ${entryName(index, issue.modId, lang)} отсеет и карты с ${names(issue.others)}.`
-        : `${entryName(index, issue.modId, lang)} подсветит и карты с ${names(issue.others)}.`;
+    case "overlap": {
+      const source = entryName(index, issue.modId, lang);
+      const others = names([...issue.conflicts, ...issue.extra]);
+      if (issue.conflicts.length)
+        return issue.choice === "AVOID"
+          ? `Исключение ${source} отсеет и нужные ${names(issue.conflicts)}.`
+          : `${source} подсветит и исключённые ${names(issue.conflicts)}.`;
+      return issue.choice === "AVOID" ? `Исключение ${source} отсеет и карты с ${others}.` : `${source} подсветит и карты с ${others}.`;
+    }
     case "bad-number":
       return `Порог — целое число от ${NUMBER_MIN} до ${NUMBER_MAX}: ${names(issue.propertyIds)}.`;
     case "all-rarities-excluded":

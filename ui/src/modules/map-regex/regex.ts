@@ -25,17 +25,25 @@ export type ExpressionIssue =
   | { kind: "whole-line"; ids: string[] }
   /** Нет текста на языке игры — пропущены. */
   | { kind: "no-text"; ids: string[] }
-  /** Токен мода находит и другие моды (обычный ↔ nightmare), которые выбраны иначе. */
-  | { kind: "overlap"; modId: string; choice: ModChoice; others: string[] }
+  /**
+   * Токен мода находит и другие моды (обычный ↔ nightmare). `conflicts` — отмеченные в другой колонке
+   * (поиск сработает против выбора), `extra` — не отмеченные (захватятся вместе с этим).
+   */
+  | { kind: "overlap"; modId: string; choice: ModChoice; conflicts: string[]; extra: string[] }
   /** Порог не целое число 1–9999 — пропущен. */
   | { kind: "bad-number"; propertyIds: string[] }
   /** Исключены все редкости — блок не строится. */
   | { kind: "all-rarities-excluded" };
 
+/** Что делает блок выражения — для подсветки. */
+export type BlockKind = "avoid" | "want" | "number" | "flag-include" | "flag-exclude";
+
 export type Expression = {
   /** Блоки через пробел; пусто, если ничего не выбрано. */
   text: string;
   blocks: string[];
+  /** Те же блоки с их смыслом, в том же порядке. */
+  parts: { text: string; kind: BlockKind }[];
   issues: ExpressionIssue[];
 };
 
@@ -50,7 +58,8 @@ export function isThreshold(value: unknown): value is number {
 
 export function buildExpression(preset: MapRegexPreset, index: MapSearchIndex): Expression {
   const lang = preset.lang;
-  const blocks: string[] = [];
+  const parts: Expression["parts"] = [];
+  const add = (kind: BlockKind, ...texts: string[]) => texts.forEach((text) => parts.push({ text, kind }));
   const issues: ExpressionIssue[] = [];
   const wholeLine: string[] = [];
   const noText: string[] = [];
@@ -72,18 +81,20 @@ export function buildExpression(preset: MapRegexPreset, index: MapSearchIndex): 
       }
       if (token.wholeLine) wholeLine.push(mod.id);
       if (!values.includes(token.value)) values.push(token.value);
-      const others = (searchOf(mod.search, lang)?.overlaps ?? []).filter((other) => preset.mods[other] !== choice);
-      if (others.length) issues.push({ kind: "overlap", modId: mod.id, choice, others });
+      const others = (searchOf(mod.search, lang)?.overlaps ?? []).filter((other) => index.modById.has(other) && preset.mods[other] !== choice);
+      const conflicts = others.filter((other) => preset.mods[other] !== undefined);
+      const extra = others.filter((other) => preset.mods[other] === undefined);
+      if (others.length) issues.push({ kind: "overlap", modId: mod.id, choice, conflicts, extra });
     }
     return values;
   };
 
   const avoid = modTokens("AVOID");
   const want = modTokens("WANT");
-  if (avoid.length) blocks.push(`"!${avoid.join("|")}"`);
+  if (avoid.length) add("avoid", `"!${avoid.join("|")}"`);
   if (preset.wantMode === "ANY") {
-    if (want.length) blocks.push(`"${want.join("|")}"`);
-  } else blocks.push(...want.map((token) => `"${token}"`));
+    if (want.length) add("want", `"${want.join("|")}"`);
+  } else add("want", ...want.map((token) => `"${token}"`));
 
   // Пороги: `<токен>.*<не меньше N>%`; награды и качество — каждая группа по своему правилу.
   const yieldParts: string[] = [];
@@ -107,12 +118,12 @@ export function buildExpression(preset: MapRegexPreset, index: MapSearchIndex): 
     const mode = quality ? preset.qualityRule.mode : preset.yieldRule.mode;
     (quality ? qualityParts : yieldParts).push(`${token.value}.*${numberPattern(value, mode)}%`);
   }
-  for (const [parts, any] of [
+  for (const [group, any] of [
     [yieldParts, preset.yieldRule.any],
     [qualityParts, preset.qualityRule.any],
   ] as const) {
-    if (any && parts.length) blocks.push(`"(${parts.join("|")})"`);
-    else blocks.push(...parts.map((part) => `"${part}"`));
+    if (any && group.length) add("number", `"(${group.join("|")})"`);
+    else add("number", ...group.map((part) => `"${part}"`));
   }
 
   // Признаки: включить — `"x"`, исключить — `!"x"`.
@@ -126,7 +137,7 @@ export function buildExpression(preset: MapRegexPreset, index: MapSearchIndex): 
     const flag = preset.flags[property.id];
     if (flag === undefined) continue;
     const token = flagToken(property);
-    if (token !== null) blocks.push(`${flag === "EXCLUDE" ? "!" : ""}"${token}"`);
+    if (token !== null) add(flag === "EXCLUDE" ? "flag-exclude" : "flag-include", `${flag === "EXCLUDE" ? "!" : ""}"${token}"`);
   }
 
   const rarities = group(index, "RARITY");
@@ -134,7 +145,7 @@ export function buildExpression(preset: MapRegexPreset, index: MapSearchIndex): 
   if (picked.length && picked.length === rarities.length && preset.rarity.mode === "EXCLUDE") issues.push({ kind: "all-rarities-excluded" });
   if (picked.length && picked.length !== rarities.length) {
     const tokens = picked.map(flagToken).filter((token): token is string => token !== null);
-    if (tokens.length) blocks.push(`${preset.rarity.mode === "EXCLUDE" ? "!" : ""}"${tokens.join("|")}"`);
+    if (tokens.length) add(preset.rarity.mode === "EXCLUDE" ? "flag-exclude" : "flag-include", `${preset.rarity.mode === "EXCLUDE" ? "!" : ""}"${tokens.join("|")}"`);
   }
 
   if (preset.useTypes) {
@@ -146,16 +157,17 @@ export function buildExpression(preset: MapRegexPreset, index: MapSearchIndex): 
       const token = flagToken(property);
       if (token !== null) (flag === "EXCLUDE" ? exclude : include).push(token);
     }
-    if (include.length) blocks.push(`"${include.join("|")}"`);
-    if (exclude.length) blocks.push(`!"${exclude.join("|")}"`);
+    if (include.length) add("flag-include", `"${include.join("|")}"`);
+    if (exclude.length) add("flag-exclude", `!"${exclude.join("|")}"`);
   }
 
+  const blocks = parts.map((part) => part.text);
   const text = blocks.join(" ");
   if (badNumbers.length) issues.push({ kind: "bad-number", propertyIds: badNumbers });
   if (noText.length) issues.push({ kind: "no-text", ids: noText });
   if (wholeLine.length) issues.push({ kind: "whole-line", ids: wholeLine });
   if (text.length > EXPRESSION_MAX) issues.push({ kind: "too-long", length: text.length });
-  return { text, blocks, issues };
+  return { text, blocks, parts, issues };
 }
 
 /**

@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useState } from "react";
 import { CloudDownload, LoaderCircle, Monitor, RefreshCw, TriangleAlert, type LucideIcon } from "lucide-react";
 import { Button, Chip, EmptyState, Page, SegmentedControl, Select, toast } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
-import { activeOptions, applyParsed, clearSide, dropKeys, resetAll, resetChoices, staleKeys, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
+import { activeOptions, applyParsed, clearSide, dropKeys, impliedChoices, resetAll, resetChoices, staleKeys, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
 import { ExpressionCard, ModColumn, StaleBanner } from "./parts";
 import { MapOptions } from "./options";
@@ -76,6 +76,7 @@ export function MapRegexPage() {
   const [tab, setTab] = useState<"mods" | "options">("mods");
   const optionsCount = index ? activeOptions(preset, index) : 0;
   const stale = useMemo(() => (index ? staleKeys(preset, index) : { mods: [], properties: [] }), [preset, index]);
+  const implied = useMemo(() => (index ? impliedChoices(preset, index) : new Map()), [preset, index]);
 
   const change = (fn: (p: MapRegexPreset) => MapRegexPreset) => updatePreset(preset.id, fn);
   const toggle = (choice: ModChoice) => (modId: string) => change((p) => toggleMod(p, modId, choice));
@@ -158,7 +159,8 @@ export function MapRegexPage() {
           <ExpressionCard
             expression={expression}
             index={index}
-            lang={preset.lang}
+            preset={preset}
+            onChange={change}
             onCopy={() => void copy()}
             onPaste={() => setDialog({ kind: "import" })}
             onResetChoices={hasChoices ? () => change(resetChoices) : null}
@@ -197,7 +199,7 @@ export function MapRegexPage() {
             <MapOptions preset={preset} index={index} onChange={change} />
           ) : (
             <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
-              <ModColumn side="AVOID" title="Исключить" preset={preset} index={index} view={view} onToggle={toggle("AVOID")} onClear={() => change((p) => clearSide(p, "AVOID", index))} />
+              <ModColumn side="AVOID" title="Исключить" preset={preset} index={index} view={view} onToggle={toggle("AVOID")} onClear={() => change((p) => clearSide(p, "AVOID", index))} implied={implied} />
               <ModColumn
                 side="WANT"
                 title="Нужные"
@@ -206,6 +208,7 @@ export function MapRegexPage() {
                 view={view}
                 onToggle={toggle("WANT")}
                 onClear={() => change((p) => clearSide(p, "WANT", index))}
+                implied={implied}
                 aside={
                   <Select
                     aria-label="Совпадение нужных модов"
