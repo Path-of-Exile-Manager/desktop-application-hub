@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardHeader, Checkbox, Input, Select, Switch, cx } from "@/design-system";
 import {
-  propertyLabel,
   setFlag,
   setNumber,
   toggleRarity,
@@ -18,23 +17,24 @@ import { NUMBER_MAX, NUMBER_MIN } from "./regex";
 // типы карт. Свойства и их порядок — из набора данных; правила блоков — как на сайте.
 // Четыре узкие карточки должны помещаться в 1280×720 без прокрутки: строки 28 px, подписи 13 px,
 // длинное — с многоточием и полным текстом в подсказке, пояснения — в подсказках.
+// Подписи — по-английски, как текст карты в игре: так ясно, к какой строке относится поле (11.11.2026).
 
 type Change = (change: (preset: MapRegexPreset) => MapRegexPreset) => void;
 
 const MODES: { value: ThresholdMode; label: string }[] = [
-  { value: "EXACT", label: "Точно" },
-  { value: "ROUNDED", label: "Округлять" },
+  { value: "EXACT", label: "Exact" },
+  { value: "ROUNDED", label: "Rounded" },
 ];
 
 const FLAG_OPTIONS = [
-  { value: "ANY", label: "Любые" },
-  { value: "INCLUDE", label: "Только" },
-  { value: "EXCLUDE", label: "Кроме" },
+  { value: "ANY", label: "Any" },
+  { value: "INCLUDE", label: "Include" },
+  { value: "EXCLUDE", label: "Exclude" },
 ];
 
 const INCLUSIONS = [
-  { value: "INCLUDE", label: "Только" },
-  { value: "EXCLUDE", label: "Кроме" },
+  { value: "INCLUDE", label: "Include" },
+  { value: "EXCLUDE", label: "Exclude" },
 ];
 
 const ROW = "flex h-7 items-center justify-between gap-2";
@@ -44,9 +44,9 @@ const MODE_SELECT = "h-7 w-[7.5rem] shrink-0";
 const of = (index: MapSearchIndex, group: MapProperty["group"], kind: MapProperty["kind"]) =>
   index.properties.filter((p) => p.group === group && p.kind === kind);
 
-/** «Качество (редкость)» внутри карточки «Качество» — просто «Редкость». */
+/** Подпись свойства, как в игре; «Quality (Rarity)» внутри карточки качества — просто «Rarity». */
 function shortLabel(property: MapProperty): string {
-  const label = propertyLabel(property);
+  const label = property.label.en;
   const inner = property.group === "QUALITY" ? /^[^(]+\((.+)\)$/.exec(label)?.[1] : undefined;
   return inner ? inner.charAt(0).toUpperCase() + inner.slice(1) : label;
 }
@@ -56,7 +56,7 @@ export function MapOptions({ preset, index, onChange }: { preset: MapRegexPreset
     <div className="grid min-h-0 flex-1 grid-cols-4 content-start gap-4">
       <ThresholdCard
         key={`yield-${preset.id}`}
-        title="Награды"
+        title="Quantity & Yield"
         rule={preset.yieldRule}
         properties={of(index, "YIELD", "NUMBER")}
         preset={preset}
@@ -65,7 +65,7 @@ export function MapOptions({ preset, index, onChange }: { preset: MapRegexPreset
       />
       <ThresholdCard
         key={`quality-${preset.id}`}
-        title="Качество"
+        title="Map Quality"
         rule={preset.qualityRule}
         properties={of(index, "QUALITY", "NUMBER")}
         preset={preset}
@@ -74,21 +74,21 @@ export function MapOptions({ preset, index, onChange }: { preset: MapRegexPreset
       />
 
       <Card>
-        <CardHeader title="Состояние" />
+        <CardHeader title="Map State" />
         <div className="flex flex-col gap-0.5 px-padding-x pb-3">
           {of(index, "STATE", "FLAG").map((property) => (
             <FlagRow key={property.id} property={property} value={preset.flags[property.id]} onChange={(v) => onChange((p) => setFlag(p, property.id, v))} />
           ))}
-          <p className="mt-3 mb-1 text-caption font-semibold tracking-caps text-text-muted uppercase">Редкость карты</p>
+          <p className="mt-3 mb-1 text-caption font-semibold tracking-caps text-text-muted uppercase">Map Rarity</p>
           {of(index, "RARITY", "FLAG").map((property) => (
             <div key={property.id} className="flex h-7 items-center text-label">
-              <Checkbox checked={preset.rarity.keys.includes(property.id)} onCheckedChange={() => onChange((p) => toggleRarity(p, property.id))} label={propertyLabel(property)} />
+              <Checkbox checked={preset.rarity.keys.includes(property.id)} onCheckedChange={() => onChange((p) => toggleRarity(p, property.id))} label={property.label.en} />
             </div>
           ))}
-          <div className={ROW} title="Ничего не отмечено — любая редкость">
-            <span className="text-label text-text-secondary">Отмеченные</span>
+          <div className={ROW} title="Nothing selected: any rarity">
+            <span className="text-label text-text-secondary">Selected</span>
             <Select
-              aria-label="Отмеченные редкости"
+              aria-label="Selected rarities"
               value={preset.rarity.mode}
               onValueChange={(mode) => onChange((p) => ({ ...p, rarity: { ...p.rarity, mode: mode as Inclusion } }))}
               options={INCLUSIONS}
@@ -100,10 +100,10 @@ export function MapOptions({ preset, index, onChange }: { preset: MapRegexPreset
 
       <Card>
         <CardHeader
-          title="Типы карт"
+          title="Map Types"
           aside={
-            <span title="Выключено — типы карт сохраняются, но в выражение не идут">
-              <Switch aria-label="Учитывать типы карт" checked={preset.useTypes} onCheckedChange={(useTypes) => onChange((p) => ({ ...p, useTypes }))} />
+            <span title="Off: map types are kept but stay out of the expression">
+              <Switch aria-label="Use map types" checked={preset.useTypes} onCheckedChange={(useTypes) => onChange((p) => ({ ...p, useTypes }))} />
             </span>
           }
         />
@@ -139,12 +139,12 @@ function ThresholdCard({
         {properties.map((property) => (
           <NumberRow key={property.id} property={property} value={preset.numbers[property.id]} onChange={(v) => onChange((p) => setNumber(p, property.id, v))} />
         ))}
-        <div className={cx(ROW, "mt-2")} title="«Округлять» — порог вниз до десятка: строка короче, условие чуть мягче">
-          <span className="text-label text-text-secondary">Порог</span>
-          <Select aria-label={`${title}: порог`} value={rule.mode} onValueChange={(mode) => onRule({ ...rule, mode: mode as ThresholdMode })} options={MODES} className={MODE_SELECT} />
+        <div className={cx(ROW, "mt-2")} title="Rounded: the threshold goes down to a ten — a shorter expression, a slightly softer bound">
+          <span className="text-label text-text-secondary">Threshold</span>
+          <Select aria-label={`${title}: threshold`} value={rule.mode} onValueChange={(mode) => onRule({ ...rule, mode: mode as ThresholdMode })} options={MODES} className={MODE_SELECT} />
         </div>
-        <div className="flex h-7 items-center text-label" title="Выключено — карта должна пройти все пороги группы">
-          <Checkbox checked={rule.any} onCheckedChange={(any) => onRule({ ...rule, any })} label="Любой из порогов" />
+        <div className="flex h-7 items-center text-label" title="Off: a map must pass every threshold of the group">
+          <Checkbox checked={rule.any} onCheckedChange={(any) => onRule({ ...rule, any })} label="Match any" />
         </div>
       </div>
     </Card>
@@ -157,7 +157,7 @@ function NumberRow({ property, value, onChange }: { property: MapProperty; value
   const trimmed = text.trim();
   const parsed = /^\d+$/.test(trimmed) ? Number(trimmed) : NaN;
   const invalid = trimmed !== "" && !(parsed >= NUMBER_MIN && parsed <= NUMBER_MAX);
-  const label = propertyLabel(property);
+  const label = property.label.en;
 
   return (
     <label className={ROW}>
@@ -166,7 +166,7 @@ function NumberRow({ property, value, onChange }: { property: MapProperty; value
       </span>
       <Input
         aria-label={label}
-        title={invalid ? `Целое число от ${NUMBER_MIN} до ${NUMBER_MAX}` : undefined}
+        title={invalid ? `Whole number ${NUMBER_MIN}–${NUMBER_MAX}` : undefined}
         inputMode="numeric"
         autoComplete="off"
         placeholder="—"
@@ -186,7 +186,7 @@ function NumberRow({ property, value, onChange }: { property: MapProperty; value
 }
 
 function FlagRow({ property, value, disabled, onChange }: { property: MapProperty; value: Inclusion | undefined; disabled?: boolean; onChange: (value: Inclusion | null) => void }) {
-  const label = propertyLabel(property);
+  const label = property.label.en;
   return (
     <div className={ROW}>
       <span className={cx("min-w-0 truncate text-label", disabled ? "text-text-disabled" : value ? "text-text-primary" : "text-text-secondary")} title={label}>
