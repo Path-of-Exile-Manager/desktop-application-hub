@@ -145,7 +145,7 @@ export function MapRegexPage() {
           {roomy && !railCollapsed ? (
             <PresetRail presets={railPresets} activeId={preset.id} index={index} actions={railActions} onCollapse={() => setView({ railCollapsed: true })} />
           ) : (
-            <PresetStrip presets={railPresets} activeId={preset.id} actions={railActions} onExpand={() => (roomy ? setView({ railCollapsed: false }) : setOverlay(true))} />
+            <PresetStrip presets={railPresets} activeId={preset.id} index={index} actions={railActions} onExpand={() => (roomy ? setView({ railCollapsed: false }) : setOverlay(true))} />
           )}
           {overlay && !roomy && (
             <>

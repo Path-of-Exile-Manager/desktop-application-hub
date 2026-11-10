@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { forwardRef, useEffect, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, ClipboardCopy, Ellipsis, Import, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Trash } from "lucide-react";
-import { Button, IconButton, Menu, Tooltip, cx, usePageSize, type MenuEntry } from "@/design-system";
+import { Button, IconButton, Menu, cx, usePageSize, type MenuEntry } from "@/design-system";
 import type { MapRegexPreset, MapSearchIndex } from "./model";
 import { DRAFT_ID } from "./store";
+import { PresetHoverCard } from "./preview";
 
 // Столбик наборов слева от вкладки (просьба пользователя 11.11.2026: переключение наборов должно быть
 // видно сразу). Раскрытый — названия и сводка; свёрнутый — полоса с буквами. Когда справа тесно
@@ -139,6 +140,7 @@ function PresetRow({ preset, active, index, actions }: { preset: MapRegexPreset;
   ];
   return (
     <li className="group relative px-1.5">
+      <PresetHoverCard preset={preset} index={index}>
       <button
         type="button"
         aria-current={active ? "true" : undefined}
@@ -148,11 +150,12 @@ function PresetRow({ preset, active, index, actions }: { preset: MapRegexPreset;
           active ? "border-accent-solid bg-accent-subtle" : "border-transparent hover:bg-bg-hover",
         )}
       >
-        <span className={cx("truncate text-body", active ? "font-semibold text-text-primary" : "text-text-primary")} title={preset.name}>
+        <span className={cx("truncate text-body", active ? "font-semibold text-text-primary" : "text-text-primary")}>
           {preset.name}
         </span>
         <span className={cx("truncate text-caption", draft ? "text-text-muted italic" : "text-text-muted")}>{summary(preset, index)}</span>
       </button>
+      </PresetHoverCard>
       <span className={cx("absolute top-1/2 right-2.5 -translate-y-1/2", active ? "opacity-100" : "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100")}>
         <Menu align="end" items={menu} trigger={<IconButton icon={Ellipsis} label={`Действия: ${preset.name}`} tooltip={false} className="size-6" iconSize={14} />} />
       </span>
@@ -164,11 +167,13 @@ function PresetRow({ preset, active, index, actions }: { preset: MapRegexPreset;
 export function PresetStrip({
   presets,
   activeId,
+  index,
   actions,
   onExpand,
 }: {
   presets: MapRegexPreset[];
   activeId: string;
+  index: MapSearchIndex | null;
   actions: RailActions;
   onExpand: () => void;
 }) {
@@ -181,9 +186,11 @@ export function PresetStrip({
       </div>
       <div ref={ref} className="flex min-h-0 w-full flex-1 flex-col items-center overflow-hidden border-t border-border-subtle py-1">
         {visible.map((preset) => (
-          <StripChip key={preset.id} label={preset.name} active={preset.id === activeId} onClick={() => actions.onSelect(preset.id)}>
-            {initials(preset.name)}
-          </StripChip>
+          <PresetHoverCard key={preset.id} preset={preset} index={index}>
+            <StripChip label={preset.name} active={preset.id === activeId} onClick={() => actions.onSelect(preset.id)}>
+              {initials(preset.name)}
+            </StripChip>
+          </PresetHoverCard>
         ))}
       </div>
       <Pager page={page} pageCount={pageCount} setPage={setPage} compact />
@@ -194,10 +201,12 @@ export function PresetStrip({
   );
 }
 
-function StripChip({ label, active, onClick, children }: { label: string; active: boolean; onClick: () => void; children: ReactNode }) {
+/** Кнопка-буква; ref и обработчики наведения приходят от HoverCard.Trigger (asChild). */
+const StripChip = forwardRef<HTMLButtonElement, { label: string; active: boolean; onClick: () => void; children: ReactNode }>(function StripChip({ label, active, onClick, children, ...rest }, ref) {
   return (
-    <Tooltip content={label} side="right">
       <button
+        ref={ref}
+        {...rest}
         type="button"
         aria-label={label}
         aria-current={active ? "true" : undefined}
@@ -209,6 +218,5 @@ function StripChip({ label, active, onClick, children }: { label: string; active
       >
         {children}
       </button>
-    </Tooltip>
   );
-}
+});
