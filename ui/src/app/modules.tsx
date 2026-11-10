@@ -1,8 +1,9 @@
 import type { ComponentType } from "react";
-import { Dices, LayoutGrid, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Dices, Eye, LayoutGrid, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
+import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
 import { SettingsPage } from "@/modules/settings/SettingsPage";
 import { DeveloperPage } from "@/modules/developer/DeveloperPage";
 import { ShowcasePage } from "@/showcase/ShowcasePage";
@@ -52,6 +53,15 @@ const PRICE_CHECK: ModuleDef = {
   keywords: "цена проверка",
 };
 
+const WATCHLIST: ModuleDef = {
+  id: "watchlist",
+  label: "Watchlist",
+  icon: Eye,
+  group: "check",
+  component: WatchlistPage,
+  keywords: "отслеживание избранное цены список",
+};
+
 const ANCIENT_ORB: ModuleDef = {
   id: "ancient-orb",
   label: "Ancient Orb",
@@ -88,7 +98,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, ANCIENT_ORB, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, ANCIENT_ORB, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])

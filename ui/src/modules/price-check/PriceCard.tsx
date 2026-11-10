@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardSection, FreshnessTag, Price, PriceChart, SegmentedControl, StatusBadge } from "@/design-system";
+import { Eye, EyeOff } from "lucide-react";
+import { Button, Card, CardHeader, CardSection, FreshnessTag, Price, PriceChart, SegmentedControl, StatusBadge, toast } from "@/design-system";
+import { addToWatchlist, findWatch, removeFromWatchlist, useWatchlist, variantLabel } from "@/app/watchlist";
+import { inTauri } from "@/app/window";
 import type { Appraisal } from "@/app/appraise";
 import { useCurrentLeague } from "@/app/leagues";
 import { formatAge, isFresh, priceHistory, toDivine, usePrices, type HistoryRange, type PriceHistory } from "@/app/prices";
@@ -11,6 +14,25 @@ function noPriceReason(appraisal: Appraisal, leagueTracked: boolean | undefined)
   if (!appraisal.catalogItem) return "Предмета нет в справочнике.";
   if (leagueTracked === false) return "По этой лиге цены не собираются — выберите в шапке лигу с ценами.";
   return "В текущей лиге на этот предмет цены нет.";
+}
+
+/** «В watchlist»: вариант — тот, чья цена показана (или самого предмета, если цены нет). */
+function WatchButton({ itemId, variantKey }: { itemId: string; variantKey: string }) {
+  const entries = useWatchlist((w) => w.entries);
+  const watched = findWatch(entries, itemId, variantKey);
+  const fail = (e: unknown) => toast({ status: "warning", title: "Watchlist не изменён", description: String(e) });
+  return (
+    <CardSection className="flex items-center gap-3">
+      <Button
+        icon={watched ? EyeOff : Eye}
+        disabled={!inTauri}
+        onClick={() => (watched ? removeFromWatchlist(watched.id) : addToWatchlist(itemId, variantKey)).catch(fail)}
+      >
+        {watched ? "Убрать из watchlist" : "В watchlist"}
+      </Button>
+      <span className="text-label text-text-secondary">{variantLabel(variantKey)}</span>
+    </CardSection>
+  );
 }
 
 /** Цена оценённого предмета: медиана, divine, надёжность, свежесть, источники и история. */
@@ -107,6 +129,7 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
           </CardSection>
         </>
       )}
+      {appraisal.catalogItem && <WatchButton itemId={appraisal.catalogItem.id} variantKey={price?.variantKey ?? appraisal.variantKey ?? ""} />}
       {appraisal.notes.length > 0 && (
         <CardSection>
           <ul className="flex flex-col gap-1 text-label text-text-secondary">

@@ -27,6 +27,7 @@ import { LeaguePicker, useLeaguesStatusSync } from "@/app/leagues";
 import { useCaptureSync } from "@/app/appraise";
 import { useAccountStatusSync } from "@/app/account";
 import { useSyncStatusSync } from "@/app/sync";
+import { useWatchlistSync } from "@/app/watchlist";
 import { pricesStatusItem, usePrices, usePricesSync, useCurrencyIcons } from "@/app/prices";
 import { useStartup } from "@/app/startup";
 import { splashVersion } from "@/app/SplashReplay";
@@ -56,6 +57,7 @@ export default function App() {
   useCaptureSync();
   useAccountStatusSync();
   useSyncStatusSync();
+  useWatchlistSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
   const game = useGameStatus();
