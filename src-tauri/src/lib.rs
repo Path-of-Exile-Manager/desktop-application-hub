@@ -20,6 +20,7 @@ mod overlay;
 mod paths;
 mod prices;
 mod server;
+mod sync;
 
 /// Что ядро сообщает интерфейсу о себе. `Serialize` позволяет отдать структуру в JS как JSON.
 #[derive(Serialize, TS)]
@@ -83,6 +84,7 @@ pub fn run() {
             leagues::start(app.handle(), &app_root);
             prices::start(app.handle(), &app_root);
             account::start(app.handle(), &app.state::<paths::AppPaths>());
+            sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
             app.manage(appraise::LastAppraisal::default());
             capture::start(app.handle(), &game::current(app.handle()));
             overlay::create(app.handle())?;
@@ -104,6 +106,13 @@ pub fn run() {
             account::account_revoke_device,
             account::account_export,
             account::account_delete,
+            sync::sync_status,
+            sync::sync_now,
+            sync::sync_resolve,
+            sync::sync_records,
+            sync::sync_put,
+            sync::sync_delete,
+            sync::sync_sort_key_between,
             server::server_check_now,
             server::server_set_url,
             api::probe::api_probe,

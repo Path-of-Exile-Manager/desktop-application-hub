@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Download, LogIn, LogOut, Monitor, Puzzle, ShieldCheck, Trash2, UserRound } from "lucide-react";
-import { Button, Card, CardHeader, CardSection, Dialog, Input, StatusBadge, toast } from "@/design-system";
+import { Download, LogIn, LogOut, Monitor, Puzzle, RefreshCw, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { Button, Card, CardHeader, CardSection, cx, Dialog, Input, StatusBadge, toast } from "@/design-system";
+import { resolveFirstSync, SYNC_STATE_LABEL, syncNow, useSync } from "@/app/sync";
 import {
   cancelLogin,
   deleteAccount,
@@ -97,6 +98,46 @@ export function AccountCard() {
   return <SignedIn />;
 }
 
+/** Синхронизация данных с аккаунтом и вопрос первого входа. */
+function SyncSection() {
+  const sync = useSync((s) => s.status);
+  if (!sync) return null;
+  const total = Object.values(sync.counts).reduce((a, b) => a + b, 0);
+
+  if (sync.state === "needsChoice") {
+    return (
+      <CardSection className="flex flex-col gap-2">
+        <p className="text-body font-semibold text-text-primary">Что сделать с данными на этом компьютере?</p>
+        <p className="text-label text-text-secondary">
+          В аккаунте уже есть записи ({sync.accountRecords ?? 0}), и здесь тоже ({total}): закладки, история, пины, список отслеживания.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="primary" onClick={() => resolveFirstSync("merge").catch(fail("Не удалось"))}>
+            Объединить
+          </Button>
+          <Button onClick={() => resolveFirstSync("replace").catch(fail("Не удалось"))}>Заменить данными аккаунта</Button>
+        </div>
+        <p className="text-caption text-text-secondary">«Заменить» удалит здешние записи, которых нет в аккаунте.</p>
+      </CardSection>
+    );
+  }
+
+  return (
+    <CardSection className="flex items-center gap-3">
+      <RefreshCw aria-hidden className={cx("size-4 shrink-0 text-text-secondary", sync.state === "syncing" && "animate-spin")} />
+      <p className="min-w-0 flex-1 text-label text-text-secondary">
+        Синхронизация: {SYNC_STATE_LABEL[sync.state]}
+        {sync.pending > 0 && ` · ждут отправки: ${sync.pending}`}
+        {sync.lastSyncedAt && sync.state === "idle" && ` · ${new Date(sync.lastSyncedAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`}
+        {sync.error && sync.state !== "idle" && ` · ${sync.error}`}
+      </p>
+      <Button variant="ghost" className="h-7 text-label" disabled={sync.state === "syncing"} onClick={() => void syncNow()}>
+        Сейчас
+      </Button>
+    </CardSection>
+  );
+}
+
 function SignedIn() {
   const status = useAccount((a) => a.status);
   const [profile, setProfile] = useState<AccountProfile | null>(null);
@@ -142,6 +183,9 @@ function SignedIn() {
           <p className="text-label text-status-warning-fg">{error}</p>
         </CardSection>
       )}
+
+      <SyncSection />
+
 
       <CardSection className="flex flex-col gap-2">
         <span className="text-label text-text-secondary">Устройства, где выполнен вход</span>

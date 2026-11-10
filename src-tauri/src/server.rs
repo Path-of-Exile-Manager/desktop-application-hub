@@ -227,6 +227,9 @@ fn watch(app: AppHandle, wake: Receiver<()>) {
                     if let Some(account) = app.try_state::<crate::account::AccountService>() {
                         account.wake();
                     }
+                    if let Some(sync) = app.try_state::<crate::sync::SyncService>() {
+                        sync.wake_now();
+                    }
                 }
                 publish(&app, status);
                 interval

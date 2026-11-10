@@ -178,7 +178,7 @@ fn now_ms() -> u64 {
 }
 
 /// ISO-время сервера в UTC (`2026-11-10T18:00:00.000Z`) → мс с эпохи.
-fn parse_iso_ms(text: &str) -> Option<u64> {
+pub(crate) fn parse_iso_ms(text: &str) -> Option<u64> {
     let b = text.as_bytes();
     let num = |from: usize, len: usize| -> Option<i64> { text.get(from..from + len)?.parse().ok() };
     if b.len() < 20 || b[4] != b'-' || b[10] != b'T' {
@@ -279,8 +279,9 @@ fn store_session(app: &AppHandle, session: Session) -> Result<String, String> {
         .map_err(|e| format!("не удалось сохранить вход в хранилище учётных данных: {e}"))?;
     let service = app.state::<AccountService>();
     let expires = parse_iso_ms(&session.access_token_expires_at).unwrap_or_else(|| now_ms() + 14 * 60 * 1000);
-    {
+    let signed_in_now = {
         let mut inner = service.inner.lock().unwrap();
+        let was = inner.status.state == AccountState::SignedIn && inner.status.user.is_some();
         inner.access = Some((session.access_token.clone(), expires));
         inner.status = AccountStatus {
             state: AccountState::SignedIn,
@@ -290,10 +291,16 @@ fn store_session(app: &AppHandle, session: Session) -> Result<String, String> {
             offline: false,
             message: None,
         };
-    }
+        !was
+    };
     service.save_cache(Some(&session.user), Some(&session.refresh_token_expires_at));
     service.wake();
     publish(app);
+    // Вход (или первый обмен после запуска) — синхронизировать данные сразу.
+    if signed_in_now
+        && let Some(sync) = app.try_state::<crate::sync::SyncService>() {
+            sync.wake_now();
+        }
     Ok(session.access_token)
 }
 
@@ -311,6 +318,9 @@ fn sign_out_local(app: &AppHandle, message: Option<String>) {
     }
     let _ = std::fs::remove_file(&service.cache_path);
     publish(app);
+    if let Some(sync) = app.try_state::<crate::sync::SyncService>() {
+        sync.wake_now();
+    }
 }
 
 enum RefreshError {
@@ -373,15 +383,34 @@ fn access_token(app: &AppHandle) -> Result<String, String> {
     }
 }
 
+/// Почему запрос с входом не удался.
+pub(crate) enum SignedInError {
+    /// Нет входа, вход больше не действует или нет связи для обмена токена — словами.
+    Auth(String),
+    /// Ответ сервера: коды в `errors`.
+    Api(ApiError),
+}
+
+impl SignedInError {
+    pub(crate) fn message(&self) -> String {
+        match self {
+            Self::Auth(message) => message.clone(),
+            Self::Api(e) => describe(e),
+        }
+    }
+}
+
 /// Запрос к маршруту, где нужен вход: с access-токеном, а на 401 `-600008` — обмен и один повтор.
-fn send_signed_in<T: DeserializeOwned>(app: &AppHandle, call: impl Fn() -> Call) -> Result<T, String> {
-    let token = access_token(app)?;
+pub(crate) fn send_signed_in_raw<T: DeserializeOwned>(app: &AppHandle, call: impl Fn() -> Call) -> Result<T, SignedInError> {
+    let token = access_token(app).map_err(SignedInError::Auth)?;
     let api = api(app);
     let reply = match api.send::<T>(call().bearer(&token)) {
         Err(e) if e.has(ApiCode::AccessTokenRequired) => {
-            let token = refresh(app, Some(&token)).map_err(|e| match e {
-                RefreshError::SignedOut(message) => message,
-                RefreshError::Network => "нет связи с сервером".into(),
+            let token = refresh(app, Some(&token)).map_err(|e| {
+                SignedInError::Auth(match e {
+                    RefreshError::SignedOut(message) => message,
+                    RefreshError::Network => "нет связи с сервером".into(),
+                })
             })?;
             api.send::<T>(call().bearer(&token))
         }
@@ -389,9 +418,13 @@ fn send_signed_in<T: DeserializeOwned>(app: &AppHandle, call: impl Fn() -> Call)
     };
     match reply {
         Ok(Reply::Fresh { value, .. }) => Ok(value),
-        Ok(Reply::NotModified { .. }) => Err("сервер ответил 304 без запроса".into()),
-        Err(e) => Err(describe(&e)),
+        Ok(Reply::NotModified { .. }) => Err(SignedInError::Auth("сервер ответил 304 без запроса".into())),
+        Err(e) => Err(SignedInError::Api(e)),
     }
+}
+
+fn send_signed_in<T: DeserializeOwned>(app: &AppHandle, call: impl Fn() -> Call) -> Result<T, String> {
+    send_signed_in_raw(app, call).map_err(|e| e.message())
 }
 
 /// Ошибка входа — словами.

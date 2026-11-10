@@ -26,6 +26,7 @@ import {
 } from "@/design-system";
 import { appraiseClipboard, appraiseText, SAMPLE_ITEMS, useAppraisal } from "@/app/appraise";
 import { useCurrentLeague, useLeagues } from "@/app/leagues";
+import { deleteRecord, listRecords, putRecord, sortKeyBetween, SYNC_STATE_LABEL, syncNow, useSync, type SyncCollection } from "@/app/sync";
 import { formatAge, isFresh, priceHistory, priceVariants, refreshPrices, toDivine, usePrices, type HistoryRange, type Price as LeaguePrice, type PriceHistory } from "@/app/prices";
 import { checkDatasetNow, iconUrl, itemName, searchCatalog, useDataset, type CatalogItem } from "@/app/dataset";
 import { appInfo, describeApiError, probeApi, type AppInfo, type ProbeMethod, type ProbeResult } from "@/app/api";
@@ -63,6 +64,7 @@ function engine(): string {
  * Режим разработки — инструменты разработчика. Видна, только пока в Настройках
  * включён «Режим разработчика» (`developerMode` в app/store.ts).
  * Раздел «Общее»: адрес сервера, окружение, сырые данные ядра и действия для отладки.
+ * Раздел «Синхронизация»: user.db, состояние движка, записи коллекций, отвергнутые сервером.
  * Раздел «Предмет»: оценка текста предмета — разбор, справочник, ключ варианта, цена.
  * Раздел «Цены»: прайс текущей лиги, варианты предмета с ценами и история.
  * Раздел «Справочник»: состояние набора данных, поиск по нему и иконки.
@@ -70,9 +72,9 @@ function engine(): string {
  * Раздел «Discord»: Rich Presence — переключатели статуса и журнал обмена с клиентом Discord.
  * Служебная страница: блок сырых данных может прокручиваться.
  */
-type Section = "general" | "api" | "catalog" | "prices" | "item" | "discord";
+type Section = "general" | "api" | "catalog" | "prices" | "item" | "sync" | "discord";
 
-const SECTIONS: readonly Section[] = ["general", "api", "catalog", "prices", "item", "discord"];
+const SECTIONS: readonly Section[] = ["general", "api", "catalog", "prices", "item", "sync", "discord"];
 
 /** Раздел можно открыть сразу: `?section=api` (для скриншотов). */
 const INITIAL_SECTION: Section = SECTIONS.find((s) => s === new URLSearchParams(location.search).get("section")) ?? "general";
@@ -95,6 +97,7 @@ export function DeveloperPage() {
             { value: "catalog", label: "Справочник" },
             { value: "prices", label: "Цены" },
             { value: "item", label: "Предмет" },
+            { value: "sync", label: "Синхронизация" },
             { value: "discord", label: "Discord" },
           ]}
         />
@@ -117,6 +120,8 @@ export function DeveloperPage() {
         <PricesProbe />
       ) : section === "item" ? (
         <ItemProbe />
+      ) : section === "sync" ? (
+        <SyncProbe />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
           <DiscordCard />
@@ -508,6 +513,128 @@ function ApiProbe() {
 }
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
+
+const SYNC_COLLECTIONS: SyncCollection[] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings"];
+
+/** Синхронизация: user.db, состояние движка, записи коллекций, отвергнутые сервером, тестовые записи. */
+function SyncProbe() {
+  const status = useSync((s) => s.status);
+  const [collection, setCollection] = useState<SyncCollection>("folders");
+  const [records, setRecords] = useState<Record<string, unknown>[]>([]);
+  const [failure, setFailure] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!inTauri) return;
+    listRecords(collection).then(setRecords, (e) => setFailure(String(e)));
+  }, [collection, status?.counts, status?.revision, status?.pending]);
+
+  const guard = (action: () => Promise<unknown>) => () => {
+    setFailure(null);
+    action().catch((e) => setFailure(String(e)));
+  };
+
+  async function addFolder() {
+    const folders = await listRecords<{ sortKey: string }>("folders");
+    const last = folders.map((f) => f.sortKey).sort().at(-1) ?? null;
+    await putRecord("folders", { title: `Папка ${new Date().toLocaleTimeString("ru-RU")}`, icon: "folder", archivedAt: null, sortKey: await sortKeyBetween(last, null) });
+  }
+
+  async function addBookmark() {
+    const folders = await listRecords<{ id: string }>("folders");
+    if (!folders.length) throw new Error("сначала создайте папку");
+    await putRecord("bookmarks", { folderId: folders[0].id, title: "Headhunter", tradeType: "SEARCH", slug: "Ab12Cd34", completedAt: null, sortKey: await sortKeyBetween(null, null) });
+  }
+
+  return (
+    <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
+        <Card>
+          <CardHeader title="Синхронизация" aside={status && <StatusBadge status={status.state === "idle" ? "success" : status.state === "error" ? "danger" : status.state === "syncing" ? "info" : "warning"}>{status.state}</StatusBadge>} />
+          <CardSection>
+            <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-label">
+              <Fact label="Состояние">{status ? SYNC_STATE_LABEL[status.state] : "—"}</Fact>
+              <Fact label="Ревизия">{status?.revision ?? "—"}</Fact>
+              <Fact label="Ждут отправки">{status?.pending ?? "—"}</Fact>
+              <Fact label="Последняя">{status?.lastSyncedAt ? new Date(status.lastSyncedAt).toLocaleTimeString("ru-RU") : "—"}</Fact>
+              {status?.accountRecords != null && <Fact label="В аккаунте">{status.accountRecords}</Fact>}
+              {status?.error && <Fact label="Ошибка">{status.error}</Fact>}
+            </dl>
+          </CardSection>
+          <CardSection className="flex flex-wrap gap-2">
+            <Button icon={RefreshCw} onClick={guard(syncNow)} disabled={!inTauri || status?.state === "syncing"}>
+              Синхронизировать
+            </Button>
+            <Button onClick={guard(addFolder)} disabled={!inTauri}>
+              + папка
+            </Button>
+            <Button onClick={guard(addBookmark)} disabled={!inTauri}>
+              + закладка
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={guard(() => putRecord("watchlist", { itemId: "base:NoSuchItem", variantKey: "", leagueId: null, note: "проверка отказа", addedAt: new Date().toISOString() }))}
+              disabled={!inTauri}
+            >
+              + запись с чужим itemId
+            </Button>
+          </CardSection>
+          {failure && (
+            <CardSection>
+              <p className="text-label text-status-danger-fg">{failure}</p>
+            </CardSection>
+          )}
+        </Card>
+        {status && status.rejected.length > 0 && (
+          <Card>
+            <CardHeader title="Отвергнуты сервером" aside={status.rejected.length} />
+            <CardSection className="flex flex-col gap-1.5">
+              {status.rejected.map((r) => (
+                <p key={`${r.collection}:${r.id}`} className="text-label">
+                  <span className="font-mono text-text-secondary">
+                    {r.collection}/{r.id}
+                  </span>{" "}
+                  — {r.reason}
+                </p>
+              ))}
+            </CardSection>
+          </Card>
+        )}
+      </div>
+
+      <Card className="col-span-2 max-h-full min-h-0 min-w-0 self-stretch">
+        <CardHeader
+          title="Записи user.db"
+          aside={
+            <SegmentedControl<SyncCollection>
+              aria-label="Коллекция"
+              value={collection}
+              onValueChange={setCollection}
+              options={SYNC_COLLECTIONS.map((c) => ({ value: c, label: `${c} ${status?.counts[c] ?? 0}` }))}
+            />
+          }
+        />
+        <CardSection className="min-h-0 flex-1 overflow-auto">
+          {records.length === 0 ? (
+            <p className="text-caption text-text-secondary">пусто</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {records.map((r) => (
+                <li key={String(r.id)} className="flex items-start gap-2 rounded-md border border-border-subtle p-2">
+                  <pre className="min-w-0 flex-1 font-mono text-caption whitespace-pre-wrap text-text-secondary">{JSON.stringify(r, null, 1)}</pre>
+                  {collection !== "settings" && (
+                    <Button variant="ghost" className="h-7 text-label" onClick={guard(() => deleteRecord(collection, String(r.id)))}>
+                      Удалить
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardSection>
+      </Card>
+    </div>
+  );
+}
 
 /** Оценка текста предмета: разбор, запись справочника, ключ варианта и цена (ядро, `item_appraise`). */
 function ItemProbe() {
