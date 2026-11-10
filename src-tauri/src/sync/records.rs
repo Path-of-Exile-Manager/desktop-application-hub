@@ -3,6 +3,8 @@
 //! сервер отвергнет, не уходит из приложения. Запись хранится в том виде, что вернул `check`:
 //! лишние поля отброшены, необязательные заданы явно.
 
+use std::collections::{BTreeMap, BTreeSet};
+
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -10,7 +12,7 @@ use serde_json::{Map, Value};
 use crate::account::parse_iso_ms;
 
 /// Коллекции в порядке отправки: папки раньше закладок.
-pub const COLLECTIONS: [&str; 6] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings"];
+pub const COLLECTIONS: [&str; 7] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets"];
 
 const MAX_JSON_BYTES: usize = 64 * 1024;
 
@@ -92,6 +94,109 @@ struct Settings {
     id: String,
     data: Map<String, Value>,
     schema_version: u32,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum GameLanguage {
+    En,
+    Ru,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum WantMode {
+    Any,
+    All,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum ModChoice {
+    Avoid,
+    Want,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum Inclusion {
+    Include,
+    Exclude,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum ThresholdMode {
+    Exact,
+    Rounded,
+}
+
+#[derive(Serialize, Deserialize)]
+struct ThresholdRule {
+    mode: ThresholdMode,
+    any: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Rarity {
+    keys: Vec<String>,
+    mode: Inclusion,
+}
+
+/// Набор вкладки «RegEx карт» (`packages/domain/src/sync/map-regex-preset.ts`). Ключи модов и
+/// свойств проверяются только по формату: семейство, пропавшее из игры, остаётся в наборе.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct MapRegexPreset {
+    id: String,
+    name: String,
+    lang: GameLanguage,
+    want_mode: WantMode,
+    mods: BTreeMap<String, ModChoice>,
+    numbers: BTreeMap<String, u32>,
+    flags: BTreeMap<String, Inclusion>,
+    rarity: Rarity,
+    yield_rule: ThresholdRule,
+    quality_rule: ThresholdRule,
+    use_types: bool,
+    sort_key: String,
+    created_at: String,
+}
+
+/// Больше, чем модов (~125) и свойств (~24) карт в игре.
+const MAX_PRESET_MODS: usize = 500;
+const MAX_PRESET_PROPERTIES: usize = 100;
+const MAX_PRESET_KEY: usize = 200;
+
+/// `map:<…>` — ключ семейства мода карты.
+fn map_mod_key(key: &str) -> bool {
+    key.len() > 4 && key.len() <= MAX_PRESET_KEY && key.starts_with("map:")
+}
+
+/// `quantity`, `quality-pack-size`, `type-shaper`: слова из a-z0-9 через «-».
+fn map_property_key(key: &str) -> bool {
+    key.len() <= MAX_PRESET_KEY && key.split('-').all(|part| !part.is_empty() && part.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit()))
+}
+
+fn check_map_regex_preset(r: &MapRegexPreset) -> Result<(), String> {
+    record_id("id", &r.id)?;
+    text("name", &r.name, 40)?;
+    if r.mods.len() > MAX_PRESET_MODS || !r.mods.keys().all(|k| map_mod_key(k)) {
+        return Err("mods: ключи — map:…, не больше 500".into());
+    }
+    if r.numbers.len() > MAX_PRESET_PROPERTIES || !r.numbers.iter().all(|(k, v)| map_property_key(k) && (1..=9999).contains(v)) {
+        return Err("numbers: ключи свойств, пороги — целые 1–9999".into());
+    }
+    if r.flags.len() > MAX_PRESET_PROPERTIES || !r.flags.keys().all(|k| map_property_key(k)) {
+        return Err("flags: ключи свойств".into());
+    }
+    let distinct: BTreeSet<&String> = r.rarity.keys.iter().collect();
+    if r.rarity.keys.len() > MAX_PRESET_PROPERTIES || distinct.len() != r.rarity.keys.len() || !r.rarity.keys.iter().all(|k| map_property_key(k)) {
+        return Err("rarity: разные ключи свойств".into());
+    }
+    sort_key(&r.sort_key)?;
+    date("createdAt", &r.created_at)?;
+    json_size("набор", r)
 }
 
 fn record_id(field: &str, id: &str) -> Result<(), String> {
@@ -214,6 +319,11 @@ pub fn check(collection: &str, value: Value) -> Result<Value, String> {
                 return Err("schemaVersion: от 1".into());
             }
             json_size("data", &r.data)?;
+            serde_json::to_value(r)
+        }
+        "mapRegexPresets" => {
+            let r: MapRegexPreset = parse(value)?;
+            check_map_regex_preset(&r)?;
             serde_json::to_value(r)
         }
         other => return Err(format!("нет коллекции «{other}»")),
