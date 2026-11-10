@@ -146,6 +146,7 @@ export function ModColumn({
   index,
   view,
   onToggle,
+  onClear,
 }: {
   side: ModChoice;
   title: string;
@@ -154,6 +155,8 @@ export function ModColumn({
   index: MapSearchIndex;
   view: ColumnView;
   onToggle: (modId: string) => void;
+  /** Снять все отметки колонки. */
+  onClear: () => void;
 }) {
   const lang = preset.lang;
   const [query, setQuery] = useState("");
@@ -192,7 +195,14 @@ export function ModColumn({
             <Badge tone={count ? "neutral" : "muted"}>{count}</Badge>
           </span>
         }
-        aside={aside}
+        aside={
+          <>
+            <Button variant="ghost" icon={X} className="h-7 px-2 text-label" disabled={!count} onClick={onClear} title={`Снять все отметки в колонке «${title}»`}>
+              Снять все
+            </Button>
+            {aside}
+          </>
+        }
       />
       <div className="px-padding-x pb-2">
         <SearchInput value={query} onValueChange={setQuery} label={`Поиск: ${title.toLowerCase()}`} placeholder="Поиск мода" />

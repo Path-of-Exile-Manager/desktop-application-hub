@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useState } from "react";
 import { CloudDownload, LoaderCircle, Monitor, RefreshCw, TriangleAlert, type LucideIcon } from "lucide-react";
 import { Button, Chip, EmptyState, Page, SegmentedControl, Select, toast } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
-import { activeOptions, applyParsed, dropKeys, resetAll, resetChoices, staleKeys, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
+import { activeOptions, applyParsed, clearSide, dropKeys, resetAll, resetChoices, staleKeys, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
 import { ExpressionCard, ModColumn, StaleBanner } from "./parts";
 import { MapOptions } from "./options";
@@ -197,7 +197,7 @@ export function MapRegexPage() {
             <MapOptions preset={preset} index={index} onChange={change} />
           ) : (
             <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
-              <ModColumn side="AVOID" title="Исключить" preset={preset} index={index} view={view} onToggle={toggle("AVOID")} />
+              <ModColumn side="AVOID" title="Исключить" preset={preset} index={index} view={view} onToggle={toggle("AVOID")} onClear={() => change((p) => clearSide(p, "AVOID", index))} />
               <ModColumn
                 side="WANT"
                 title="Нужные"
@@ -205,6 +205,7 @@ export function MapRegexPage() {
                 index={index}
                 view={view}
                 onToggle={toggle("WANT")}
+                onClear={() => change((p) => clearSide(p, "WANT", index))}
                 aside={
                   <Select
                     aria-label="Совпадение нужных модов"

@@ -162,6 +162,11 @@ export function humanizeKey(key: string): string {
   return nightmare ? `${words} (Nightmare)` : words;
 }
 
+/** «Снять все» в колонке: убрать отметки одной стороны у модов из набора данных (пропавшие — у баннера). */
+export function clearSide(preset: MapRegexPreset, choice: ModChoice, index: MapSearchIndex): MapRegexPreset {
+  return { ...preset, mods: Object.fromEntries(Object.entries(preset.mods).filter(([id, c]) => c !== choice || !index.modById.has(id))) };
+}
+
 /** «Сбросить выбор»: только моды, параметры карт остаются. */
 export function resetChoices(preset: MapRegexPreset): MapRegexPreset {
   return { ...preset, mods: {} };
