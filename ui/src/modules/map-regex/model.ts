@@ -116,6 +116,17 @@ export function normalizePreset(raw: unknown): MapRegexPreset | null {
   };
 }
 
+/** «Сбросить выбор»: только моды, параметры карт остаются. */
+export function resetChoices(preset: MapRegexPreset): MapRegexPreset {
+  return { ...preset, mods: {} };
+}
+
+/** «Сбросить всё»: моды и параметры карт; имя, язык и режим нужных модов остаются. */
+export function resetAll(preset: MapRegexPreset): MapRegexPreset {
+  const { lang: _lang, wantMode: _wantMode, ...cleared } = presetDefaults();
+  return { ...preset, ...cleared };
+}
+
 /** Отметить мод в колонке; повторная отметка снимает. Мод бывает только в одной колонке. */
 export function toggleMod(preset: MapRegexPreset, modId: string, choice: ModChoice): MapRegexPreset {
   const mods = { ...preset.mods };

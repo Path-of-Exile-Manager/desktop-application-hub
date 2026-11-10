@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { toast } from "@/design-system";
-import { listRecords, putRecord, sortKeyBetween, useSync } from "@/app/sync";
+import { deleteRecord, listRecords, putRecord, sortKeyBetween, useSync } from "@/app/sync";
 import { inTauri } from "@/app/window";
-import { DEFAULT_NAME, normalizePreset, presetDefaults, type MapRegexPreset } from "./model";
+import { DEFAULT_NAME, normalizePreset, presetDefaults, type GameLang, type MapRegexPreset } from "./model";
 
 // Наборы вкладки «RegEx карт» — коллекция `mapRegexPresets` в user.db, с аккаунтом синхронизируется
 // между устройствами. Правка видна сразу, а пишется в базу с задержкой: серия кликов — одна запись.
@@ -121,6 +121,34 @@ async function save(id: string): Promise<void> {
     }
   } catch (e) {
     toast({ status: "danger", title: "Набор не сохранён", description: String(e) });
+  }
+}
+
+/** Новый пустой набор в конце списка; язык — как у текущего (язык клиента игры у пользователя один). */
+export async function createPreset(name: string, lang: GameLang): Promise<void> {
+  if (!inTauri) return;
+  try {
+    const last = useMapRegexPresets.getState().presets?.at(-1)?.sortKey ?? null;
+    const sortKey = await sortKeyBetween(last, null);
+    const saved = normalizePreset(await putRecord(COLLECTION, { ...presetDefaults(), name, lang, sortKey, createdAt: new Date().toISOString() }));
+    if (!saved) return;
+    useMapRegexPresets.setState((s) => ({ presets: [...(s.presets ?? []), saved].sort(bySortKey) }));
+    useMapRegexView.getState().setActivePreset(saved.id);
+  } catch (e) {
+    toast({ status: "danger", title: "Набор не создан", description: String(e) });
+  }
+}
+
+/** Удалить набор. Удалили последний — на экране снова черновик. Черновик не удаляется: его нет в базе. */
+export async function deletePreset(id: string): Promise<void> {
+  if (id === DRAFT_ID || !inTauri) return;
+  clearTimeout(pending.get(id));
+  pending.delete(id);
+  try {
+    await deleteRecord(COLLECTION, id);
+    useMapRegexPresets.setState((s) => ({ presets: (s.presets ?? []).filter((p) => p.id !== id) }));
+  } catch (e) {
+    toast({ status: "danger", title: "Набор не удалён", description: String(e) });
   }
 }
 

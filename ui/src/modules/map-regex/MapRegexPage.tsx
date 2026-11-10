@@ -1,18 +1,21 @@
 import { useMemo, useState } from "react";
-import { CloudDownload, LoaderCircle, Monitor, RefreshCw, TriangleAlert, type LucideIcon } from "lucide-react";
-import { Button, Chip, EmptyState, Page, SegmentedControl, Select, toast } from "@/design-system";
+import { CloudDownload, Ellipsis, LoaderCircle, Monitor, Pencil, Plus, RefreshCw, Trash, TriangleAlert, type LucideIcon } from "lucide-react";
+import { Button, Chip, EmptyState, IconButton, Menu, Page, SegmentedControl, Select, toast, type MenuEntry } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
-import { activeOptions, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
+import { activeOptions, resetAll, resetChoices, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
 import { ExpressionCard, ModColumn } from "./parts";
 import { MapOptions } from "./options";
-import { DRAFT_ID, updatePreset, useActivePreset, useMapRegexPresets, useMapRegexView, usePresetsSync } from "./store";
+import { ConfirmDialog, PresetDialog } from "./dialogs";
+import { createPreset, deletePreset, DRAFT_ID, updatePreset, useActivePreset, useMapRegexPresets, useMapRegexView, usePresetsSync } from "./store";
 import { useMapSearch } from "./useMapSearch";
 
 const LANGS: { value: GameLang; label: string }[] = [
   { value: "RU", label: "RU" },
   { value: "EN", label: "EN" },
 ];
+
+type OpenDialog = { kind: "new" } | { kind: "rename" } | { kind: "delete" } | { kind: "reset-all" } | null;
 
 const WANT_MODES = [
   { value: "ANY", label: "Любой" },
@@ -56,6 +59,19 @@ export function MapRegexPage() {
     }
   };
 
+  const [dialog, setDialog] = useState<OpenDialog>(null);
+  const close = () => setDialog(null);
+  const isDraft = preset.id === DRAFT_ID;
+  const hasChoices = Object.keys(preset.mods).length > 0;
+  const hasOptions = JSON.stringify(resetAll(preset)) !== JSON.stringify(resetChoices(preset));
+
+  const menu: MenuEntry[] = [
+    { label: "Новый набор", icon: Plus, onSelect: () => setDialog({ kind: "new" }) },
+    { label: "Переименовать", icon: Pencil, onSelect: () => setDialog({ kind: "rename" }) },
+    { type: "separator" },
+    { label: "Удалить набор", icon: Trash, disabled: isDraft, onSelect: () => setDialog({ kind: "delete" }) },
+  ];
+
   const options = (presets?.length ? presets : [preset]).map((p) => ({ value: p.id, label: p.name, hint: p.id === DRAFT_ID ? "не сохранён" : undefined }));
 
   return (
@@ -65,10 +81,11 @@ export function MapRegexPage() {
       actions={
         <>
           <Select aria-label="Набор" value={preset.id} onValueChange={setActivePreset} options={options} className="w-48" disabled={!presets} />
+          <Menu align="end" items={menu} trigger={<IconButton icon={Ellipsis} label="Действия с набором" disabled={!presets} />} />
           <SegmentedControl
             aria-label="Язык клиента игры"
             value={preset.lang}
-            onValueChange={(lang) => updatePreset(preset.id, (p) => ({ ...p, lang }))}
+            onValueChange={(lang) => change((p) => ({ ...p, lang }))}
             options={LANGS}
           />
         </>
@@ -76,7 +93,14 @@ export function MapRegexPage() {
     >
       {search.status === "ready" && expression && index && presets ? (
         <>
-          <ExpressionCard expression={expression} index={index} lang={preset.lang} onCopy={() => void copy()} />
+          <ExpressionCard
+            expression={expression}
+            index={index}
+            lang={preset.lang}
+            onCopy={() => void copy()}
+            onResetChoices={hasChoices ? () => change(resetChoices) : null}
+            onResetAll={hasChoices || hasOptions ? () => setDialog({ kind: "reset-all" }) : null}
+          />
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <SegmentedControl
@@ -131,6 +155,27 @@ export function MapRegexPage() {
         </>
       ) : (
         <NotReady state={search.status === "ready" ? { status: "loading" } : search} />
+      )}
+
+      {dialog?.kind === "new" && <PresetDialog name={null} onSave={(name) => void createPreset(name, preset.lang)} onClose={close} />}
+      {dialog?.kind === "rename" && <PresetDialog name={preset.name} onSave={(name) => change((p) => ({ ...p, name }))} onClose={close} />}
+      {dialog?.kind === "delete" && (
+        <ConfirmDialog
+          title={`Удалить набор «${preset.name}»?`}
+          description={presets && presets.length > 1 ? "Набор удалится на всех устройствах вашего аккаунта." : "Это последний набор: на вкладке останется пустой «Мой первый набор»."}
+          confirmLabel="Удалить набор"
+          onConfirm={() => void deletePreset(preset.id)}
+          onClose={close}
+        />
+      )}
+      {dialog?.kind === "reset-all" && (
+        <ConfirmDialog
+          title="Сбросить всё?"
+          description={`Снимутся отметки модов и все параметры карт набора «${preset.name}». Название и язык игры останутся.`}
+          confirmLabel="Сбросить всё"
+          onConfirm={() => change(resetAll)}
+          onClose={close}
+        />
       )}
     </Page>
   );

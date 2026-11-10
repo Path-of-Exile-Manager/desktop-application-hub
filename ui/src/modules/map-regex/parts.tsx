@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Check, Copy, SearchX } from "lucide-react";
+import { Check, Copy, Eraser, RotateCcw, SearchX } from "lucide-react";
 import {
   AffixBadge,
   Badge,
@@ -16,7 +16,22 @@ import {
 import { describeIssue, modText, searchKey, type GameLang, type MapRegexPreset, type MapSearchIndex, type MapSearchMod, type ModChoice } from "./model";
 import { EXPRESSION_MAX, isError, type Expression } from "./regex";
 
-export function ExpressionCard({ expression, index, lang, onCopy }: { expression: Expression; index: MapSearchIndex; lang: GameLang; onCopy: () => void }) {
+export function ExpressionCard({
+  expression,
+  index,
+  lang,
+  onCopy,
+  onResetChoices,
+  onResetAll,
+}: {
+  expression: Expression;
+  index: MapSearchIndex;
+  lang: GameLang;
+  onCopy: () => void;
+  /** `null` — сбрасывать нечего. */
+  onResetChoices: (() => void) | null;
+  onResetAll: (() => void) | null;
+}) {
   const { text, issues } = expression;
   const tooLong = text.length > EXPRESSION_MAX;
   // Одна строка — самая важная проблема; остальные в подсказке: блок не отнимает место у списков.
@@ -29,9 +44,17 @@ export function ExpressionCard({ expression, index, lang, onCopy }: { expression
       <CardHeader
         title="Готовое выражение"
         aside={
-          <span className={cx("font-mono", tooLong ? "font-semibold text-status-danger-fg" : "text-text-secondary")}>
-            {text.length} / {EXPRESSION_MAX}
-          </span>
+          <>
+            <Button variant="ghost" icon={Eraser} className="h-7 text-label" disabled={!onResetChoices} onClick={() => onResetChoices?.()} title="Снять отметки модов; параметры карт остаются">
+              Сбросить выбор
+            </Button>
+            <Button variant="ghost" icon={RotateCcw} className="h-7 text-label" disabled={!onResetAll} onClick={() => onResetAll?.()} title="Моды и параметры карт">
+              Сбросить всё
+            </Button>
+            <span className={cx("ml-2 font-mono", tooLong ? "font-semibold text-status-danger-fg" : "text-text-secondary")}>
+              {text.length} / {EXPRESSION_MAX}
+            </span>
+          </>
         }
       />
       <div className="flex flex-col gap-2 px-padding-x pb-3">
