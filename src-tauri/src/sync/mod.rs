@@ -13,6 +13,7 @@
 //! связи. Первый вход: если и в аккаунте, и здесь есть данные — спросить «Объединить» или «Заменить».
 //! Настройки (`settings`) движок принимает с сервера, но десктоп их пока не отправляет (8.6).
 
+pub mod bridge;
 mod records;
 mod sort_key;
 mod store;
@@ -281,29 +282,40 @@ fn pull(app: &AppHandle, since: i64) -> Result<Pull, Failure> {
 
 fn apply(app: &AppHandle, pull: &Pull) -> Result<(), Failure> {
     let service = app.state::<SyncService>();
-    let store = service.store.lock().unwrap();
-    if pull.full {
-        let records: Vec<(String, String, Value)> = pull
-            .upserts
-            .iter()
-            .flat_map(|(c, list)| list.iter().filter_map(move |v| records::id_of(v).map(|id| (c.clone(), id.to_string(), v.clone()))))
-            .collect();
-        store.replace_clean(&records).map_err(Failure::Error)?;
-    } else {
-        for (collection, list) in &pull.upserts {
-            for value in list {
-                if let Some(id) = records::id_of(value) {
-                    store.apply_upsert(collection, id, value).map_err(Failure::Error)?;
+    // Изменились ли данные, которые видит расширение: тогда отправить ему новый снимок.
+    let mut bridge_changed = false;
+    {
+        let store = service.store.lock().unwrap();
+        if pull.full {
+            let records: Vec<(String, String, Value)> = pull
+                .upserts
+                .iter()
+                .flat_map(|(c, list)| list.iter().filter_map(move |v| records::id_of(v).map(|id| (c.clone(), id.to_string(), v.clone()))))
+                .collect();
+            store.replace_clean(&records).map_err(Failure::Error)?;
+            bridge_changed = true;
+        } else {
+            for (collection, list) in &pull.upserts {
+                for value in list {
+                    if let Some(id) = records::id_of(value) {
+                        let changed = store.apply_upsert(collection, id, value).map_err(Failure::Error)?;
+                        bridge_changed |= changed && bridge::COLLECTIONS.contains(&collection.as_str());
+                    }
+                }
+            }
+            for (collection, ids) in &pull.deletes {
+                for id in ids {
+                    let changed = store.apply_delete(collection, id).map_err(Failure::Error)?;
+                    bridge_changed |= changed && bridge::COLLECTIONS.contains(&collection.as_str());
                 }
             }
         }
-        for (collection, ids) in &pull.deletes {
-            for id in ids {
-                store.apply_delete(collection, id).map_err(Failure::Error)?;
-            }
-        }
+        store.set_state(KEY_CURSOR, Some(&pull.revision.to_string())).map_err(Failure::Error)?;
     }
-    store.set_state(KEY_CURSOR, Some(&pull.revision.to_string())).map_err(Failure::Error)
+    if bridge_changed {
+        crate::extension::data_changed(app);
+    }
+    Ok(())
 }
 
 fn cycle(app: &AppHandle) -> Result<(), Failure> {
@@ -413,10 +425,14 @@ fn push(app: &AppHandle) -> Result<bool, Failure> {
     }
 }
 
-fn changed(app: &AppHandle) {
+/// Изменение здесь: отправить на сервер после паузы, а если это данные расширения — и ему.
+fn changed(app: &AppHandle, collection: &str) {
     let service = app.state::<SyncService>();
     let _ = service.wake.send(Wake::Soon);
     publish(app, |_| {});
+    if bridge::COLLECTIONS.contains(&collection) {
+        crate::extension::data_changed(app);
+    }
 }
 
 #[tauri::command]
@@ -463,7 +479,7 @@ pub fn sync_put(app: AppHandle, service: State<SyncService>, collection: String,
     let record = records::check(&collection, record)?;
     let id = records::id_of(&record).ok_or("у записи нет id")?.to_string();
     service.store.lock().unwrap().put_local(&collection, &id, &record)?;
-    changed(&app);
+    changed(&app, &collection);
     Ok(record)
 }
 
@@ -471,7 +487,7 @@ pub fn sync_put(app: AppHandle, service: State<SyncService>, collection: String,
 pub fn sync_delete(app: AppHandle, service: State<SyncService>, collection: String, id: String) -> Result<bool, String> {
     let deleted = service.store.lock().unwrap().delete_local(&collection, &id)?;
     if deleted {
-        changed(&app);
+        changed(&app, &collection);
     }
     Ok(deleted)
 }

@@ -17,7 +17,9 @@ use serde_json::Value;
 
 use super::records::COLLECTIONS;
 
-const SCHEMA_VERSION: i64 = 1;
+const SCHEMA_VERSION: i64 = 2;
+/// Сколько хранить отметки об удалении (как сервер): иначе удалённое воскресает из старой очереди расширения.
+const TOMBSTONE_TTL_MS: i64 = 90 * 24 * 60 * 60 * 1000;
 
 pub struct Store {
     conn: Connection,
@@ -78,6 +80,18 @@ impl Store {
                 )
                 .map_err(err)?;
         }
+        if version < 2 {
+            // Когда запись удалили (здесь или на сервере) — для споров с изменениями из расширения.
+            self.conn
+                .execute_batch(
+                    "BEGIN;
+                     CREATE TABLE tombstones (collection TEXT NOT NULL, id TEXT NOT NULL, deleted_at INTEGER NOT NULL, PRIMARY KEY (collection, id));
+                     PRAGMA user_version = 2;
+                     COMMIT;",
+                )
+                .map_err(err)?;
+        }
+        self.conn.execute("DELETE FROM tombstones WHERE deleted_at < ?1", [now_ms() - TOMBSTONE_TTL_MS]).map_err(err)?;
         Ok(())
     }
 
@@ -101,8 +115,18 @@ impl Store {
         Ok(rows.filter_map(Result::ok).filter_map(|s| serde_json::from_str(&s).ok()).collect())
     }
 
+    pub fn get(&self, collection: &str, id: &str) -> Option<Value> {
+        self.conn
+            .query_row("SELECT data FROM records WHERE collection = ?1 AND id = ?2 AND deleted = 0", [collection, id], |r| r.get::<_, String>(0))
+            .optional()
+            .ok()
+            .flatten()
+            .and_then(|s| serde_json::from_str(&s).ok())
+    }
+
     /// Изменение здесь: запись станет «грязной» и уйдёт на сервер.
     pub fn put_local(&self, collection: &str, id: &str, data: &Value) -> Result<(), String> {
+        self.forget_tombstone(collection, id)?;
         self.conn
             .execute(
                 "INSERT INTO records (collection, id, data, deleted, dirty, local_rev, rejected, updated_at)
@@ -117,33 +141,75 @@ impl Store {
 
     /// Удаление здесь: надгробие до отправки. `false` — такой записи нет.
     pub fn delete_local(&self, collection: &str, id: &str) -> Result<bool, String> {
-        self.conn
+        let deleted = self
+            .conn
             .execute(
                 "UPDATE records SET data = NULL, deleted = 1, dirty = 1, local_rev = local_rev + 1, rejected = NULL, updated_at = ?3
                  WHERE collection = ?1 AND id = ?2 AND deleted = 0",
                 params![collection, id, now_ms()],
             )
             .map(|n| n > 0)
-            .map_err(err)
+            .map_err(err)?;
+        if deleted {
+            self.remember_tombstone(collection, id)?;
+        }
+        Ok(deleted)
     }
 
     /// Запись с сервера. Изменённая здесь и не отправленная не перезаписывается: её версия
-    /// уйдёт на сервер следом и станет последней принятой.
-    pub fn apply_upsert(&self, collection: &str, id: &str, data: &Value) -> Result<(), String> {
-        self.conn
+    /// уйдёт на сервер следом и станет последней принятой. `true` — данные здесь изменились.
+    pub fn apply_upsert(&self, collection: &str, id: &str, data: &Value) -> Result<bool, String> {
+        let changed = self
+            .conn
             .execute(
                 "INSERT INTO records (collection, id, data, deleted, dirty, local_rev, rejected, updated_at)
                  VALUES (?1, ?2, ?3, 0, 0, 0, NULL, ?4)
                  ON CONFLICT (collection, id) DO UPDATE SET data = excluded.data, deleted = 0, updated_at = excluded.updated_at
-                 WHERE dirty = 0",
+                 WHERE dirty = 0 AND (deleted = 1 OR data IS NOT excluded.data)",
                 params![collection, id, data.to_string(), now_ms()],
+            )
+            .map(|n| n > 0)
+            .map_err(err)?;
+        if changed {
+            self.forget_tombstone(collection, id)?;
+        }
+        Ok(changed)
+    }
+
+    /// Удаление с сервера. `true` — запись здесь была и удалена.
+    pub fn apply_delete(&self, collection: &str, id: &str) -> Result<bool, String> {
+        let deleted = self.conn.execute("DELETE FROM records WHERE collection = ?1 AND id = ?2 AND dirty = 0", [collection, id]).map(|n| n > 0).map_err(err)?;
+        if deleted {
+            self.remember_tombstone(collection, id)?;
+        }
+        Ok(deleted)
+    }
+
+    fn remember_tombstone(&self, collection: &str, id: &str) -> Result<(), String> {
+        self.conn
+            .execute(
+                "INSERT INTO tombstones (collection, id, deleted_at) VALUES (?1, ?2, ?3) ON CONFLICT (collection, id) DO UPDATE SET deleted_at = excluded.deleted_at",
+                params![collection, id, now_ms()],
             )
             .map(|_| ())
             .map_err(err)
     }
 
-    pub fn apply_delete(&self, collection: &str, id: &str) -> Result<(), String> {
-        self.conn.execute("DELETE FROM records WHERE collection = ?1 AND id = ?2 AND dirty = 0", [collection, id]).map(|_| ()).map_err(err)
+    fn forget_tombstone(&self, collection: &str, id: &str) -> Result<(), String> {
+        self.conn.execute("DELETE FROM tombstones WHERE collection = ?1 AND id = ?2", [collection, id]).map(|_| ()).map_err(err)
+    }
+
+    /// Когда запись последний раз менялась здесь: изменение, приход с сервера или удаление (мс).
+    pub fn last_change(&self, collection: &str, id: &str) -> Result<Option<i64>, String> {
+        self.conn
+            .query_row(
+                "SELECT MAX(at) FROM (
+                   SELECT updated_at AS at FROM records WHERE collection = ?1 AND id = ?2
+                   UNION ALL SELECT deleted_at FROM tombstones WHERE collection = ?1 AND id = ?2)",
+                [collection, id],
+                |r| r.get(0),
+            )
+            .map_err(err)
     }
 
     /// Полная копия с сервера: всё отправленное раньше заменяется ею, неотправленное остаётся.

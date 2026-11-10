@@ -137,6 +137,7 @@ pub fn run() {
             overlay::overlay_hide,
             overlay::overlay_open_main,
             extension::extension_status,
+            extension::extension_open_trade,
             discord::discord_status,
             discord::discord_configure,
             discord::discord_reconnect,

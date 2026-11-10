@@ -265,6 +265,7 @@ pub fn start(app: &AppHandle, paths: &AppPaths) {
 fn publish(app: &AppHandle) {
     let status = app.state::<AccountService>().status();
     let _ = app.emit(EVENT, status);
+    crate::extension::account_changed(app);
 }
 
 fn api(app: &AppHandle) -> Arc<Api> {
