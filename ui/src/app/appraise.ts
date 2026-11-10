@@ -5,6 +5,7 @@ import { create } from "zustand";
 import { toast } from "@/design-system";
 import type { Appraisal } from "@/generated/Appraisal";
 import type { CaptureFailure } from "@/generated/CaptureFailure";
+import { appraisalToItem } from "./item-view";
 import { useShell } from "./store";
 import { inTauri } from "./window";
 
@@ -25,8 +26,17 @@ export function useCaptureSync() {
   useEffect(() => {
     if (!inTauri) return;
     const unlisteners: Promise<() => void>[] = [
-      listen<Appraisal>("item-appraised", (e) => useAppraisal.setState({ last: e.payload, at: Date.now() })),
+      listen<Appraisal>("item-appraised", (e) => {
+        useAppraisal.setState({ last: e.payload, at: Date.now() });
+        // Панель «Текущий предмет» оболочки показывает тот же предмет.
+        useShell.setState({
+          currentItem: appraisalToItem(e.payload),
+          caughtAt: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
+        });
+      }),
       listen<CaptureFailure>("item-capture-failed", (e) => toast({ status: "warning", title: "Предмет не захвачен", description: e.payload.message })),
+      // «Подробнее в окне» в оверлее.
+      listen<string>("open-module", (e) => useShell.getState().openModule(e.payload)),
     ];
     invoke<Appraisal | null>("item_last_appraisal").then((last) => last && useAppraisal.setState({ last, at: Date.now() }));
     return () => unlisteners.forEach((p) => p.then((fn) => fn()));

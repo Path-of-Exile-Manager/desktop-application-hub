@@ -1,23 +1,40 @@
-import { ScanSearch } from "lucide-react";
-import { Banner, EmptyState, Hotkey, Page } from "@/design-system";
+import { ClipboardPaste, ScanSearch } from "lucide-react";
+import { Banner, Button, EmptyState, Hotkey, Page, toast } from "@/design-system";
 import { useShell } from "@/app/store";
 import { inputBlocked, useGameStatus } from "@/app/game";
+import { appraiseClipboard, useAppraisal } from "@/app/appraise";
+import { appraisalToItem } from "@/app/item-view";
+import { inTauri } from "@/app/window";
 import { ItemCard } from "./ItemCard";
+import { PriceCard } from "./PriceCard";
 
 /**
- * Модуль Price check (app-shell.md, экран A1).
- * Показывает только настоящие данные: пойманный предмет и состояние игры.
- * Оценка цены и похожие лоты появятся вместе с данными от бэкенда (пример раскладки — в витрине).
+ * Модуль Price check (app-shell.md, экран A1): последний оценённый предмет — карточка и цена.
+ * Предмет приходит из ядра: горячая клавиша в игре, кнопка «Из буфера обмена» или режим разработки.
  */
 export function PriceCheckPage() {
-  const { currentItem: item, caughtAt, hotkeys } = useShell();
+  const hotkeys = useShell((s) => s.hotkeys);
+  const { last: appraisal, at } = useAppraisal();
   const game = useGameStatus();
+  const caught = at ? new Date(at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : null;
+
+  function fromClipboard() {
+    appraiseClipboard().catch((e) => toast({ status: "warning", title: "Не удалось оценить", description: String(e) }));
+  }
 
   return (
-    <Page title="Price check" subtitle={item && caughtAt ? `Пойман в ${caughtAt}` : undefined}>
+    <Page
+      title="Price check"
+      subtitle={appraisal && caught ? `Пойман в ${caught}` : undefined}
+      actions={
+        <Button icon={ClipboardPaste} onClick={fromClipboard} disabled={!inTauri}>
+          Из буфера обмена
+        </Button>
+      }
+    >
       {game?.state === "notRunning" && (
         <Banner status="danger" title="Окно игры не найдено — горячие клавиши сейчас не работают">
-          Запустите Path of Exile — приложение найдёт окно само.
+          Запустите Path of Exile — приложение найдёт окно само. Предмет можно скопировать в игре (Ctrl+Alt+C) и нажать «Из буфера обмена».
         </Banner>
       )}
       {game?.state === "unsupported" && (
@@ -31,9 +48,10 @@ export function PriceCheckPage() {
         </Banner>
       )}
 
-      {item ? (
+      {appraisal ? (
         <div className="flex min-h-0 flex-wrap items-start gap-4">
-          <ItemCard item={item} className="min-w-0 grow basis-90" />
+          <ItemCard item={appraisalToItem(appraisal)} className="min-w-0 grow basis-90" />
+          <PriceCard appraisal={appraisal} className="min-w-0 grow basis-110" />
         </div>
       ) : (
         <EmptyState icon={ScanSearch} title="Предмет ещё не пойман">
