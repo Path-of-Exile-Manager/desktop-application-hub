@@ -6,7 +6,7 @@
  * Здесь только чистые функции и только типовые импорты: файл можно запустить в Node и сверить
  * результат с сайтом побайтно.
  */
-import type { GameLang, MapRegexPreset, MapSearchIndex, ModChoice, ThresholdMode } from "./model";
+import type { GameLang, Inclusion, MapRegexPreset, MapSearchIndex, ModChoice, ThresholdMode, WantMode } from "./model";
 import type { LocalizedLines } from "@/generated/LocalizedLines";
 import type { LocalizedSearchToken } from "@/generated/LocalizedSearchToken";
 import type { MapProperty } from "@/generated/MapProperty";
@@ -215,6 +215,224 @@ function entryToken(entry: { lines: LocalizedLines; search: LocalizedSearchToken
   const line = linesOf(entry.lines, lang)?.[0];
   if (!line) return null;
   return { value: linePattern(beforeNumber ? (line.split("#")[0] ?? line) : line, lang), wholeLine: true };
+}
+
+// ─── Разбор готового выражения (D7) ─────────────────────────────────────
+
+/** Что удалось узнать из строки поиска. Порог «Округлять» неотличим от точного — ставится EXACT. */
+export type ParsedExpression = {
+  lang: GameLang;
+  mods: Record<string, ModChoice>;
+  wantMode: WantMode;
+  numbers: Record<string, number>;
+  flags: Record<string, Inclusion>;
+  rarity: { keys: string[]; mode: Inclusion };
+  /** `null` — порогов группы в строке нет. */
+  yieldAny: boolean | null;
+  qualityAny: boolean | null;
+  useTypes: boolean;
+  /** Сколько частей строки узнано. */
+  recognized: number;
+  /** Части, которые ни к чему не подошли (или не регулярки). */
+  unmatched: string[];
+  /** Моды, попавшие и в «исключить», и в «нужные». */
+  conflicts: string[];
+};
+
+/**
+ * Строка поиска → набор. Блоки читаются так, как их пишет сборщик (и сайт): `"!a|b"` — исключить моды,
+ * `!"x"` — исключить признак, `"t.*(…)%"` — порог, `"a|b"` — нужные моды или признаки. Каждая часть
+ * сначала сверяется с нашими токенами, потом пробуется как регулярка против текста игры (диапазоны —
+ * нижним числом, `#` — порогом), поэтому узнаются и строки с чужими токенами.
+ */
+export function parseExpression(text: string, index: MapSearchIndex, lang: GameLang): ParsedExpression {
+  const out: ParsedExpression = {
+    lang,
+    mods: {},
+    wantMode: "ANY",
+    numbers: {},
+    flags: {},
+    rarity: { keys: [], mode: "INCLUDE" },
+    yieldAny: null,
+    qualityAny: null,
+    useTypes: false,
+    recognized: 0,
+    unmatched: [],
+    conflicts: [],
+  };
+  const fold = (s: string) => (lang === "RU" ? s.toLowerCase().replace(/й/g, "и").replace(/ё/g, "е") : s.toLowerCase());
+  const tokenOf = (entry: { search: LocalizedSearchToken }) => {
+    const token = searchOf(entry.search, lang)?.token;
+    return token ? fold(token) : null;
+  };
+  const sample = (lines: string[] | null, value = 1) =>
+    fold((lines ?? []).map((l) => l.replace(/\((-?[\d.]+)[-–]-?[\d.]+\)/g, "$1").replace(/#/g, String(value))).join("\n"));
+  /** Регулярка для части строки; обрывки короче 3 символов («не», «of») — не токены. Якоря `^`/`$`
+   *  считаются, как и у генератора токенов: `em$` — точный токен. */
+  const compile = (source: string): RegExp | null => {
+    if (source.replace(/\\./g, "x").length < MIN_PART_LENGTH) return null;
+    try {
+      return new RegExp(fold(source), "im");
+    } catch {
+      return null;
+    }
+  };
+
+  const flagProps = index.properties.filter((p) => p.kind === "FLAG" && (p.group === "STATE" || p.group === "RARITY" || p.group === "TYPE"));
+  const numberProps = index.properties.filter((p) => p.kind === "NUMBER" && (p.group === "YIELD" || p.group === "QUALITY"));
+  const modText = new Map(index.mods.map((m) => [m.id, sample(linesOf(m.lines, lang))]));
+
+  const modsFor = (alt: string): string[] => {
+    const exact = index.mods.filter((m) => tokenOf(m) === fold(alt));
+    if (exact.length) return exact.map((m) => m.id);
+    const rx = compile(alt);
+    const hits = rx ? index.mods.filter((m) => rx.test(modText.get(m.id) ?? "")).map((m) => m.id) : [];
+    // Токен нацелен на мод (с близнецами — на несколько); слово, которое есть в десятках модов
+    // («не», «of»), — не токен, а случайный текст.
+    return hits.length > MAX_MODS_PER_PART ? [] : hits;
+  };
+  const flagsFor = (alt: string): MapProperty[] => {
+    const exact = flagProps.filter((p) => tokenOf(p) === fold(alt));
+    if (exact.length) return exact;
+    const rx = compile(alt);
+    return rx ? flagProps.filter((p) => rx.test(sample(linesOf(p.lines, lang)))) : [];
+  };
+
+  const markMods = (ids: string[], choice: ModChoice) => {
+    for (const id of ids) {
+      if (out.mods[id] && out.mods[id] !== choice && !out.conflicts.includes(id)) out.conflicts.push(id);
+      out.mods[id] = choice;
+    }
+  };
+  const markFlags = (props: MapProperty[], negative: boolean) => {
+    for (const p of props) {
+      if (p.group === "RARITY") {
+        if (!out.rarity.keys.includes(p.id)) out.rarity.keys.push(p.id);
+        out.rarity.mode = negative ? "EXCLUDE" : "INCLUDE";
+      } else {
+        out.flags[p.id] = negative ? "EXCLUDE" : "INCLUDE";
+        if (p.group === "TYPE") out.useTypes = true;
+      }
+    }
+  };
+
+  let wantBlocks = 0;
+  const blockRx = /(!?)"([^"]*)"|(!?)([^\s"]+)/g;
+  for (let m = blockRx.exec(text); m; m = blockRx.exec(text)) {
+    const outside = (m[1] ?? m[3]) === "!";
+    let body = m[2] ?? m[4] ?? "";
+    const inside = body.startsWith("!");
+    if (inside) body = body.slice(1);
+    if (!body) continue;
+
+    // Пороги: `t.*(…)%`, группа «любой из» — `(t1.*(…)%|t2.*(…)%)`.
+    const grouped = isWrapped(body);
+    const parts = splitTop(grouped ? body.slice(1, -1) : body);
+    if (parts.every((p) => thresholdOf(p) !== null)) {
+      for (const part of parts) {
+        const value = thresholdOf(part);
+        const head = part.slice(0, part.lastIndexOf(".*("));
+        const exact = numberProps.filter((p) => tokenOf(p) === fold(head));
+        const rx = compile(part);
+        let hits = exact.length ? exact : rx && value !== null ? numberProps.filter((p) => rx.test(sample(linesOf(p.lines, lang), value))) : [];
+        // «iz» находит и «Monster Pack Size», и «Quality (Pack Size)»: токены качества пишут со скобкой,
+        // поэтому неоднозначная часть — награда.
+        if (hits.length > 1 && hits.some((p) => p.group === "YIELD")) hits = hits.filter((p) => p.group === "YIELD");
+        if (hits.length !== 1 || value === null) {
+          out.unmatched.push(part);
+          continue;
+        }
+        out.numbers[hits[0]!.id] = value;
+        out.recognized++;
+        // Сборщик пишет группу «любой из» блоком `"(…|…)"` даже из одного порога, иначе — блок на порог.
+        if (hits[0]!.group === "QUALITY") out.qualityAny = (out.qualityAny ?? false) || grouped;
+        else out.yieldAny = (out.yieldAny ?? false) || grouped;
+      }
+      continue;
+    }
+
+    let modsInBlock = false;
+    for (const alt of splitTop(body)) {
+      if (inside) {
+        const ids = modsFor(alt);
+        if (ids.length) {
+          markMods(ids, "AVOID");
+          out.recognized++;
+        } else out.unmatched.push(alt);
+      } else if (outside) {
+        const props = flagsFor(alt);
+        if (props.length) {
+          markFlags(props, true);
+          out.recognized++;
+        } else out.unmatched.push(alt);
+      } else {
+        const exactFlag = flagProps.some((p) => tokenOf(p) === fold(alt));
+        const ids = exactFlag ? [] : modsFor(alt);
+        if (ids.length) {
+          markMods(ids, "WANT");
+          modsInBlock = true;
+          out.recognized++;
+          continue;
+        }
+        const props = flagsFor(alt);
+        if (props.length) {
+          markFlags(props, false);
+          out.recognized++;
+        } else out.unmatched.push(alt);
+      }
+    }
+    if (modsInBlock) wantBlocks++;
+  }
+  out.wantMode = wantBlocks > 1 ? "ALL" : "ANY";
+  return out;
+}
+
+/** Больше модов на одну часть строки — это не токен (у poe.re «eflect» находит 4 мода). */
+const MAX_MODS_PER_PART = 8;
+const MIN_PART_LENGTH = 3;
+
+/** Нижняя граница из шаблона `(7[5-9]|[8-9].|\d..)` → 75: первая ветка — числа той же длины, не меньше n. */
+function thresholdOf(part: string): number | null {
+  const at = part.lastIndexOf(".*(");
+  if (at < 0 || !part.endsWith(")%")) return null;
+  const first = splitTop(part.slice(at + 3, -2))[0] ?? "";
+  if (!/^(\d|\[\d-\d\]|\.)+$/.test(first)) return null;
+  const value = Number(first.replace(/\[(\d)-\d\]/g, "$1").replace(/\./g, "0"));
+  return isThreshold(value) ? value : null;
+}
+
+/** `(…)` целиком в одних внешних скобках. */
+function isWrapped(s: string): boolean {
+  if (!s.startsWith("(") || !s.endsWith(")")) return false;
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === "\\") i++;
+    else if (s[i] === "(") depth++;
+    else if (s[i] === ")" && --depth === 0 && i < s.length - 1) return false;
+  }
+  return true;
+}
+
+/** Разбить по `|` верхнего уровня (вне скобок, классов и экранирования). */
+function splitTop(s: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let inClass = false;
+  let start = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === "\\") i++;
+    else if (inClass) inClass = c !== "]";
+    else if (c === "[") inClass = true;
+    else if (c === "(") depth++;
+    else if (c === ")") depth--;
+    else if (c === "|" && depth === 0) {
+      parts.push(s.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(s.slice(start));
+  return parts.filter((p) => p.length > 0);
 }
 
 function group(index: MapSearchIndex, name: MapProperty["group"]): MapProperty[] {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Check, Copy, Eraser, RotateCcw, SearchX } from "lucide-react";
+import { Check, ClipboardPaste, Copy, Eraser, RotateCcw, SearchX } from "lucide-react";
 import {
   AffixBadge,
   Badge,
@@ -21,6 +21,7 @@ export function ExpressionCard({
   index,
   lang,
   onCopy,
+  onPaste,
   onResetChoices,
   onResetAll,
 }: {
@@ -28,6 +29,7 @@ export function ExpressionCard({
   index: MapSearchIndex;
   lang: GameLang;
   onCopy: () => void;
+  onPaste: () => void;
   /** `null` — сбрасывать нечего. */
   onResetChoices: (() => void) | null;
   onResetAll: (() => void) | null;
@@ -67,6 +69,9 @@ export function ExpressionCard({
           >
             {text || "Отметьте моды ниже — здесь появится строка для поиска во вкладке сундука"}
           </p>
+          <Button variant="secondary" icon={ClipboardPaste} onClick={onPaste} title="Вставить свою строку: моды и параметры отметятся по ней">
+            Вставить
+          </Button>
           <Button variant="primary" icon={Copy} disabled={!text} onClick={onCopy}>
             Копировать
           </Button>

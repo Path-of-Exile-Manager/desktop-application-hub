@@ -2,11 +2,11 @@ import { useMemo, useState } from "react";
 import { CloudDownload, Ellipsis, LoaderCircle, Monitor, Pencil, Plus, RefreshCw, Trash, TriangleAlert, type LucideIcon } from "lucide-react";
 import { Button, Chip, EmptyState, IconButton, Menu, Page, SegmentedControl, Select, toast, type MenuEntry } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
-import { activeOptions, resetAll, resetChoices, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
+import { activeOptions, applyParsed, resetAll, resetChoices, toggleMod, type GameLang, type MapRegexPreset, type ModChoice, type WantMode } from "./model";
 import { buildExpression, EXPRESSION_MAX, isError } from "./regex";
 import { ExpressionCard, ModColumn } from "./parts";
 import { MapOptions } from "./options";
-import { ConfirmDialog, PresetDialog } from "./dialogs";
+import { ConfirmDialog, ImportExpressionDialog, PresetDialog } from "./dialogs";
 import { createPreset, deletePreset, DRAFT_ID, updatePreset, useActivePreset, useMapRegexPresets, useMapRegexView, usePresetsSync } from "./store";
 import { useMapSearch } from "./useMapSearch";
 
@@ -15,7 +15,7 @@ const LANGS: { value: GameLang; label: string }[] = [
   { value: "EN", label: "EN" },
 ];
 
-type OpenDialog = { kind: "new" } | { kind: "rename" } | { kind: "delete" } | { kind: "reset-all" } | null;
+type OpenDialog = { kind: "new" } | { kind: "rename" } | { kind: "delete" } | { kind: "reset-all" } | { kind: "import" } | null;
 
 const WANT_MODES = [
   { value: "ANY", label: "Любой" },
@@ -98,6 +98,7 @@ export function MapRegexPage() {
             index={index}
             lang={preset.lang}
             onCopy={() => void copy()}
+            onPaste={() => setDialog({ kind: "import" })}
             onResetChoices={hasChoices ? () => change(resetChoices) : null}
             onResetAll={hasChoices || hasOptions ? () => setDialog({ kind: "reset-all" }) : null}
           />
@@ -157,6 +158,21 @@ export function MapRegexPage() {
         <NotReady state={search.status === "ready" ? { status: "loading" } : search} />
       )}
 
+      {dialog?.kind === "import" && index && (
+        <ImportExpressionDialog
+          preset={preset}
+          index={index}
+          onApply={(parsed) => {
+            change((p) => applyParsed(p, parsed));
+            toast({
+              status: parsed.unmatched.length || parsed.conflicts.length ? "warning" : "success",
+              title: `Распознано частей строки: ${parsed.recognized}`,
+              description: parsed.unmatched.length ? `Не распознано: ${parsed.unmatched.length}.` : undefined,
+            });
+          }}
+          onClose={close}
+        />
+      )}
       {dialog?.kind === "new" && <PresetDialog name={null} onSave={(name) => void createPreset(name, preset.lang)} onClose={close} />}
       {dialog?.kind === "rename" && <PresetDialog name={preset.name} onSave={(name) => change((p) => ({ ...p, name }))} onClose={close} />}
       {dialog?.kind === "delete" && (

@@ -8,7 +8,7 @@ import type { MapProperty } from "@/generated/MapProperty";
 import type { MapPropertyGroup } from "@/generated/MapPropertyGroup";
 import type { MapSearch } from "@/generated/MapSearch";
 import type { MapSearchMod } from "@/generated/MapSearchMod";
-import { EXPRESSION_MAX, isThreshold, NUMBER_MAX, NUMBER_MIN, type ExpressionIssue } from "./regex";
+import { EXPRESSION_MAX, isThreshold, NUMBER_MAX, NUMBER_MIN, type ExpressionIssue, type ParsedExpression } from "./regex";
 
 export type { MapProperty, MapSearch, MapSearchMod };
 
@@ -113,6 +113,25 @@ export function normalizePreset(raw: unknown): MapRegexPreset | null {
     useTypes: typeof raw.useTypes === "boolean" ? raw.useTypes : defaults.useTypes,
     sortKey: typeof raw.sortKey === "string" ? raw.sortKey : "",
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : "",
+  };
+}
+
+/**
+ * Разобранная строка → набор: моды и параметры карт заменяются распознанными, язык — тем, на котором
+ * строка узналась. Округлённый порог неотличим от точного (25 → 20 читается как 20): режим — EXACT.
+ */
+export function applyParsed(preset: MapRegexPreset, parsed: ParsedExpression): MapRegexPreset {
+  return {
+    ...preset,
+    lang: parsed.lang,
+    wantMode: parsed.wantMode,
+    mods: parsed.mods,
+    numbers: parsed.numbers,
+    flags: parsed.flags,
+    rarity: parsed.rarity,
+    yieldRule: { mode: "EXACT", any: parsed.yieldAny ?? preset.yieldRule.any },
+    qualityRule: { mode: "EXACT", any: parsed.qualityAny ?? preset.qualityRule.any },
+    useTypes: parsed.useTypes,
   };
 }
 
