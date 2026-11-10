@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Check, ClipboardPaste, Copy, Eraser, RotateCcw, SearchX, Trash2, X } from "lucide-react";
 import {
   AffixBadge,
@@ -9,11 +9,9 @@ import {
   Card,
   CardHeader,
   EmptyState,
-  Pagination,
   SearchInput,
   StatusIcon,
   cx,
-  usePageSize,
 } from "@/design-system";
 import { describeIssue, humanizeKey, modText, searchKey, type GameLang, type MapRegexPreset, type MapSearchIndex, type MapSearchMod, type ModChoice } from "./model";
 import { EXPRESSION_MAX, isError, type Expression } from "./regex";
@@ -131,9 +129,6 @@ export function StaleBanner({ mods, properties, onRemove }: { mods: string[]; pr
   );
 }
 
-/** Высота строки списка = row-height (36): по ней считается размер страницы. */
-const ROW_HEIGHT = 36;
-
 export type ColumnView = { showNightmare: boolean; showAffix: boolean; groupByAffix: boolean };
 
 const OTHER_SIDE: Record<ModChoice, string> = { AVOID: "в исключённых", WANT: "в нужных" };
@@ -160,11 +155,9 @@ export function ModColumn({
 }) {
   const lang = preset.lang;
   const [query, setQuery] = useState("");
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
-  const [page, setPage] = useState(1);
+  const list = useRef<HTMLDivElement>(null);
 
-  // «По типу» — сначала префиксы, потом суффиксы, с меткой P/S у каждой строки (без строк-заголовков:
-  // счётчик страниц считает только моды).
+  // «По типу» — сначала префиксы, потом суффиксы, с меткой P/S у каждой строки.
   const rows = useMemo(() => {
     const needle = searchKey(query.trim());
     const locale = lang === "RU" ? "ru" : "en";
@@ -176,13 +169,11 @@ export function ModColumn({
       .map(({ mod }) => mod);
   }, [index, lang, query, view.showNightmare, view.groupByAffix]);
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  useEffect(() => setPage(1), [query, lang, view.showNightmare, view.groupByAffix]);
+  // Другой поиск или вид — список с начала; отметка мода позицию прокрутки не трогает.
+  // Тело в фигурных скобках: scrollTo в Chromium возвращает Promise, а React примет его за очистку.
   useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
-
-  const visible = rows.slice((page - 1) * pageSize, page * pageSize);
+    if (list.current) list.current.scrollTop = 0;
+  }, [query, lang, view.showNightmare, view.groupByAffix]);
   // Пропавшие из игры моды не считаются: в выражение они не идут (их показывает StaleBanner).
   const count = Object.entries(preset.mods).filter(([id, choice]) => choice === side && index.modById.has(id)).length;
 
@@ -207,10 +198,11 @@ export function ModColumn({
       <div className="px-padding-x pb-2">
         <SearchInput value={query} onValueChange={setQuery} label={`Поиск: ${title.toLowerCase()}`} placeholder="Поиск мода" />
       </div>
-      <div ref={ref} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {visible.length ? (
+      {/* Прокрутка внутри колонки — решение пользователя 11.11.2026 (вместо страниц); окно не прокручивается. */}
+      <div ref={list} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {rows.length ? (
           <ul className="flex flex-col">
-            {visible.map((mod) => (
+            {rows.map((mod) => (
               <ModRow key={mod.id} mod={mod} lang={lang} side={side} choice={preset.mods[mod.id]} showAffix={view.showAffix || view.groupByAffix} onToggle={onToggle} />
             ))}
           </ul>
@@ -220,9 +212,9 @@ export function ModColumn({
           </EmptyState>
         )}
       </div>
-      {rows.length > pageSize && (
-        <Pagination page={page} pageSize={pageSize} total={rows.length} onPageChange={setPage} className="border-t border-border-subtle px-padding-x py-1.5" />
-      )}
+      <p className="shrink-0 border-t border-border-subtle px-padding-x py-1.5 text-caption text-text-muted">
+        {rows.length === index.mods.length ? `${rows.length} модов` : `Найдено ${rows.length} из ${index.mods.length}`}
+      </p>
     </Card>
   );
 }
