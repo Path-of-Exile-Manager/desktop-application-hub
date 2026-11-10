@@ -102,6 +102,17 @@ fn record_id(field: &str, id: &str) -> Result<(), String> {
     }
 }
 
+/// Поиск в адресе сайта торговли: короткий id сохранённого поиска или весь запрос, упакованный
+/// в адрес (`H4sI…`, gzip + base64url), — он растёт вместе с запросом, поэтому не id записи.
+/// Правило сервера: `packages/domain/src/sync/rules.ts`.
+fn trade_slug(value: &str) -> Result<(), String> {
+    if (1..=2000).contains(&value.len()) && value.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-') {
+        Ok(())
+    } else {
+        Err("slug: 1–2000 символов из A-Z a-z 0-9 _ -".into())
+    }
+}
+
 fn text(field: &str, value: &str, max: usize) -> Result<(), String> {
     if value.trim().is_empty() || value.chars().count() > max {
         Err(format!("{field}: от 1 до {max} символов"))
@@ -156,7 +167,7 @@ pub fn check(collection: &str, value: Value) -> Result<Value, String> {
             record_id("id", &r.id)?;
             record_id("folderId", &r.folder_id)?;
             text("title", &r.title, 200)?;
-            record_id("slug", &r.slug)?;
+            trade_slug(&r.slug)?;
             optional_date("completedAt", &r.completed_at)?;
             sort_key(&r.sort_key)?;
             serde_json::to_value(r)
@@ -165,7 +176,7 @@ pub fn check(collection: &str, value: Value) -> Result<Value, String> {
             let r: History = parse(value)?;
             record_id("id", &r.id)?;
             text("league", &r.league, 100)?;
-            record_id("slug", &r.slug)?;
+            trade_slug(&r.slug)?;
             text("title", &r.title, 200)?;
             date("createdAt", &r.created_at)?;
             serde_json::to_value(r)
@@ -174,7 +185,7 @@ pub fn check(collection: &str, value: Value) -> Result<Value, String> {
             let r: Pin = parse(value)?;
             record_id("id", &r.id)?;
             text("league", &r.league, 100)?;
-            record_id("slug", &r.slug)?;
+            trade_slug(&r.slug)?;
             text("searchTitle", &r.search_title, 200)?;
             json_size("снимок пина", &serde_json::json!({ "item": r.item, "price": r.price, "seller": r.seller }))?;
             date("pinnedAt", &r.pinned_at)?;
