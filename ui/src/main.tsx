@@ -1,8 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./design-system/styles.css";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import App from "./App";
 import { useShell } from "./app/store";
+import { inTauri } from "./app/window";
+import { OverlayApp } from "./overlay/OverlayApp";
 
 // Только для разработки: открыть нужное состояние по адресу, например
 // http://localhost:1420/?module=craft&collapsed=1&panel=hidden&demo=problems
@@ -29,8 +32,9 @@ if (import.meta.env.DEV) {
   }
 }
 
+// Тот же фронтенд и для оверлея поверх игры (src-tauri/src/overlay.rs): какое окно — по его метке.
+const isOverlay = inTauri && getCurrentWindow().label === "overlay";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <React.StrictMode>{isOverlay ? <OverlayApp /> : <App />}</React.StrictMode>,
 );

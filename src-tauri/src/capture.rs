@@ -102,7 +102,11 @@ fn trigger(app: &AppHandle) {
     thread::spawn(move || {
         let result = capture_from_game().and_then(|text| appraise::appraise(&app, &text));
         match result {
-            Ok(appraisal) => appraise::publish(&app, appraisal),
+            Ok(appraisal) => {
+                appraise::publish(&app, appraisal);
+                // Захват из игры — показать цену прямо поверх неё.
+                crate::overlay::show_near_cursor(&app);
+            }
             Err(message) => {
                 let _ = app.emit(EVENT_FAILED, CaptureFailure { message });
             }

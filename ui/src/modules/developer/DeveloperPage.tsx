@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowDownLeft, ArrowUpRight, Bug, ClipboardPaste, Eraser, RefreshCw, RotateCcw, Send, Trash2, Undo2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Bug, ClipboardPaste, Eraser, Layers, RefreshCw, RotateCcw, Send, Trash2, Undo2 } from "lucide-react";
 import {
   Button,
   Card,
@@ -555,6 +555,9 @@ function ItemProbe() {
             </Button>
             <Button icon={ClipboardPaste} onClick={() => run(appraiseClipboard)} disabled={busy || !inTauri}>
               Из буфера обмена
+            </Button>
+            <Button icon={Layers} onClick={() => invoke("overlay_show")} disabled={!result || !inTauri}>
+              Показать в оверлее
             </Button>
           </div>
         </CardSection>

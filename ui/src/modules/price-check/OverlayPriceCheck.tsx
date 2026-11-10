@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Button,
   ItemStateBadge,
@@ -16,21 +17,26 @@ import {
 
 export type OverlayPriceCheckProps = {
   item: Item;
-  price: PriceAmount;
-  conversion: PriceAmount;
-  similar: number;
+  /** `null` — цены нет; вместо неё — `priceNote`. */
+  price: PriceAmount | null;
+  conversion?: PriceAmount | null;
+  /** Число похожих лотов (витрина). */
+  similar?: number;
+  /** Подпись под ценой или вместо неё: свежесть, «ближайший вариант», «нет цены». */
+  priceNote?: ReactNode;
   pinned: boolean;
   onPinnedChange: (pinned: boolean) => void;
   onClose: () => void;
   onOpenInWindow: () => void;
-  onOpenCraft: () => void;
+  /** Без обработчика кнопки «В ассистент крафта» нет. */
+  onOpenCraft?: () => void;
 };
 
 /**
  * Виджет оверлея Price check (экран A4, OvA.dc.html). Порядок сверху вниз (guide.md, п. 4):
  * редкость и имя → базовые свойства → моды → состояние → цена → действия.
  */
-export function OverlayPriceCheck({ item, price, conversion, similar, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenCraft }: OverlayPriceCheckProps) {
+export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenCraft }: OverlayPriceCheckProps) {
   return (
     <OverlayFrame
       title="Price check"
@@ -42,9 +48,11 @@ export function OverlayPriceCheck({ item, price, conversion, similar, pinned, on
           <Button variant="secondary" block onClick={onOpenInWindow}>
             Подробнее в окне
           </Button>
-          <Button variant="ghost" block onClick={onOpenCraft}>
-            В ассистент крафта
-          </Button>
+          {onOpenCraft && (
+            <Button variant="ghost" block onClick={onOpenCraft}>
+              В ассистент крафта
+            </Button>
+          )}
         </>
       }
     >
@@ -74,20 +82,27 @@ export function OverlayPriceCheck({ item, price, conversion, similar, pinned, on
           {item.sockets && <Sockets groups={item.sockets} variant="text" />}
         </p>
       </OverlaySection>
-      <OverlaySection>
-        <ModList mods={item.mods} />
-      </OverlaySection>
+      {item.mods.length > 0 && (
+        <OverlaySection>
+          <ModList mods={item.mods} />
+        </OverlaySection>
+      )}
       <OverlaySection className="flex items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1.5">
           {item.states?.map((s) => (
             <ItemStateBadge key={s} state={s} />
           ))}
         </div>
-        <div className="flex flex-col items-end gap-0.5">
-          <Price price={price} approx size="lg" />
-          <span className="text-label text-text-secondary">
-            <span className="font-mono">≈ {formatAmount(conversion.amount)} div</span> · {similar} похожих
-          </span>
+        <div className="flex flex-col items-end gap-0.5 text-right">
+          {price && <Price price={price} approx size="lg" />}
+          {(conversion || similar !== undefined) && (
+            <span className="text-label text-text-secondary">
+              {conversion && <span className="font-mono">≈ {formatAmount(conversion.amount)} div</span>}
+              {conversion && similar !== undefined && " · "}
+              {similar !== undefined && `${similar} похожих`}
+            </span>
+          )}
+          {priceNote && <span className="text-label text-text-secondary">{priceNote}</span>}
         </div>
       </OverlaySection>
     </OverlayFrame>

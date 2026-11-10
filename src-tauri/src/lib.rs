@@ -15,6 +15,7 @@ mod extension;
 mod game;
 mod icons;
 mod leagues;
+mod overlay;
 mod paths;
 mod prices;
 mod server;
@@ -81,6 +82,7 @@ pub fn run() {
             prices::start(app.handle(), &app_root);
             app.manage(appraise::LastAppraisal::default());
             capture::start(app.handle(), &game::current(app.handle()));
+            overlay::create(app.handle())?;
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             Ok(())
@@ -110,6 +112,9 @@ pub fn run() {
             appraise::item_last_appraisal,
             capture::capture_set_hotkey,
             capture::capture_from_clipboard,
+            overlay::overlay_show,
+            overlay::overlay_hide,
+            overlay::overlay_open_main,
             extension::extension_status,
             discord::discord_status,
             discord::discord_configure,
