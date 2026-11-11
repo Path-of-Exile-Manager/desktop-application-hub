@@ -6,12 +6,17 @@ use std::sync::Arc;
 
 use craft_engine::Engine;
 
-use super::model::{Ascendancy, CatalogItem, ItemClass, Manifest, MapSearch};
+use super::model::{Ascendancy, CatalogItem, ItemClass, Manifest, MapSearch, TradeStatsFile};
+use crate::trade::stats::StatIndex;
 use super::store::DatasetStore;
 
 pub const MAP_SEARCH_FILE: &str = "map-search.json";
 pub const CRAFTING_FILE: &str = "crafting.json";
 pub const ASCENDANCIES_FILE: &str = "ascendancies.json";
+pub const TRADE_STATS_FILE: &str = "trade-stats.json";
+
+/// `trade-stats.json`: `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан.
+pub type TradeStatsIndex = Option<Result<Arc<StatIndex>, String>>;
 
 /// `crafting.json`: `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан.
 pub type CraftingFile = Option<Result<Arc<Engine>, String>>;
@@ -27,6 +32,8 @@ pub struct Catalog {
     pub crafting: CraftingFile,
     /// Портреты классов и восхождений (вкладка «Билды»); необязательный, как и `map_search`.
     pub ascendancies: Option<Result<Vec<Ascendancy>, String>>,
+    /// Индекс фильтров модов сайта торговли; необязательный, как и `map_search`.
+    pub trade_stats: TradeStatsIndex,
     by_id: HashMap<String, usize>,
     /// Нормализованное название (ru и en) → предметы: одно имя бывает у нескольких записей
     /// (уникальный на разных базах).
@@ -47,7 +54,9 @@ impl Catalog {
         let crafting = has_file(&manifest, CRAFTING_FILE).then(|| store.read_file(id, &manifest, CRAFTING_FILE).and_then(|bytes| parse_crafting(&bytes)));
         let ascendancies = has_file(&manifest, ASCENDANCIES_FILE)
             .then(|| store.read_file(id, &manifest, ASCENDANCIES_FILE).and_then(|bytes| parse_ascendancies(&bytes)));
-        Ok(Self::new(manifest, items, classes, map_search, crafting, ascendancies))
+        let trade_stats = has_file(&manifest, TRADE_STATS_FILE)
+            .then(|| store.read_file(id, &manifest, TRADE_STATS_FILE).and_then(|bytes| parse_trade_stats(&bytes)));
+        Ok(Self::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats))
     }
 
     pub fn new(
@@ -57,11 +66,15 @@ impl Catalog {
         map_search: Option<Result<MapSearch, String>>,
         crafting: CraftingFile,
         ascendancies: Option<Result<Vec<Ascendancy>, String>>,
+        trade_stats: TradeStatsIndex,
     ) -> Self {
         // По самому файлу: манифесты в кэше, записанные до появления этих счётчиков, их потеряли.
         if let Some(Ok(search)) = &map_search {
             manifest.counts.map_mods = search.mods.len() as u32;
             manifest.counts.map_properties = search.properties.len() as u32;
+        }
+        if let Some(Ok(index)) = &trade_stats {
+            manifest.counts.trade_stats = index.stats.len() as u32;
         }
         let mut by_id = HashMap::with_capacity(items.len());
         let mut by_name: HashMap<String, Vec<usize>> = HashMap::with_capacity(items.len() * 2);
@@ -77,7 +90,7 @@ impl Catalog {
                 by_trade_id.insert(trade_id.clone(), i);
             }
         }
-        Self { manifest, items, classes, map_search, crafting, ascendancies, by_id, by_name, by_trade_id }
+        Self { manifest, items, classes, map_search, crafting, ascendancies, trade_stats, by_id, by_name, by_trade_id }
     }
 
     pub fn get(&self, id: &str) -> Option<&CatalogItem> {
@@ -173,6 +186,12 @@ pub fn parse_map_search(bytes: &[u8]) -> Result<MapSearch, String> {
 
 pub fn parse_ascendancies(bytes: &[u8]) -> Result<Vec<Ascendancy>, String> {
     serde_json::from_slice(bytes).map_err(|e| format!("{ASCENDANCIES_FILE} не разобран: {e}"))
+}
+
+/// Разбор и индекс — в одном шаге: индекс строится при загрузке набора, а не при первом поиске.
+pub fn parse_trade_stats(bytes: &[u8]) -> Result<Arc<StatIndex>, String> {
+    let file: TradeStatsFile = serde_json::from_slice(bytes).map_err(|e| format!("{TRADE_STATS_FILE} не разобран: {e}"))?;
+    Ok(Arc::new(StatIndex::new(file)))
 }
 
 pub fn parse_crafting(bytes: &[u8]) -> Result<Arc<Engine>, String> {

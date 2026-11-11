@@ -25,7 +25,9 @@ use ts_rs::TS;
 
 use crate::api::{Api, ApiCode, Call, Reply};
 pub use catalog::{normalize, Catalog};
-use catalog::{has_file, parse_ascendancies, parse_crafting, parse_map_search, ASCENDANCIES_FILE, CRAFTING_FILE, MAP_SEARCH_FILE};
+use catalog::{
+    has_file, parse_ascendancies, parse_crafting, parse_map_search, parse_trade_stats, ASCENDANCIES_FILE, CRAFTING_FILE, MAP_SEARCH_FILE, TRADE_STATS_FILE,
+};
 use model::{Ascendancy, Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, MapSearch, SCHEMA_VERSION};
 pub use store::sha256_hex;
 use store::{verify, DatasetStore};
@@ -214,9 +216,10 @@ fn sync(api: &Api, store: &DatasetStore, current: Option<&str>) -> Result<Option
     let map_search = has_file(&manifest, MAP_SEARCH_FILE).then(|| file(MAP_SEARCH_FILE).and_then(parse_map_search));
     let crafting = has_file(&manifest, CRAFTING_FILE).then(|| file(CRAFTING_FILE).and_then(parse_crafting));
     let ascendancies = has_file(&manifest, ASCENDANCIES_FILE).then(|| file(ASCENDANCIES_FILE).and_then(parse_ascendancies));
+    let trade_stats = has_file(&manifest, TRADE_STATS_FILE).then(|| file(TRADE_STATS_FILE).and_then(parse_trade_stats));
 
     store.install(&manifest, &files).map_err(|e| format!("набор не сохранён: {e}"))?;
-    Ok(Some(Catalog::new(manifest, items, classes, map_search, crafting, ascendancies)))
+    Ok(Some(Catalog::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats)))
 }
 
 fn publish(app: &AppHandle, service: &DatasetService) {

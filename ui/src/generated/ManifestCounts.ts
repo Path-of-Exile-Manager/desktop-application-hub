@@ -4,4 +4,8 @@ export type ManifestCounts = { classes: number, items: number, uniques: number, 
 /**
  * Из `map-search.json`; 0 — файла нет или он не прочитан.
  */
-mapMods: number, mapProperties: number, };
+mapMods: number, mapProperties: number, 
+/**
+ * Из `trade-stats.json`; 0 — файла нет.
+ */
+tradeStats: number, };

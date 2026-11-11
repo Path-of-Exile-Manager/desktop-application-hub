@@ -55,6 +55,8 @@ pub struct ManifestCounts {
     /// Из `map-search.json`; 0 — файла нет или он не прочитан.
     pub map_mods: u32,
     pub map_properties: u32,
+    /// Из `trade-stats.json`; 0 — файла нет.
+    pub trade_stats: u32,
 }
 
 /// Ответ `GET /v1/bootstrap`.
@@ -365,4 +367,42 @@ pub struct Ascendancy {
     /// Класс восхождения (`witch`); у самого класса — нет.
     pub class_id: Option<String>,
     pub icon_sha256: String,
+}
+
+/// `trade-stats.json`: фильтры модов сайта торговли (EN и RU) — по ним сопоставляются моды
+/// предметов (вкладка «Билды», позже редкие в Price check). Контракт — shared/docs/pob-trader.md, раздел 4.
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct TradeStatsFile {
+    /// В порядке сайта торговли.
+    pub sections: Vec<TradeStatSection>,
+    /// По разделу, затем по id; один id бывает с двумя текстами (`Area has …` / `Your Maps have …`).
+    pub stats: Vec<TradeStat>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct TradeStatSection {
+    /// `explicit`, `implicit`, `pseudo`…
+    pub id: String,
+    pub label: LocalizedName,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct TradeStat {
+    /// Id фильтра на сайте торговли: `explicit.stat_3299347043`.
+    pub id: String,
+    pub section: String,
+    /// Шаблон с `#` вместо чисел: `+# to maximum Life`; многострочные — через `\n`.
+    pub text: LocalizedName,
+    /// Варианты стата с выбором («Allocates #», радиус самоцвета); у числового — нет.
+    pub options: Option<Vec<TradeStatOption>>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
+pub struct TradeStatOption {
+    pub id: u32,
+    pub text: LocalizedName,
 }

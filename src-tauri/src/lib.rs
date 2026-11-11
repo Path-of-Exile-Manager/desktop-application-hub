@@ -26,6 +26,7 @@ mod pob_stage;
 mod prices;
 mod server;
 mod sync;
+mod trade;
 
 /// Что ядро сообщает интерфейсу о себе. `Serialize` позволяет отдать структуру в JS как JSON.
 #[derive(Serialize, TS)]
@@ -132,6 +133,7 @@ pub fn run() {
             dataset::catalog_by_trade_ids,
             dataset::catalog_map_search,
             dataset::catalog_ascendancies,
+            trade::stats::trade_stats_lookup,
             leagues::leagues_status,
             leagues::leagues_refresh,
             prices::prices_status,
