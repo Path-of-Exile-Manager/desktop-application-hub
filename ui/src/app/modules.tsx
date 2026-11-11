@@ -1,9 +1,10 @@
 import type { ComponentType } from "react";
-import { Bookmark, Dices, Eye, History, LayoutGrid, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Bookmark, Dices, Eye, Gem, History, LayoutGrid, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
 import { MapRegexPage } from "@/modules/map-regex/MapRegexPage";
+import { ClustersPage } from "@/modules/clusters/ClustersPage";
 import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
 import { BookmarksPage } from "@/modules/user-data/BookmarksPage";
 import { HistoryPage } from "@/modules/user-data/HistoryPage";
@@ -91,6 +92,15 @@ const MAP_REGEX: ModuleDef = {
   keywords: "regex регекс карты атлас моды сундук поиск map mods stash",
 };
 
+const CLUSTERS: ModuleDef = {
+  id: "clusters",
+  label: "Выгодные кластеры",
+  icon: Gem,
+  group: "craft",
+  component: ClustersPage,
+  keywords: "кластер кластерный самоцвет cluster jewel крафт craft фоссил ископаемые fossil notable прибыль roi",
+};
+
 const SETTINGS: ModuleDef = {
   id: "settings",
   label: "Настройки",
@@ -118,7 +128,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, WATCHLIST, ANCIENT_ORB, MAP_REGEX, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])

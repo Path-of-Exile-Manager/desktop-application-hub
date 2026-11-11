@@ -30,6 +30,11 @@ if (import.meta.env.DEV) {
     ]);
     useAncientOrb.getState().restore(ancientDemoData());
   }
+  // demo=clusters — «Выгодные кластеры» с демо-целями (ядра в браузере нет).
+  if (q.get("demo") === "clusters") {
+    const [{ useClustersData }, { clustersDemo }] = await Promise.all([import("./modules/clusters/useClusters"), import("./modules/clusters/demo")]);
+    useClustersData.setState(clustersDemo());
+  }
 }
 
 // Тот же фронтенд и для оверлея поверх игры (src-tauri/src/overlay.rs): какое окно — по его метке.
