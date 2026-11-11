@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
-import { AppWindow, ChevronLeft, ChevronRight, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
+import { AppWindow, ChevronLeft, ChevronRight, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Import, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader, cx, EmptyState, IconButton, Menu, Page, Pagination, SearchInput, usePageSize, type MenuEntry } from "@/design-system";
 import { useAccount } from "@/app/account";
 import { bySortKey, keyBetween, removeRecord, saveRecord, useRecords } from "@/app/user-data";
-import { AddBuildDialog, BuildSummaryDialog, ConfirmDialog, copyCode, fail, NameDialog, PublishDialog, type AddForm } from "./dialogs";
+import { AddBuildDialog, BuildSummaryDialog, ConfirmDialog, copyCode, fail, ImportDialog, NameDialog, PublishDialog, type AddForm } from "./dialogs";
 import {
   buildSubtitle,
   byCreatedDesc,
@@ -38,7 +38,8 @@ type Dialogs =
   | { kind: "new-group" }
   | { kind: "rename-group"; group: PobBuildGroup }
   | { kind: "delete-group"; group: PobBuildGroup; count: number }
-  | { kind: "delete-build"; build: PobBuildRecord };
+  | { kind: "delete-build"; build: PobBuildRecord }
+  | { kind: "import" };
 
 const NO_BUILDS: PobBuildRecord[] = [];
 const NO_GROUPS: PobBuildGroup[] = [];
@@ -92,9 +93,14 @@ export function PobBuildsPage() {
       title="Билды"
       subtitle={`Сборки Path of Building · ${signedIn ? "синхронизируются с аккаунтом" : "хранятся на этом компьютере, с аккаунтом — на всех устройствах"}`}
       actions={
-        <Button variant="primary" icon={Plus} onClick={() => setDialog({ kind: "add", form: { groupId: defaultGroup } })}>
-          Добавить билд
-        </Button>
+        <>
+          <Button icon={Import} onClick={() => setDialog({ kind: "import" })}>
+            Импорт
+          </Button>
+          <Button variant="primary" icon={Plus} onClick={() => setDialog({ kind: "add", form: { groupId: defaultGroup } })}>
+            Добавить билд
+          </Button>
+        </>
       }
     >
       <div className="flex min-h-0 flex-1 gap-4">
@@ -161,6 +167,7 @@ export function PobBuildsPage() {
           }}
         />
       )}
+      {dialog?.kind === "import" && <ImportDialog builds={all} groups={groups} onClose={() => setDialog(null)} />}
       {dialog?.kind === "add" && (
         <AddBuildDialog
           form={dialog.form}

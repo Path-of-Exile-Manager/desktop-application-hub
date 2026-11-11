@@ -1,9 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Copy, Eye, Save, Trash2, Upload } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Copy, Eye, FileUp, Import, Save, Trash2, Upload } from "lucide-react";
 import { Banner, Button, Checkbox, Dialog, Field, fieldClasses, Input, Select, toast, cx } from "@/design-system";
 import type { PobBuild } from "@/generated/PobBuild";
 import type { PobLink } from "@/generated/PobLink";
-import { buildSubtitle, classLabel, decodeBuild, fetchBuild, looksLikeLink, NAME_MAX, normalizeCode, SITE_LABEL, type PobBuildGroup } from "./model";
+import { buildSubtitle, classLabel, decodeBuild, fetchBuild, looksLikeLink, NAME_MAX, normalizeCode, SITE_LABEL, type PobBuildGroup, type PobBuildRecord } from "./model";
+import { parseImport, runImport, type ImportResult } from "./import";
 import { Fact, Portrait } from "./parts";
 import { useSharePrefs } from "./share";
 
@@ -258,6 +259,127 @@ export function NameDialog({
           <Input id={id} value={name} maxLength={max} autoFocus onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
         )}
       </Field>
+    </Dialog>
+  );
+}
+
+const PAGE_COMMAND = "copy(localStorage.getItem('pob-trader-library-v1'))";
+
+/**
+ * Импорт со страниц PoB Library (`library.json`) и PoB-разборщика (localStorage): файл или вставка.
+ * Сначала — что найдено, затем импорт с ходом и итогом.
+ */
+export function ImportDialog({ builds, groups, onClose }: { builds: PobBuildRecord[]; groups: PobBuildGroup[]; onClose: () => void }) {
+  const [text, setText] = useState("");
+  const [running, setRunning] = useState<number | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const parsed = useMemo(() => {
+    if (!text.trim()) return null;
+    try {
+      return { plan: parseImport(text, groups), error: null };
+    } catch (e) {
+      return { plan: null, error: e instanceof Error ? e.message : String(e) };
+    }
+  }, [text, groups]);
+  const plan = parsed?.plan ?? null;
+  const known = useMemo(() => new Set(builds.map((b) => b.code)), [builds]);
+  const fresh = plan ? new Set(plan.entries.map((e) => e.code).filter((c) => !known.has(c))).size : 0;
+
+  const readFile = (file: File | undefined) => file?.text().then(setText, fail("Файл не прочитан"));
+  const start = () => {
+    if (!plan) return;
+    setRunning(0);
+    runImport(plan, { builds, groups }, setRunning)
+      .then(setResult, fail("Импорт прерван"))
+      .finally(() => setRunning(null));
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => !open && running === null && onClose()}
+      title="Импорт билдов"
+      description="Из страниц PoB Library и PoB-разборщика. Билды, которые уже есть в библиотеке, пропускаются."
+      className="w-150"
+      footer={
+        result ? (
+          <Button variant="primary" onClick={onClose}>
+            Готово
+          </Button>
+        ) : (
+          <>
+            <Button onClick={onClose} disabled={running !== null}>
+              Отмена
+            </Button>
+            <Button variant="primary" icon={Import} disabled={!plan || fresh === 0 || running !== null} onClick={start}>
+              {running !== null ? `Импорт… ${running} из ${plan?.entries.length ?? 0}` : fresh ? `Импортировать ${fresh}` : "Импортировать"}
+            </Button>
+          </>
+        )
+      }
+    >
+      {result ? (
+        <div className="flex flex-col gap-3">
+          <Banner status={result.failed.length ? "warning" : "success"} title={`Добавлено билдов: ${result.added}`}>
+            {[result.groups && `новых групп: ${result.groups}`, result.duplicates && `уже были в библиотеке: ${result.duplicates}`, result.failed.length && `не импортировано: ${result.failed.length}`]
+              .filter(Boolean)
+              .join(" · ") || null}
+          </Banner>
+          {result.failed.length > 0 && (
+            <ul className="flex max-h-40 flex-col gap-1 overflow-auto text-label text-text-secondary">
+              {result.failed.map((f, i) => (
+                <li key={i}>
+                  <span className="text-text-primary">{f.name}</span> — {f.reason}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5 text-label text-text-secondary">
+            <p>
+              <span className="font-medium text-text-primary">PoB Library</span> — файл <span className="font-mono">pob-library/data/library.json</span>.
+            </p>
+            <p>
+              <span className="font-medium text-text-primary">PoB-разборщик</span> — на его странице F12 → Console, выполнить{" "}
+              <button type="button" className="font-mono text-text-accent hover:underline" onClick={() => void navigator.clipboard.writeText(PAGE_COMMAND)} title="Скопировать команду">
+                {PAGE_COMMAND}
+              </button>{" "}
+              и вставить сюда.
+            </p>
+          </div>
+          <Field
+            label="Содержимое"
+            error={parsed?.error ?? undefined}
+            hint={
+              plan
+                ? `${plan.format === "pob-library" ? "PoB Library" : "PoB-разборщик"}: билдов ${plan.entries.length}, новых ${fresh}${plan.newGroups.length ? `, новых групп ${plan.newGroups.length}` : ""}`
+                : undefined
+            }
+          >
+            {(p) => (
+              <textarea
+                id={p.id}
+                aria-describedby={p.describedBy}
+                aria-invalid={p.invalid || undefined}
+                spellCheck={false}
+                value={text}
+                disabled={running !== null}
+                placeholder='{"groups": […], "builds": […]} или [{"name": …, "code": …}]'
+                onChange={(e) => setText(e.target.value)}
+                className={cx(fieldClasses, "h-32 resize-none py-2 font-mono text-label break-all")}
+              />
+            )}
+          </Field>
+          <label className="self-start">
+            <input type="file" accept=".json,application/json,text/plain" className="sr-only" onChange={(e) => readFile(e.target.files?.[0])} />
+            <span className={cx(fieldClasses, "inline-flex cursor-pointer items-center gap-2 text-body hover:bg-bg-hover")}>
+              <FileUp aria-hidden size={16} /> Выбрать файл…
+            </span>
+          </label>
+        </div>
+      )}
     </Dialog>
   );
 }
