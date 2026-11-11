@@ -57,6 +57,8 @@ pub struct ManifestCounts {
     pub map_properties: u32,
     /// Из `trade-stats.json`; 0 — файла нет.
     pub trade_stats: u32,
+    /// Из `item-mods.json`; 0 — файла нет.
+    pub item_mods: u32,
 }
 
 /// Ответ `GET /v1/bootstrap`.

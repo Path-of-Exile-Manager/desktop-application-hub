@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use ts_rs::TS;
 
 use item_parser::variant::{self, CatalogKind, PriceVariant};
-use item_parser::{ParsedItem, Rarity};
+use item_parser::{ModKind, ParsedItem, Rarity};
 
 use crate::dataset::model::{CatalogItem, ItemKind, ItemRarity, ReleaseState};
 use crate::dataset::{Catalog, DatasetService};
@@ -55,7 +55,7 @@ pub fn appraise(app: &AppHandle, text: &str) -> Result<Appraisal, String> {
 
 /// Оценка уже разобранного предмета: текст из игры или предмет сборки PoB (`pob_stage`).
 /// `prices` — цены предмета текущей лиги по id справочника (`PricesService::variants`).
-pub fn appraise_item(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, item: ParsedItem) -> Appraisal {
+pub fn appraise_item(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, mut item: ParsedItem) -> Appraisal {
     let mut notes = Vec::new();
 
     let (lookup_name, found) = find(catalog, &item, &mut notes);
@@ -78,6 +78,7 @@ pub fn appraise_item(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, ite
         notes.push(format!("одно название у {candidates} записей справочника — взята та, у которой есть цена"));
     }
 
+    label_mods(catalog, &matched, &mut item, &mut notes);
     let kind = catalog_kind(matched.kind);
     let wanted = variant::variant_of(&item, kind);
     let key = wanted.key();
@@ -270,4 +271,27 @@ pub fn publish(app: &AppHandle, appraisal: Appraisal) {
 #[tauri::command]
 pub fn item_last_appraisal(last: State<LastAppraisal>) -> Option<Appraisal> {
     last.0.lock().unwrap().clone()
+}
+
+/// Префикс/суффикс и тир explicit-модов редкого или волшебного предмета, у которых их нет в тексте
+/// (простое Ctrl+C или русский клиент без заголовков модов), — по `item-mods.json`, предположительно.
+fn label_mods(catalog: &Catalog, base_item: &CatalogItem, item: &mut ParsedItem, notes: &mut Vec<String>) {
+    if !matches!(item.rarity, Rarity::Rare | Rarity::Magic) {
+        return;
+    }
+    let (Some(Ok(index)), Some(base)) = (&catalog.item_mods, crate::item_mods::Base::of(base_item)) else { return };
+    let base = base.with_influences(&item.influences);
+    let language = item.language;
+    let mut filled = 0;
+    for m in item.mods.iter_mut().filter(|m| matches!(m.kind, ModKind::Explicit | ModKind::Fractured) && m.affix.is_none()) {
+        let Some(label) = m.lines.iter().find_map(|line| index.label(line, language, &base, &[])) else { continue };
+        m.affix = Some(label.affix);
+        if m.tier.is_none() {
+            m.tier = label.tier;
+        }
+        filled += 1;
+    }
+    if filled > 0 {
+        notes.push(format!("префикс/суффикс и тир {filled} модов определены по данным игры — предположительно"));
+    }
 }

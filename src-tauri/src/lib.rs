@@ -18,6 +18,7 @@ mod discord;
 mod extension;
 mod game;
 mod icons;
+mod item_mods;
 mod leagues;
 mod overlay;
 mod paths;

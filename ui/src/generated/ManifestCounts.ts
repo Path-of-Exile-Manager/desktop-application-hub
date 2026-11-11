@@ -8,4 +8,8 @@ mapMods: number, mapProperties: number,
 /**
  * Из `trade-stats.json`; 0 — файла нет.
  */
-tradeStats: number, };
+tradeStats: number, 
+/**
+ * Из `item-mods.json`; 0 — файла нет.
+ */
+itemMods: number, };

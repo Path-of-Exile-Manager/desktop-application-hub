@@ -7,6 +7,7 @@ use std::sync::Arc;
 use craft_engine::Engine;
 
 use super::model::{Ascendancy, CatalogItem, ItemClass, Manifest, MapSearch, TradeStatsFile};
+use crate::item_mods::{ItemModIndex, ItemModsFile};
 use crate::trade::stats::StatIndex;
 use super::store::DatasetStore;
 
@@ -14,6 +15,10 @@ pub const MAP_SEARCH_FILE: &str = "map-search.json";
 pub const CRAFTING_FILE: &str = "crafting.json";
 pub const ASCENDANCIES_FILE: &str = "ascendancies.json";
 pub const TRADE_STATS_FILE: &str = "trade-stats.json";
+pub const ITEM_MODS_FILE: &str = "item-mods.json";
+
+/// `item-mods.json`: `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан.
+pub type ItemModsIndex = Option<Result<Arc<ItemModIndex>, String>>;
 
 /// `trade-stats.json`: `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан.
 pub type TradeStatsIndex = Option<Result<Arc<StatIndex>, String>>;
@@ -34,6 +39,8 @@ pub struct Catalog {
     pub ascendancies: Option<Result<Vec<Ascendancy>, String>>,
     /// Индекс фильтров модов сайта торговли; необязательный, как и `map_search`.
     pub trade_stats: TradeStatsIndex,
+    /// Моды предметов для подписей префикс/суффикс и тир; необязательный.
+    pub item_mods: ItemModsIndex,
     by_id: HashMap<String, usize>,
     /// Нормализованное название (ru и en) → предметы: одно имя бывает у нескольких записей
     /// (уникальный на разных базах).
@@ -56,9 +63,11 @@ impl Catalog {
             .then(|| store.read_file(id, &manifest, ASCENDANCIES_FILE).and_then(|bytes| parse_ascendancies(&bytes)));
         let trade_stats = has_file(&manifest, TRADE_STATS_FILE)
             .then(|| store.read_file(id, &manifest, TRADE_STATS_FILE).and_then(|bytes| parse_trade_stats(&bytes)));
-        Ok(Self::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats))
+        let item_mods = has_file(&manifest, ITEM_MODS_FILE).then(|| store.read_file(id, &manifest, ITEM_MODS_FILE).and_then(|bytes| parse_item_mods(&bytes)));
+        Ok(Self::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         mut manifest: Manifest,
         items: Vec<CatalogItem>,
@@ -67,6 +76,7 @@ impl Catalog {
         crafting: CraftingFile,
         ascendancies: Option<Result<Vec<Ascendancy>, String>>,
         trade_stats: TradeStatsIndex,
+        item_mods: ItemModsIndex,
     ) -> Self {
         // По самому файлу: манифесты в кэше, записанные до появления этих счётчиков, их потеряли.
         if let Some(Ok(search)) = &map_search {
@@ -75,6 +85,9 @@ impl Catalog {
         }
         if let Some(Ok(index)) = &trade_stats {
             manifest.counts.trade_stats = index.stats.len() as u32;
+        }
+        if let Some(Ok(index)) = &item_mods {
+            manifest.counts.item_mods = index.len() as u32;
         }
         let mut by_id = HashMap::with_capacity(items.len());
         let mut by_name: HashMap<String, Vec<usize>> = HashMap::with_capacity(items.len() * 2);
@@ -90,7 +103,7 @@ impl Catalog {
                 by_trade_id.insert(trade_id.clone(), i);
             }
         }
-        Self { manifest, items, classes, map_search, crafting, ascendancies, trade_stats, by_id, by_name, by_trade_id }
+        Self { manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods, by_id, by_name, by_trade_id }
     }
 
     pub fn get(&self, id: &str) -> Option<&CatalogItem> {
@@ -192,6 +205,11 @@ pub fn parse_ascendancies(bytes: &[u8]) -> Result<Vec<Ascendancy>, String> {
 pub fn parse_trade_stats(bytes: &[u8]) -> Result<Arc<StatIndex>, String> {
     let file: TradeStatsFile = serde_json::from_slice(bytes).map_err(|e| format!("{TRADE_STATS_FILE} не разобран: {e}"))?;
     Ok(Arc::new(StatIndex::new(file)))
+}
+
+pub fn parse_item_mods(bytes: &[u8]) -> Result<Arc<ItemModIndex>, String> {
+    let file: ItemModsFile = serde_json::from_slice(bytes).map_err(|e| format!("{ITEM_MODS_FILE} не разобран: {e}"))?;
+    Ok(Arc::new(ItemModIndex::new(file)))
 }
 
 pub fn parse_crafting(bytes: &[u8]) -> Result<Arc<Engine>, String> {

@@ -48,6 +48,8 @@ pub struct SpecMod {
     pub use_fractured: bool,
     pub unavailable: Option<ModUnavailable>,
     pub duplicate_of: Option<usize>,
+    /// Префикс/суффикс и тир — подпись, на поиск не влияет.
+    pub label: Option<crate::item_mods::ModLabel>,
 }
 
 /// Что искать на сайте торговли.
@@ -138,6 +140,7 @@ impl TradeSearchSpec {
                     use_fractured: row.fracture_only,
                     unavailable: row.unavailable,
                     duplicate_of: row.duplicate_of,
+                    label: row.label,
                 }
             })
             .collect();

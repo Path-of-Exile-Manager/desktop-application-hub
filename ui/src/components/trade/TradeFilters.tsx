@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Checkbox, cx, Input, ModTypeTag, SegmentedControl, Switch, Tooltip, type ModKind } from "@/design-system";
+import { AffixBadge, Checkbox, cx, Input, ModTypeTag, SegmentedControl, Switch, TierBadge, Tooltip, type ModKind } from "@/design-system";
 import type { PobModKind } from "@/generated/PobModKind";
 import type { Corrupted, SpecMod, TradeSearchSpec } from "./spec";
 
@@ -106,6 +106,14 @@ export function TradeFilters({ spec, onChange, extra }: { spec: TradeSearchSpec;
             return (
               <li key={m.index} className={cx("flex min-h-10 items-center gap-3 px-3 py-1.5", disabled && "text-text-muted")}>
                 <Checkbox checked={m.enabled && !disabled} disabled={disabled} onCheckedChange={(v) => setMod(m.index, { enabled: v })} aria-label={`В поиске: ${m.line}`} />
+                {m.label && (
+                  <Tooltip content={m.label.exact ? "По аффиксам крафтера PoB" : "Предположительно: по тексту мода и базе"}>
+                    <span className={cx("flex shrink-0 items-center gap-1", !m.label.exact && "opacity-70")}>
+                      <AffixBadge affix={m.label.affix} />
+                      <TierBadge tier={m.label.tier} />
+                    </span>
+                  </Tooltip>
+                )}
                 <ModTypeTag kind={modKind(m)} />
                 <span className={cx("min-w-0 flex-1 text-body", m.enabled && !disabled ? "text-text-primary" : "text-text-secondary")}>
                   {m.line}

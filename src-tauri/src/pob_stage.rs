@@ -188,6 +188,8 @@ fn item_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, stats: Optio
     let unique_name = (parsed.rarity == Rarity::Unique).then(|| parsed.name.clone());
     let appraisal = appraise_item(catalog, prices, parsed);
     let mut notes = appraisal.notes;
+    // Подписи модов PoB — в `mods` строки, а не в пояснениях оценки.
+    notes.retain(|n| !n.starts_with("префикс/суффикс"));
     let (mut price, mut price_match) = (appraisal.price, appraisal.price_match);
     if let Some((variant, found)) = appraisal.catalog_item.as_ref().and_then(|c| unique_variant_price(item, &prices(&c.id))) {
         notes.retain(|n| !n.starts_with("точной цены"));
@@ -212,7 +214,8 @@ fn item_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, stats: Optio
     } else {
         entry.map_or_else(|| base_name(&item.base).to_string(), |b| b.name.en.clone())
     };
-    let mods = stats.map(|s| match_item(s, item, slot)).unwrap_or_default();
+    let mut mods = stats.map(|s| match_item(s, item, slot)).unwrap_or_default();
+    label_mods(catalog, item, entry, &mut mods);
     let spec = TradeSearchSpec::item(item, unique_name, base, &mods, DEFAULT_TOLERANCE);
     let (mods_searched, mods_unavailable) = spec.counts();
     let trade = build_query(&spec).ok();
@@ -267,6 +270,21 @@ fn gem_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, gem: &PobGem,
         price_match: appraisal.price_match,
         trade,
         notes: appraisal.notes,
+    }
+}
+
+/// Префикс/суффикс и тир explicit-модов редких и волшебных (у уникальных их нет): по `item-mods.json`,
+/// точно — по аффиксам крафтера PoB.
+fn label_mods(catalog: &Catalog, item: &PobItem, entry: Option<&CatalogItem>, mods: &mut [crate::trade::matcher::ModRow]) {
+    if !matches!(item.rarity, PobRarity::Rare | PobRarity::Magic) {
+        return;
+    }
+    let (Some(Ok(index)), Some(base)) = (&catalog.item_mods, entry.and_then(crate::item_mods::Base::of)) else { return };
+    let influences: Vec<Influence> = item.influences.iter().filter_map(|i| influence(*i)).collect();
+    let base = base.with_influences(&influences);
+    let known: Vec<String> = item.affixes.iter().map(|a| a.mod_id.clone()).collect();
+    for row in mods.iter_mut().filter(|r| r.kind == PobModKind::Explicit && !r.crafted) {
+        row.label = index.label(&row.line, Language::En, &base, &known);
     }
 }
 

@@ -302,6 +302,8 @@ pub struct ModRow {
     pub unavailable: Option<ModUnavailable>,
     /// Номер строки, которой уже принадлежит тот же фильтр.
     pub duplicate_of: Option<usize>,
+    /// Префикс/суффикс и тир (`item-mods.json`); заполняет `pob_stage`.
+    pub label: Option<crate::item_mods::ModLabel>,
 }
 
 /// Все моды предмета PoB со статами. Fractured-мод ищется обычным статом (`explicit.…`), а
@@ -367,6 +369,7 @@ pub fn match_item(index: &StatIndex, item: &PobItem, slot: &str) -> Vec<ModRow> 
                 fracture_only,
                 unavailable,
                 duplicate_of,
+                label: None,
             }
         })
         .collect()

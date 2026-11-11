@@ -13,6 +13,18 @@ import { fail } from "./dialogs";
 // поиска (TradeFilters) с правками поверх умолчаний ядра, «Трейд». Правки сохраняются в записи
 // билда (`filterOverrides[ключ строки]`) — только изменённые поля.
 
+/** Влияния — как в игре. */
+const INFLUENCE: Record<PobItem["influences"][number], string> = {
+  shaper: "Shaper",
+  elder: "Elder",
+  crusader: "Crusader",
+  redeemer: "Redeemer",
+  hunter: "Hunter",
+  warlord: "Warlord",
+  searingExarch: "Searing Exarch",
+  eaterOfWorlds: "Eater of Worlds",
+};
+
 const RARITY: Record<PobItem["rarity"], Item["rarity"]> = { normal: "normal", magic: "magic", rare: "rare", unique: "unique", relic: "unique" };
 
 /** Сокеты PoB (`R-R-G B`) → группы дизайн-системы; A (абиссальное) и DV — как белые. */
@@ -116,7 +128,7 @@ export function ItemCard({
               {row.item?.synthesised && <Badge tone="muted">Synthesised</Badge>}
               {row.item?.influences.map((i) => (
                 <Badge key={i} tone="muted">
-                  {i}
+                  {INFLUENCE[i]}
                 </Badge>
               ))}
             </div>
