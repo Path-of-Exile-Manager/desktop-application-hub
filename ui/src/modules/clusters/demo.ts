@@ -1,4 +1,7 @@
+import type { ClusterDetail } from "@/generated/ClusterDetail";
 import type { ClusterRow } from "@/generated/ClusterRow";
+import type { CraftCurrency } from "@/generated/CraftCurrency";
+import type { CraftPlan } from "@/generated/CraftPlan";
 import type { ClustersStatus } from "@/generated/ClustersStatus";
 import type { CraftMethodKind } from "@/generated/CraftMethodKind";
 
@@ -25,7 +28,43 @@ const SEEDS: Seed[] = [
   ["large", 8, ["Heavy Hitter", "Martial Prowess"], 0.012, null, 1, 25, "fossil", "Dagger and Claw Damage"],
 ];
 
-export function clustersDemo(): { status: ClustersStatus; rows: ClusterRow[] } {
+const DEMO_TRADE = { query: { status: { option: "securable" }, type: "Large Cluster Jewel" }, sort: { price: "asc" } };
+
+/** Карточка цели из строки: лучший план и два других для сравнения. */
+function demoDetail(row: ClusterRow): ClusterDetail {
+  const best = row.best!;
+  const variant = (method: CraftMethodKind, factor: number): CraftPlan => ({
+    ...best,
+    method,
+    fossils: [],
+    resonatorSockets: null,
+    probability: best.probability / factor,
+    attempts: { mean: best.attempts.mean * factor, p50: Math.ceil(best.attempts.p50 * factor), p90: Math.ceil(best.attempts.p90 * factor) },
+    craftCost: { mean: best.craftCost.mean * factor, p50: best.craftCost.p50 * factor, p90: best.craftCost.p90 * factor },
+    totalCost: best.basePrice + best.craftCost.mean * factor,
+    totalCostP90: best.basePrice + best.craftCost.p90 * factor,
+    profit: best.profit === null ? null : best.profit - best.craftCost.mean * (factor - 1),
+    roi: best.profit === null ? null : (best.profit - best.craftCost.mean * (factor - 1)) / (best.basePrice + best.craftCost.mean * factor),
+  });
+  return {
+    row,
+    plans: [best, variant("chaos", 1.6), variant("alteration", 2.4)],
+    enchants: [best.enchant, { en: "Attack Damage", ru: "Урон атак" }],
+    tradeTarget: DEMO_TRADE,
+  };
+}
+
+const DEMO_CURRENCY: CraftCurrency[] = [
+  ["transmutation", "Сфера превращения", 0.05],
+  ["alteration", "Сфера перемен", 0.15],
+  ["augmentation", "Сфера усиления", 0.05],
+  ["regal", "Сфера царей", 0.5],
+  ["exalted", "Сфера возвышения", 4],
+  ["alchemy", "Сфера алхимии", 0.3],
+  ["scouring", "Сфера очищения", 0.3],
+].map(([key, ru, chaos]) => ({ key: String(key), itemId: `demo:${key}`, name: { en: String(key), ru: String(ru) }, marketChaos: Number(chaos), ownChaos: null }));
+
+export function clustersDemo(): { status: ClustersStatus; rows: ClusterRow[]; demo: { details: Record<string, ClusterDetail>; currency: CraftCurrency[] } } {
   const now = Date.now();
   const iso = (minutesAgo: number) => new Date(now - minutesAgo * 60000).toISOString();
   const rows: ClusterRow[] = SEEDS.map(([size, passives, notables, share, sale, base, craft, method, enchant], index) => {
@@ -56,6 +95,7 @@ export function clustersDemo(): { status: ClustersStatus; rows: ClusterRow[] } {
         totalCostP90: base + craft * 2.3,
         profit,
         roi: profit === null ? null : profit / total,
+        tradeBase: DEMO_TRADE,
       },
       plans: 4,
       issue: sale === null ? "notQuoted" : null,
@@ -77,5 +117,6 @@ export function clustersDemo(): { status: ClustersStatus; rows: ClusterRow[] } {
     error: null,
     engineError: null,
   };
-  return { status, rows };
+  const details = Object.fromEntries(rows.filter((r) => r.best).map((r) => [r.key, demoDetail(r)]));
+  return { status, rows, demo: { details, currency: DEMO_CURRENCY } };
 }

@@ -11,4 +11,8 @@ plans: Array<CraftPlan>,
 /**
  * Энчанты, на которых выпадает цель.
  */
-enchants: Array<ClusterName>, };
+enchants: Array<ClusterName>, 
+/**
+ * Запрос сайта торговли готовых самоцветов цели (как проверяет цену сервер).
+ */
+tradeTarget: unknown, };

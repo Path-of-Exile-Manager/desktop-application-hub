@@ -10,6 +10,7 @@
 //! сразу — по `clusters_refresh`. Пересчёт — когда меняются цели, цены лиги или набор данных,
 //! в нескольких потоках (`cluster_plans.rs`). Событие `clusters-status`.
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
@@ -22,7 +23,7 @@ use tauri::{AppHandle, Emitter, Listener, Manager, State};
 use ts_rs::TS;
 
 use crate::api::{Api, Call, Reply};
-use crate::cluster_plans::{compute, ClusterDemand, ClusterDetail, ClusterName, ClusterRow, ClustersReply, Computed, MarketData};
+use crate::cluster_plans::{compute, craft_currency_ids, ClusterDemand, ClusterDetail, ClusterName, ClusterRow, ClustersReply, Computed, CraftCurrency, MarketData};
 use crate::dataset::{self, Catalog, DatasetService};
 use crate::paths::write_atomic;
 use crate::prices::{self, encode_segment, PricesService};
@@ -102,6 +103,9 @@ struct Inner {
     computed: Option<Arc<Computed>>,
     /// Из чего посчитан `computed`.
     computed_from: Option<String>,
+    /// Свои цены валюты пользователя (id предмета → chaos); сохраняет интерфейс.
+    own: Arc<HashMap<String, f64>>,
+    own_version: u64,
 }
 
 enum Wake {
@@ -154,7 +158,7 @@ fn idle_status(league: Option<String>) -> ClustersStatus {
 
 pub fn start(app: &AppHandle, app_root: &Path) {
     let (tx, rx) = mpsc::channel();
-    let inner = Inner { status: idle_status(None), reply: None, etag: None, reply_version: 0, computed: None, computed_from: None };
+    let inner = Inner { status: idle_status(None), reply: None, etag: None, reply_version: 0, computed: None, computed_from: None, own: Arc::new(HashMap::new()), own_version: 0 };
     app.manage(ClustersService { inner: Mutex::new(inner), wake: Mutex::new(tx), root: app_root.to_path_buf() });
 
     // Цены и набор данных меняются в своих потоках: просыпаемся по их событиям.
@@ -294,9 +298,9 @@ fn fetch(app: &AppHandle, service: &ClustersService, league: &str) -> bool {
 fn compute_if_needed(app: &AppHandle, service: &ClustersService, league: &str) {
     let catalog = app.state::<DatasetService>().catalog();
     let prices = app.state::<PricesService>();
-    let (reply, reply_version, computed_from) = {
+    let (reply, reply_version, computed_from, own, own_version) = {
         let inner = service.inner.lock().unwrap();
-        (inner.reply.clone(), inner.reply_version, inner.computed_from.clone())
+        (inner.reply.clone(), inner.reply_version, inner.computed_from.clone(), inner.own.clone(), inner.own_version)
     };
     let Some(reply) = reply else { return };
     let engine = match catalog.as_ref().map(|c| c.crafting.clone()) {
@@ -326,7 +330,7 @@ fn compute_if_needed(app: &AppHandle, service: &ClustersService, league: &str) {
     }
 
     let (Ok(engine), Some(prices_version), Some(catalog)) = (engine, prices_version, catalog) else { return };
-    let source = format!("{reply_version}|{prices_version}|{}", catalog.manifest.dataset_id);
+    let source = format!("{reply_version}|{prices_version}|{}|{own_version}", catalog.manifest.dataset_id);
 
     if computed_from.as_deref() == Some(source.as_str()) {
         return;
@@ -340,7 +344,7 @@ fn compute_if_needed(app: &AppHandle, service: &ClustersService, league: &str) {
     publish(app, service);
 
     let started = Instant::now();
-    let computed = compute(&engine, &LiveData { prices: &prices, catalog: &catalog }, &reply);
+    let computed = compute(&engine, &LiveData { prices: &prices, catalog: &catalog }, &reply, &own);
     let elapsed = started.elapsed().as_millis() as u64;
 
     let mut inner = service.inner.lock().unwrap();
@@ -383,6 +387,38 @@ pub fn clusters_refresh(service: State<ClustersService>) {
 #[tauri::command]
 pub fn clusters_list(service: State<ClustersService>) -> Vec<ClusterRow> {
     service.inner.lock().unwrap().computed.as_ref().map(|c| c.rows.clone()).unwrap_or_default()
+}
+
+/// Свои цены валюты (id предмета → chaos; 0 или отсутствие — цена прайса). Интерфейс хранит их
+/// у себя и присылает при запуске и при каждой правке; другие — пересчёт.
+#[tauri::command]
+pub fn clusters_set_own_prices(service: State<ClustersService>, prices: HashMap<String, f64>) {
+    let prices: HashMap<String, f64> = prices.into_iter().filter(|(_, p)| p.is_finite() && *p > 0.0).collect();
+    {
+        let mut inner = service.inner.lock().unwrap();
+        if *inner.own == prices {
+            return;
+        }
+        inner.own = Arc::new(prices);
+        inner.own_version += 1;
+    }
+    service.send(Wake::Changed);
+}
+
+/// Валюта крафта с ценой прайса и своей ценой. Пусто, пока нет `crafting.json`.
+#[tauri::command]
+pub fn clusters_currency(service: State<ClustersService>, dataset: State<DatasetService>, prices: State<PricesService>) -> Vec<CraftCurrency> {
+    let Some(catalog) = dataset.catalog() else { return Vec::new() };
+    let Some(Ok(engine)) = catalog.crafting.clone() else { return Vec::new() };
+    let own = service.inner.lock().unwrap().own.clone();
+    craft_currency_ids(&engine)
+        .into_iter()
+        .map(|(key, item_id)| {
+            let name = catalog.get(&item_id).map_or_else(|| ClusterName { en: key.to_owned(), ru: None }, |item| ClusterName { en: item.name.en.clone(), ru: item.name.ru.clone() });
+            let market_chaos = if key == "chaos" { Some(1.0) } else { prices.chaos(&item_id) };
+            CraftCurrency { key: key.to_owned(), own_chaos: own.get(&item_id).copied(), item_id, name, market_chaos }
+        })
+        .collect()
 }
 
 /// Цель целиком: все методы и подходящие энчанты.

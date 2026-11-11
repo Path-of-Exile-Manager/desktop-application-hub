@@ -1,6 +1,7 @@
 import type { ClusterIssue } from "@/generated/ClusterIssue";
 import type { ClusterRow } from "@/generated/ClusterRow";
 import type { CraftMethodKind } from "@/generated/CraftMethodKind";
+import type { CraftPlan } from "@/generated/CraftPlan";
 
 // Чистые функции вкладки «Выгодные кластеры»: группы по ROI, фильтры, подписи. Без импортов
 // во время выполнения — запускаются и в Node.
@@ -101,6 +102,42 @@ export const METHOD_LABEL: Record<CraftMethodKind, string> = {
   chaos: "Хаос",
   fossil: "Ископаемые",
 };
+
+/** Шаги метода словами: что купить и что делать до попадания. */
+export function methodSteps(plan: CraftPlan, notables: string): string[] {
+  const base = `Купить белую базу: ${plan.enchant.ru ?? plan.enchant.en}, уровень не ниже ${plan.itemLevel} (≈ ${plan.basePrice.toFixed(1)} c).`;
+  const target = `Цель — ${notables}.`;
+  switch (plan.method) {
+    case "alteration":
+      return [base, "Сфера превращения.", `Сферы перемен, пока не выпадет цель. ${target}`];
+    case "altAug":
+      return [base, "Сфера превращения.", "Сфера перемен; если у предмета один мод и сфера усиления может закончить цель — усиление.", `Повторять до попадания. ${target}`];
+    case "altAugRegal":
+      return [
+        base,
+        "Сфера превращения.",
+        "Сферы перемен (и усиление, когда оно может дать нужный notable), пока на предмете не будет notable цели.",
+        "Сфера царей. Не вышло — сфера очищения, превращение и снова перемены.",
+        target,
+      ];
+    case "altAugRegalExalt":
+      return [
+        base,
+        "Сфера превращения.",
+        "Сферы перемен (и усиление), пока на предмете не будет notable цели.",
+        "Сфера царей; если цели не хватает одного мода — сфера возвышения.",
+        "Не вышло — сфера очищения, превращение и снова перемены.",
+        target,
+      ];
+    case "chaos":
+      return [base, "Сфера алхимии.", `Сферы хаоса, пока не выпадет цель. ${target}`];
+    case "fossil": {
+      const fossils = plan.fossils.map((f) => f.name.ru ?? f.name.en).join(", ");
+      const sockets = plan.resonatorSockets ?? plan.fossils.length;
+      return [base, `Хаотический резонатор (${sockets} ${sockets === 1 ? "гнездо" : "гнезда"}), в него: ${fossils}.`, `Резонатор с ископаемыми на каждую попытку, пока не выпадет цель. ${target}`];
+    }
+  }
+}
 
 export const ISSUE_LABEL: Record<ClusterIssue, string> = {
   unreachable: "не выпадает на базах этой версии игры",

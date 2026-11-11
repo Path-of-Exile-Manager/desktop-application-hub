@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Gem, Minus, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
+import { Coins, Gem, Minus, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
 import {
   Banner,
   Button,
@@ -37,7 +37,9 @@ import {
   type Band,
   type SortKey,
 } from "./model";
-import { refreshClusters, useClustersData, useClustersSync, useClustersView, type ClusterRow, type ClustersStatus } from "./useClusters";
+import { CurrencyDialog } from "./CurrencyDialog";
+import { TargetCard } from "./TargetCard";
+import { refreshClusters, useClustersData, useClustersSync, useClustersView, useOwnPrices, type ClusterRow, type ClustersStatus } from "./useClusters";
 
 /** Высота строки списка: две строки текста. */
 const ROW_HEIGHT = 52;
@@ -79,14 +81,21 @@ function Trend({ row }: { row: ClusterRow }) {
   );
 }
 
-function TargetRow({ row }: { row: ClusterRow }) {
+function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
   const best = row.best;
   const market = row.market;
   const names = row.notables.map((n) => n.en).join(" + ");
   const namesRu = row.notables.map((n) => n.ru ?? n.en).join(" + ");
 
   return (
-    <li className={cx(COLUMNS, "border-b border-border-subtle")} style={{ height: ROW_HEIGHT }}>
+    <li
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen())}
+      className={cx(COLUMNS, "cursor-pointer border-b border-border-subtle transition-colors hover:bg-bg-hover focus-visible:bg-bg-hover focus-visible:outline-none")}
+      style={{ height: ROW_HEIGHT }}
+    >
       <div className="min-w-0">
         <Tooltip content={namesRu !== names ? namesRu : undefined}>
           <p className="truncate text-body font-semibold text-text-primary">{names}</p>
@@ -205,7 +214,15 @@ export function ClustersPage() {
   const rows = useClustersData((d) => d.rows);
   const { band: savedBand, filters, sort, showLosses, set } = useClustersView();
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<ClusterRow | null>(null);
+  const [currencyOpen, setCurrencyOpen] = useState(() => import.meta.env.DEV && new URLSearchParams(location.search).get("dialog") === "currency");
+  const ownCount = useOwnPrices((s) => Object.keys(s.prices).length);
   const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
+
+  // Только dev: `?dialog=card` открывает карточку первой цели (скриншоты).
+  useEffect(() => {
+    if (import.meta.env.DEV && !selected && rows.length > 0 && new URLSearchParams(location.search).get("dialog") === "card") setSelected(rows.find((r) => r.best?.roi) ?? rows[0]);
+  }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => applyFilters(rows, filters), [rows, filters]);
   const counts = useMemo(() => bandCounts(filtered), [filtered]);
@@ -226,9 +243,14 @@ export function ClustersPage() {
       title="Выгодные кластеры"
       subtitle={subtitle(status)}
       actions={
-        <Button icon={RefreshCw} variant="secondary" onClick={refreshClusters} disabled={!inTauri || !status?.league || status.syncing}>
-          {status?.syncing ? "Обновляется…" : "Обновить"}
-        </Button>
+        <>
+          <Button icon={Coins} variant="ghost" onClick={() => setCurrencyOpen(true)}>
+            {ownCount > 0 ? `Цены валюты · свои ${ownCount}` : "Цены валюты"}
+          </Button>
+          <Button icon={RefreshCw} variant="secondary" onClick={refreshClusters} disabled={!inTauri || !status?.league || status.syncing}>
+            {status?.syncing ? "Обновляется…" : "Обновить"}
+          </Button>
+        </>
       }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -281,7 +303,7 @@ export function ClustersPage() {
           ) : (
             <ul className="flex flex-col">
               {shown.map((row) => (
-                <TargetRow key={row.key} row={row} />
+                <TargetRow key={row.key} row={row} onOpen={() => setSelected(row)} />
               ))}
             </ul>
           )}
@@ -289,6 +311,8 @@ export function ClustersPage() {
 
         <Pagination page={page} pageSize={pageSize} total={visible.length} onPageChange={setPage} />
       </div>
+      <TargetCard row={selected && (rows.find((r) => r.key === selected.key) ?? selected)} onClose={() => setSelected(null)} />
+      <CurrencyDialog open={currencyOpen} onOpenChange={setCurrencyOpen} />
     </Page>
   );
 }

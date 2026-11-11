@@ -7,6 +7,7 @@ use std::thread;
 use craft_engine::data::ClusterSize;
 use craft_engine::{BaseOffer, Engine, Method, Plan, Prices};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use ts_rs::TS;
 
 /// Ископаемые перебираются для стольких самых дешёвых баз цели (самая долгая часть расчёта).
@@ -176,6 +177,25 @@ pub struct CraftPlan {
     /// Цена продажи − вложения; без цены продажи — `null`.
     pub profit: Option<f64>,
     pub roi: Option<f64>,
+    /// Запрос сайта торговли для покупки базы (`?q=` поиска): белая база с энчантом, числом
+    /// пассивов и уровнем не ниже нужного, мгновенный выкуп, дешёвые сначала.
+    #[ts(type = "unknown")]
+    pub trade_base: Option<serde_json::Value>,
+}
+
+/// Валюта крафта: цена прайса и действующая (своя, если задана).
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CraftCurrency {
+    /// `transmutation`, `alteration`, `augmentation`, `regal`, `exalted`, `alchemy`, `chaos`, `scouring`.
+    pub key: String,
+    pub item_id: String,
+    pub name: ClusterName,
+    /// Цена прайса лиги, chaos.
+    pub market_chaos: Option<f64>,
+    /// Своя цена пользователя, chaos.
+    pub own_chaos: Option<f64>,
 }
 
 /// Почему у цели нет плана или прибыли.
@@ -223,11 +243,37 @@ pub struct ClusterDetail {
     pub plans: Vec<CraftPlan>,
     /// Энчанты, на которых выпадает цель.
     pub enchants: Vec<ClusterName>,
+    /// Запрос сайта торговли готовых самоцветов цели (как проверяет цену сервер).
+    #[ts(type = "unknown")]
+    pub trade_target: Option<serde_json::Value>,
 }
 
-/// Планы всех целей ответа, в нескольких потоках.
-pub fn compute(engine: &Engine, data: &dyn MarketData, reply: &ClustersReply) -> Computed {
-    let market = market_prices(engine, data);
+/// «Adds # Passive Skills», строка энчанта числа пассивов на сайте торговли.
+const PASSIVES_STAT: &str = "enchant.stat_3086156145";
+
+/// Валюта, которую видит и может переоценить пользователь: ключ и id предмета.
+pub fn craft_currency_ids(engine: &Engine) -> Vec<(&'static str, String)> {
+    let currency = &engine.data().currency;
+    let mut ids = Vec::new();
+    if let Some(id) = &currency.transmutation {
+        ids.push(("transmutation", id.clone()));
+    }
+    ids.push(("alteration", currency.alteration.clone()));
+    ids.push(("augmentation", currency.augmentation.clone()));
+    ids.push(("regal", currency.regal.clone()));
+    ids.push(("exalted", currency.exalted.clone()));
+    if let Some(id) = &currency.alchemy {
+        ids.push(("alchemy", id.clone()));
+    }
+    ids.push(("chaos", currency.chaos.clone()));
+    ids.push(("scouring", currency.scouring.clone()));
+    ids
+}
+
+/// Планы всех целей ответа, в нескольких потоках. `own` — свои цены пользователя (id → chaos),
+/// они важнее прайса.
+pub fn compute(engine: &Engine, data: &dyn MarketData, reply: &ClustersReply, own: &HashMap<String, f64>) -> Computed {
+    let market = market_prices(engine, data, own);
     let offers = BaseOffers::new(engine, data);
     let workers = thread::available_parallelism().map_or(2, |n| n.get()).saturating_sub(1).clamp(1, 8);
     let chunk = reply.targets.len().div_ceil(workers).max(1);
@@ -260,7 +306,7 @@ pub fn compute(engine: &Engine, data: &dyn MarketData, reply: &ClustersReply) ->
 }
 
 /// Цены валюты, резонаторов и ископаемых из прайса лиги.
-fn market_prices(engine: &Engine, data: &dyn MarketData) -> Prices {
+fn market_prices(engine: &Engine, data: &dyn MarketData, own: &HashMap<String, f64>) -> Prices {
     let currency = &engine.data().currency;
     let mut ids: Vec<&String> = vec![
         &currency.alteration,
@@ -278,7 +324,7 @@ fn market_prices(engine: &Engine, data: &dyn MarketData) -> Prices {
 
     let mut map = HashMap::new();
     for id in ids {
-        if let Some(price) = data.chaos(id) {
+        if let Some(price) = own.get(id).copied().filter(|p| *p > 0.0).or_else(|| data.chaos(id)) {
             map.insert(id.clone(), price);
         }
     }
@@ -378,7 +424,7 @@ fn evaluate(engine: &Engine, names: &dyn MarketData, market: &Prices, offers: &B
     } else {
         Vec::new()
     };
-    let plans: Vec<CraftPlan> = plans.iter().map(|plan| craft_plan(engine, names, plan)).collect();
+    let plans: Vec<CraftPlan> = plans.iter().map(|plan| craft_plan(engine, names, plan, target)).collect();
     let issue = if !known || target.enchants.is_empty() {
         Some(ClusterIssue::Unreachable)
     } else if base_offers.is_empty() {
@@ -407,11 +453,58 @@ fn evaluate(engine: &Engine, names: &dyn MarketData, market: &Prices, offers: &B
         issue,
     };
     let enchants = target.enchants.iter().map(|id| enchant_name(engine, &target.size, id)).collect();
+    let trade_target = target_query(engine, target);
 
-    (row.clone(), ClusterDetail { row, plans, enchants })
+    (row.clone(), ClusterDetail { row, plans, enchants, trade_target })
 }
 
-fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan) -> CraftPlan {
+/// Запрос готовых самоцветов цели: база, notable, пассивов не больше, мгновенный выкуп.
+fn target_query(engine: &Engine, target: &TargetReply) -> Option<serde_json::Value> {
+    let data = engine.data();
+    let size = data.clusters.sizes.iter().find(|size| size.id == target.size)?;
+    let mut filters = Vec::new();
+    for name in &target.notables {
+        let stat = data.clusters.mods.iter().find_map(|m| m.notable.as_ref().filter(|n| n.name.en == *name).and_then(|n| n.trade_stat_id.clone()))?;
+        filters.push(json!({ "id": stat }));
+    }
+    filters.push(json!({ "id": PASSIVES_STAT, "value": { "max": target.passives } }));
+    Some(json!({
+        "query": {
+            "status": { "option": "securable" },
+            "type": size.name.en,
+            "stats": [{ "type": "and", "filters": filters }],
+            "filters": { "misc_filters": { "filters": { "corrupted": { "option": "false" } } } }
+        },
+        "sort": { "price": "asc" }
+    }))
+}
+
+/// Запрос базы плана: белая, энчант, ровно столько пассивов, уровень не ниже, мгновенный выкуп.
+fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, item_level: u32) -> Option<serde_json::Value> {
+    let data = engine.data();
+    let size = data.clusters.sizes.iter().find(|size| size.id == target.size)?;
+    let enchant = data.clusters.enchants.iter().find(|e| e.size == target.size && e.id == enchant_id)?;
+    // `enchant.stat_3948993189|11`: фильтр энчанта и номер варианта в нём.
+    let (stat, option) = enchant.trade_stat_ids.first()?.split_once('|')?;
+    let option: u32 = option.parse().ok()?;
+    Some(json!({
+        "query": {
+            "status": { "option": "securable" },
+            "type": size.name.en,
+            "stats": [{ "type": "and", "filters": [
+                { "id": stat, "value": { "option": option } },
+                { "id": PASSIVES_STAT, "value": { "min": target.passives, "max": target.passives } }
+            ] }],
+            "filters": {
+                "type_filters": { "filters": { "rarity": { "option": "normal" } } },
+                "misc_filters": { "filters": { "ilvl": { "min": item_level }, "corrupted": { "option": "false" } } }
+            }
+        },
+        "sort": { "price": "asc" }
+    }))
+}
+
+fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &TargetReply) -> CraftPlan {
     let (method, fossils, resonator_sockets) = match &plan.estimate.method {
         Method::Alteration => (CraftMethodKind::Alteration, Vec::new(), None),
         Method::AltAug => (CraftMethodKind::AltAug, Vec::new(), None),
@@ -431,14 +524,14 @@ fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan) -> CraftPlan
         ),
     };
     let spread = |s: craft_engine::Spread| CraftSpread { mean: s.mean, p50: s.p50, p90: s.p90 };
-    let size = engine.data().clusters.enchants.iter().find(|e| e.id == plan.base.enchant).map(|e| e.size.clone()).unwrap_or_default();
 
     CraftPlan {
         method,
         fossils,
         resonator_sockets,
         enchant_id: plan.base.enchant.clone(),
-        enchant: enchant_name(engine, &size, &plan.base.enchant),
+        enchant: enchant_name(engine, &target.size, &plan.base.enchant),
+        trade_base: base_query(engine, target, &plan.base.enchant, plan.base.item_level),
         item_level: plan.base.item_level,
         base_price: plan.base.price,
         probability: plan.estimate.probability,

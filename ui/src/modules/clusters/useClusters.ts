@@ -6,16 +6,23 @@ import { persist } from "zustand/middleware";
 import type { ClusterDetail } from "@/generated/ClusterDetail";
 import type { ClusterRow } from "@/generated/ClusterRow";
 import type { ClustersStatus } from "@/generated/ClustersStatus";
+import type { CraftCurrency } from "@/generated/CraftCurrency";
+import type { CraftPlan } from "@/generated/CraftPlan";
 import { inTauri } from "@/app/window";
 import { NO_FILTERS, type Band, type Filters, type SortKey } from "./model";
 
 // Цели и планы считает ядро (src-tauri/src/clusters.rs) для лиги цен; вкладка только показывает.
 
-export type { ClusterDetail, ClusterRow, ClustersStatus };
+export type { ClusterDetail, ClusterRow, ClustersStatus, CraftCurrency, CraftPlan };
 
 const NO_ROWS: ClusterRow[] = [];
 
-export const useClustersData = create<{ status: ClustersStatus | null; rows: ClusterRow[] }>(() => ({ status: null, rows: NO_ROWS }));
+export const useClustersData = create<{
+  status: ClustersStatus | null;
+  rows: ClusterRow[];
+  /** Только `?demo=clusters`: карточки и валюта без ядра. */
+  demo?: { details: Record<string, ClusterDetail>; currency: CraftCurrency[] };
+}>(() => ({ status: null, rows: NO_ROWS }));
 
 /** Вид вкладки: группа, фильтры, сортировка, убыточные. Хранится локально. */
 export const useClustersView = create<{
@@ -37,8 +44,32 @@ export const useClustersView = create<{
   ),
 );
 
-/** Подписка на состояние ядра; список перечитывается, когда ядро его пересчитало. */
+/** Свои цены валюты крафта (id предмета → chaos). Хранятся здесь, ядру присылаются при каждой правке. */
+export const useOwnPrices = create<{ prices: Record<string, number>; set: (itemId: string, chaos: number | null) => void; reset: () => void }>()(
+  persist(
+    (set) => ({
+      prices: {},
+      set: (itemId, chaos) =>
+        set((s) => {
+          const prices = { ...s.prices };
+          if (chaos === null || !(chaos > 0)) delete prices[itemId];
+          else prices[itemId] = chaos;
+          return { prices };
+        }),
+      reset: () => set({ prices: {} }),
+    }),
+    { name: "poe-manager.clusters-prices", partialize: ({ prices }) => ({ prices }) },
+  ),
+);
+
+/** Подписка на состояние ядра; список перечитывается, когда ядро его пересчитало. Свои цены — ядру. */
 export function useClustersSync() {
+  const ownPrices = useOwnPrices((s) => s.prices);
+
+  useEffect(() => {
+    if (inTauri) void invoke("clusters_set_own_prices", { prices: ownPrices });
+  }, [ownPrices]);
+
   useEffect(() => {
     if (!inTauri) return;
     let unlisten: (() => void) | undefined;
@@ -71,5 +102,15 @@ export function refreshClusters() {
 }
 
 export function clusterDetail(key: string): Promise<ClusterDetail | null> {
-  return inTauri ? invoke<ClusterDetail | null>("cluster_detail", { key }) : Promise.resolve(null);
+  if (inTauri) return invoke<ClusterDetail | null>("cluster_detail", { key });
+  return Promise.resolve(useClustersData.getState().demo?.details[key] ?? null);
+}
+
+export function craftCurrency(): Promise<CraftCurrency[]> {
+  return inTauri ? invoke<CraftCurrency[]>("clusters_currency") : Promise.resolve(useClustersData.getState().demo?.currency ?? []);
+}
+
+/** Поиск на сайте торговли по запросу ядра (`?q=`). */
+export function tradeUrl(league: string, query: unknown): string {
+  return `https://www.pathofexile.com/trade/search/${encodeURIComponent(league)}?q=${encodeURIComponent(JSON.stringify(query))}`;
 }

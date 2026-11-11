@@ -63,7 +63,13 @@ fn main() {
     let snapshot = Snapshot { by_item };
 
     let started = Instant::now();
-    let computed = compute(&engine, &snapshot, &reply);
+    let computed = compute(&engine, &snapshot, &reply, &HashMap::new());
+    if let Some(row) = computed.rows.iter().find(|row| row.notables.len() == 2 && row.best.is_some()) {
+        let detail = &computed.details[&row.key];
+        println!("пример запросов сайта торговли ({}):", row.key);
+        println!("  цель: {}", detail.trade_target.as_ref().map_or("—".to_owned(), |q| q.to_string()));
+        println!("  база: {}", row.best.as_ref().and_then(|b| b.trade_base.as_ref()).map_or("—".to_owned(), |q| q.to_string()));
+    }
     let elapsed = started.elapsed();
 
     let mut issues: HashMap<String, u32> = HashMap::new();

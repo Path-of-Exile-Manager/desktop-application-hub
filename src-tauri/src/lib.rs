@@ -138,6 +138,8 @@ pub fn run() {
             clusters::clusters_refresh,
             clusters::clusters_list,
             clusters::cluster_detail,
+            clusters::clusters_set_own_prices,
+            clusters::clusters_currency,
             appraise::item_appraise,
             appraise::item_last_appraisal,
             capture::capture_set_hotkey,
