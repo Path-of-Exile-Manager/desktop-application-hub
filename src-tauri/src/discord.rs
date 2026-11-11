@@ -208,7 +208,8 @@ fn refresh(inner: &mut Inner, version: &str) {
 }
 
 fn update(app: &AppHandle, change: impl FnOnce(&mut Inner)) {
-    let watcher = app.state::<DiscordWatcher>();
+    // Команда может прийти раньше `start`: паника здесь роняла бы приложение.
+    let Some(watcher) = app.try_state::<DiscordWatcher>() else { return };
     let status = {
         let mut inner = watcher.0.lock().unwrap();
         change(&mut inner);

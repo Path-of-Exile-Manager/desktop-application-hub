@@ -92,7 +92,7 @@ fn apply_snapshot(status: &mut ExtensionStatus, snapshot: &Snapshot) {
 }
 
 fn update(app: &AppHandle, change: impl FnOnce(&mut ExtensionStatus)) {
-    let watcher = app.state::<ExtensionWatcher>();
+    let Some(watcher) = app.try_state::<ExtensionWatcher>() else { return };
     let status = {
         let mut status = watcher.0.lock().unwrap();
         change(&mut status);

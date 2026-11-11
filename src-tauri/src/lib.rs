@@ -91,9 +91,12 @@ pub fn run() {
             sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
             app.manage(appraise::LastAppraisal::default());
             capture::start(app.handle(), &game::current(app.handle()));
-            overlay::create(app.handle())?;
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
+            // Последним: создание окна крутит очередь сообщений, и главное окно уже вызывает
+            // команды. Всё их состояние должно быть зарегистрировано до этого, иначе паника
+            // внутри обработчика WebView2 роняет приложение (abort).
+            overlay::create(app.handle())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
