@@ -1,11 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { PobBuild } from "@/generated/PobBuild";
+import type { PobFetched } from "@/generated/PobFetched";
+import type { PobLink } from "@/generated/PobLink";
+import type { PobSite } from "@/generated/PobSite";
 
 // Библиотека билдов (план shared/docs/pob-trader.md, P6): записи коллекций pobBuilds и
 // pobBuildGroups (формы /v1/sync, проверка — src-tauri/src/sync/records.rs). Код PoB хранится как
 // есть, без пробелов; класс, восхождение и уровень берутся из кода при добавлении.
 
-export type PobBuildSite = "POBBIN" | "PASTEBIN" | "POE_NINJA";
+export type PobBuildSite = PobSite;
 
 export type PobBuildRecord = {
   id: string;
@@ -38,6 +41,22 @@ export const normalizeCode = (code: string) => code.replace(/\s+/g, "");
 
 /** Код PoB → сборка (ядро, `pob-parser`). Ошибка — текстом для пользователя. */
 export const decodeBuild = (code: string) => invoke<PobBuild>("pob_decode", { code });
+
+/** Ссылка pobb.in / Pastebin / poe.ninja → код и сборка (ядро скачивает само). */
+export const fetchBuild = (url: string) => invoke<PobFetched>("pob_fetch", { url });
+
+/** Ссылка, а не код: есть схема или начинается с сайта (как `looks_like_link` в pob-parser). */
+export function looksLikeLink(input: string): boolean {
+  const s = input.trim().toLowerCase();
+  return s.includes("://") || ["pobb.in/", "pastebin.com/", "poe.ninja/", "www."].some((p) => s.startsWith(p));
+}
+
+/** Открыть страницу сборки на её сайте (ядро проверяет адрес по белому списку). */
+export const openSourcePage = (url: string) => invoke<void>("pob_open_page", { url });
+
+export const SITE_LABEL: Record<PobSite, string> = { POBBIN: "pobb.in", PASTEBIN: "Pastebin", POE_NINJA: "poe.ninja" };
+
+export const sourceOf = (link: PobLink | null): PobBuildRecord["source"] => (link ? { site: link.site, idOnSite: link.idOnSite, url: link.url } : null);
 
 /** Что показывать: восхождение, а без него — класс. */
 export const classLabel = (b: { className: string; ascendancy: string | null }) => b.ascendancy ?? (b.className || "Класс не указан");
@@ -81,12 +100,12 @@ export const byCreatedDesc = (a: PobBuildRecord, b: PobBuildRecord) => (a.create
 export const formatDate = (iso: string) => new Date(iso).toLocaleDateString("ru-RU");
 
 /** Запись нового билда из разобранного кода. */
-export function newBuildRecord(input: { name: string; code: string; groupId: string | null; build: PobBuild; sortKey: string }): Omit<PobBuildRecord, "id"> {
+export function newBuildRecord(input: { name: string; code: string; groupId: string | null; build: PobBuild; link: PobLink | null; sortKey: string }): Omit<PobBuildRecord, "id"> {
   return {
     name: input.name.trim(),
     code: normalizeCode(input.code),
     groupId: input.groupId,
-    source: null,
+    source: sourceOf(input.link),
     className: (input.build.className || "Scion").slice(0, 40),
     ascendancy: input.build.ascendancy?.slice(0, 40) ?? null,
     level: input.build.level && input.build.level <= 100 ? input.build.level : null,

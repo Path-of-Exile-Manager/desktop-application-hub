@@ -155,6 +155,8 @@ pub fn run() {
             extension::extension_status,
             extension::extension_open_trade,
             pob::pob_decode,
+            pob::pob_fetch,
+            pob::pob_open_page,
             discord::discord_status,
             discord::discord_configure,
             discord::discord_reconnect,

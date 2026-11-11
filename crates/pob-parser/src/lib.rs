@@ -2,7 +2,8 @@
 //!
 //! - [`decode_code`] — код (base64url + zlib) → XML;
 //! - [`parse_xml`] — XML → [`PobBuild`]: предметы со свойствами, наборы предметов, наборы камней, деревья;
-//! - [`parse_code`] — оба шага сразу.
+//! - [`parse_code`] — оба шага сразу;
+//! - [`parse_link`] — ссылка pobb.in / Pastebin / poe.ninja → адрес кода (сеть — у приложения).
 //!
 //! Справочника, цен и сети у крейта нет: названия остаются как в PoB, сопоставление — в приложении.
 //!
@@ -12,10 +13,12 @@
 mod build;
 mod decode;
 mod item_text;
+mod link;
 mod model;
 
 pub use build::parse_xml;
 pub use decode::{MAX_XML_BYTES, decode_code};
+pub use link::{LinkError, PobLink, PobSite, looks_like_link, parse_link};
 pub use model::{
     PobAffix, PobAffixKind, PobBuild, PobEldritch, PobGem, PobGemGroup, PobInfluence, PobItem,
     PobItemSet, PobMod, PobModKind, PobRarity, PobSkillSet, PobSlot, PobSockets, PobTreeSocket,

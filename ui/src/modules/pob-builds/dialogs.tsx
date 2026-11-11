@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Copy, Eye, Save, Trash2 } from "lucide-react";
 import { Banner, Button, Dialog, Field, fieldClasses, Input, Select, toast, cx } from "@/design-system";
 import type { PobBuild } from "@/generated/PobBuild";
-import { buildSubtitle, classLabel, decodeBuild, NAME_MAX, normalizeCode, type PobBuildGroup } from "./model";
+import type { PobLink } from "@/generated/PobLink";
+import { buildSubtitle, classLabel, decodeBuild, fetchBuild, looksLikeLink, NAME_MAX, normalizeCode, SITE_LABEL, type PobBuildGroup } from "./model";
 import { Fact, Portrait } from "./parts";
 
 export const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -17,33 +18,53 @@ export function copyCode(code: string) {
 
 const NO_GROUP = "none";
 
-/** Разбор кода по мере ввода: сборка, ошибка или ожидание. */
-function useDecoded(code: string) {
-  const [state, setState] = useState<{ code: string; build: PobBuild | null; error: string | null }>({ code: "", build: null, error: null });
+/** Что вставлено: ссылка (ядро скачает) или код (ядро разберёт). Ключ — чтобы не путать устаревший ответ. */
+const inputKey = (input: string) => (looksLikeLink(input) ? `link:${input.trim()}` : `code:${normalizeCode(input)}`);
+
+type Resolved = { key: string; build: PobBuild | null; code: string; link: PobLink | null; error: string | null };
+
+/** Разбор по мере ввода: код — сразу, ссылка — загрузка с сайта. Сборка, ошибка или ожидание. */
+function useResolved(input: string) {
+  const [state, setState] = useState<Resolved>({ key: "", build: null, code: "", link: null, error: null });
+  const key = inputKey(input);
+  const empty = key === "code:" || key === "link:";
   useEffect(() => {
-    const normalized = normalizeCode(code);
-    if (!normalized) return setState({ code: "", build: null, error: null });
+    if (empty) return;
     let alive = true;
-    const timer = setTimeout(() => {
-      decodeBuild(normalized).then(
-        (build) => alive && setState({ code: normalized, build, error: null }),
-        (e) => alive && setState({ code: normalized, build: null, error: String(e) }),
-      );
-    }, 250);
+    const link = looksLikeLink(input);
+    const timer = setTimeout(
+      () => {
+        const done = (r: Omit<Resolved, "key">) => alive && setState({ key, ...r });
+        if (link)
+          fetchBuild(input.trim()).then(
+            (f) => done({ build: f.build, code: f.code, link: f.link, error: null }),
+            (e) => done({ build: null, code: "", link: null, error: String(e) }),
+          );
+        else
+          decodeBuild(normalizeCode(input)).then(
+            (build) => done({ build, code: normalizeCode(input), link: null, error: null }),
+            (e) => done({ build: null, code: "", link: null, error: String(e) }),
+          );
+      },
+      link ? 500 : 250,
+    );
     return () => {
       alive = false;
       clearTimeout(timer);
     };
-  }, [code]);
-  const pending = normalizeCode(code) !== state.code;
-  return { build: pending ? null : state.build, error: pending ? null : state.error, pending: pending && normalizeCode(code) !== "" };
+  }, [key, empty, input]);
+  const fresh = !empty && state.key === key;
+  return { ...(fresh ? state : { build: null, code: "", link: null, error: null }), pending: !empty && !fresh, isLink: looksLikeLink(input) };
 }
 
 export type AddForm = { code?: string; name?: string; groupId: string | null };
 
+export type AddInput = { name: string; code: string; groupId: string | null; build: PobBuild; link: PobLink | null };
+
 /**
- * «Добавить билд»: код экспорта PoB, название, группа. Код разбирается сразу — видно класс, уровень
- * и этапы; «Просто посмотреть» открывает сводку без сохранения.
+ * «Добавить билд»: ссылка pobb.in / Pastebin / poe.ninja или код экспорта PoB, название, группа.
+ * Код разбирается сразу, ссылка скачивается — видно класс, уровень и этапы; «Просто посмотреть»
+ * открывает сводку без сохранения.
  */
 export function AddBuildDialog({
   form,
@@ -55,16 +76,16 @@ export function AddBuildDialog({
   form: AddForm;
   groups: PobBuildGroup[];
   onClose: () => void;
-  onSave: (input: { name: string; code: string; groupId: string | null; build: PobBuild }) => Promise<void>;
-  onPreview: (input: { name: string; code: string; groupId: string | null; build: PobBuild }) => void;
+  onSave: (input: AddInput) => Promise<void>;
+  onPreview: (input: AddInput) => void;
 }) {
-  const [code, setCode] = useState(form.code ?? "");
+  const [text, setText] = useState(form.code ?? "");
   const [name, setName] = useState(form.name ?? "");
   const [groupId, setGroupId] = useState(form.groupId ?? NO_GROUP);
   const [saving, setSaving] = useState(false);
-  const { build, error, pending } = useDecoded(code);
+  const { build, code, link, error, pending, isLink } = useResolved(text);
   const suggested = build ? (build.level ? `${classLabel(build)} ${build.level}` : classLabel(build)) : "";
-  const input = build && { name: (name.trim() || suggested).slice(0, NAME_MAX), code: normalizeCode(code), groupId: groupId === NO_GROUP ? null : groupId, build };
+  const input: AddInput | null = build && { name: (name.trim() || suggested).slice(0, NAME_MAX), code, groupId: groupId === NO_GROUP ? null : groupId, build, link };
 
   const save = () => {
     if (!input) return;
@@ -77,7 +98,7 @@ export function AddBuildDialog({
       open
       onOpenChange={(open) => !open && onClose()}
       title="Добавить билд"
-      description="Код экспорта из Path of Building: Import/Export Build → Generate. Код разбирается на этом компьютере."
+      description="Ссылка pobb.in, Pastebin или poe.ninja/pob — или код экспорта из Path of Building (Import/Export Build → Generate). Код разбирается на этом компьютере."
       className="w-140"
       footer={
         <>
@@ -92,7 +113,11 @@ export function AddBuildDialog({
       }
     >
       <div className="flex flex-col gap-4">
-        <Field label="Код PoB" error={error ?? undefined} hint={pending ? "Разбираем…" : undefined}>
+        <Field
+          label="Ссылка или код PoB"
+          error={error ?? undefined}
+          hint={pending ? (isLink ? "Загружаем сборку по ссылке…" : "Разбираем…") : link ? `Загружено с ${SITE_LABEL[link.site]}: ${link.url}` : undefined}
+        >
           {(p) => (
             <textarea
               id={p.id}
@@ -100,9 +125,9 @@ export function AddBuildDialog({
               aria-invalid={p.invalid || undefined}
               autoFocus={!form.code}
               spellCheck={false}
-              value={code}
-              placeholder="eNrtfWtz2zi2…"
-              onChange={(e) => setCode(e.target.value)}
+              value={text}
+              placeholder="https://pobb.in/… или eNrtfWtz2zi2…"
+              onChange={(e) => setText(e.target.value)}
               className={cx(fieldClasses, "h-28 resize-none py-2 font-mono text-label break-all")}
             />
           )}
@@ -125,7 +150,6 @@ export function AddBuildDialog({
     </Dialog>
   );
 }
-
 /** Сводка разобранной сборки: класс, уровень, этапы предметов, наборы камней, деревья. */
 export function BuildFacts({ build, compact }: { build: PobBuild; compact?: boolean }) {
   const titles = (list: { title: string | null }[], active: number) =>

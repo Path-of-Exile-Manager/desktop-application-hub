@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
-import { ChevronLeft, ChevronRight, Copy, Ellipsis, FolderInput, FolderMinus, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader, cx, EmptyState, IconButton, Menu, Page, Pagination, SearchInput, usePageSize, type MenuEntry } from "@/design-system";
 import { useAccount } from "@/app/account";
 import { bySortKey, keyBetween, removeRecord, saveRecord, useRecords } from "@/app/user-data";
@@ -13,6 +13,8 @@ import {
   matchesQuery,
   NAME_MAX,
   newBuildRecord,
+  openSourcePage,
+  SITE_LABEL,
   type GroupFilter,
   type PobBuildGroup,
   type PobBuildRecord,
@@ -21,8 +23,8 @@ import { Portrait } from "./parts";
 import { usePortraitsSync } from "./portraits";
 
 // Вкладка «Билды» (план shared/docs/pob-trader.md, P6): библиотека сборок Path of Building — группы
-// слева, список справа. Экран сборки с ценами (P7), ссылки pobb.in / Pastebin / poe.ninja (L1),
-// «Открыть в PoB» (L2) добавятся следующими шагами.
+// слева, список справа. Экран сборки с ценами (P7) и «Открыть в PoB» / выгрузка на pobb.in (L2)
+// добавятся следующими шагами.
 
 const ROW_HEIGHT = 56;
 const GROUP_ROW_HEIGHT = 36;
@@ -153,7 +155,7 @@ export function PobBuildsPage() {
           groups={groups}
           onClose={() => setDialog(null)}
           onSave={addBuild}
-          onPreview={(input) => setDialog({ kind: "summary", title: input.name, code: input.code, unsaved: { code: input.code, name: input.name, groupId: input.groupId } })}
+          onPreview={(input) => setDialog({ kind: "summary", title: input.name, code: input.code, unsaved: { code: input.link?.url ?? input.code, name: input.name, groupId: input.groupId } })}
         />
       )}
       {dialog?.kind === "summary" && (
@@ -397,6 +399,7 @@ function BuildList({
             const group = groupName(b);
             const menu: MenuEntry[] = [
               { label: "Переименовать", icon: Pencil, onSelect: () => onRename(b) },
+              ...(b.source ? [{ label: `Открыть на ${SITE_LABEL[b.source.site]}`, icon: ExternalLink, onSelect: () => void openSourcePage(b.source!.url).catch(fail("Страница не открыта")) }] : []),
               { type: "separator" },
               { type: "label", label: "В группу" },
               { label: "Без группы", icon: FolderMinus, disabled: !group, onSelect: () => onMove(b, null) },
