@@ -17,6 +17,8 @@ use crate::appraise::{PriceMatch, appraise_item};
 use crate::dataset::model::{CatalogItem, ItemKind};
 use crate::dataset::{Catalog, DatasetService};
 use crate::prices::{Price, PricesService};
+use crate::trade::matcher::{match_item, ModRow};
+use crate::trade::stats::StatIndex;
 
 /// Секция экрана сборки.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
@@ -62,7 +64,9 @@ pub struct PobStageRow {
     pub variant_key: Option<String>,
     pub price: Option<Price>,
     pub price_match: Option<PriceMatch>,
-    /// Запрос сайта торговли (`?q=`): по имени уникального, базе, камню, связям. Без модов (это P3–P4).
+    /// Моды предмета с фильтрами сайта торговли; пусто у камней и без `trade-stats.json`.
+    pub mods: Vec<ModRow>,
+    /// Запрос сайта торговли (`?q=`): по имени уникального, базе, камню, связям. Без модов (это P4).
     pub trade: Option<Value>,
     pub notes: Vec<String>,
 }
@@ -88,7 +92,8 @@ pub async fn pob_stage(app: AppHandle, code: String, item_set: usize, skill_set:
         let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
         let prices = app.state::<PricesService>();
         let variants = |id: &str| prices.variants(id);
-        let result = stage(&build, &catalog, &variants, prices.league(), item_set, skill_set, tree_spec);
+        let stats = catalog.trade_stats.as_ref().and_then(|s| s.as_ref().ok()).cloned();
+        let result = stage(&build, &catalog, &variants, stats.as_deref(), prices.league(), item_set, skill_set, tree_spec);
         Ok(result)
     })
     .await
@@ -96,20 +101,31 @@ pub async fn pob_stage(app: AppHandle, code: String, item_set: usize, skill_set:
 }
 
 /// `prices` — цены предмета текущей лиги по id справочника, `league` — её название.
-pub fn stage(build: &PobBuild, catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, league: Option<String>, item_set: usize, skill_set: usize, tree_spec: usize) -> PobStage {
+/// `stats` — индекс фильтров модов; нет — строки без модов.
+#[allow(clippy::too_many_arguments)]
+pub fn stage(
+    build: &PobBuild,
+    catalog: &Catalog,
+    prices: &dyn Fn(&str) -> Vec<Price>,
+    stats: Option<&StatIndex>,
+    league: Option<String>,
+    item_set: usize,
+    skill_set: usize,
+    tree_spec: usize,
+) -> PobStage {
     let mut rows = Vec::new();
 
     if let Some(set) = build.item_sets.get(item_set) {
         for slot in &set.slots {
             let Some(item) = build.item(slot.item_id) else { continue };
             let section = section_of(&slot.name, item);
-            rows.push(item_row(catalog, prices, item, section, &slot.name, format!("item|{}|{}", slot.name, item.name)));
+            rows.push(item_row(catalog, prices, stats, item, section, &slot.name, format!("item|{}|{}", slot.name, item.name)));
         }
     }
     if let Some(tree) = build.tree_specs.get(tree_spec) {
         for socket in &tree.sockets {
             let Some(item) = build.item(socket.item_id) else { continue };
-            rows.push(item_row(catalog, prices, item, PobSection::Jewels, "Tree", format!("jewel|{}|{}", socket.node_id, item.name)));
+            rows.push(item_row(catalog, prices, stats, item, PobSection::Jewels, "Tree", format!("jewel|{}|{}", socket.node_id, item.name)));
         }
     }
     if let Some(set) = build.skill_sets.get(skill_set) {
@@ -152,7 +168,7 @@ fn section_of(slot: &str, item: &PobItem) -> PobSection {
     }
 }
 
-fn item_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, item: &PobItem, section: PobSection, slot: &str, key: String) -> PobStageRow {
+fn item_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, stats: Option<&StatIndex>, item: &PobItem, section: PobSection, slot: &str, key: String) -> PobStageRow {
     let mut parsed = parsed_item(item);
     if parsed.rarity == Rarity::Unique {
         // PoB дописывает к имени своё: сид Timeless-самоцвета (`Elegant Hubris [91160; 3; Pain Attunement]`).
@@ -189,6 +205,7 @@ fn item_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, item: &PobIt
         slot: slot.to_string(),
         item: Some(item.clone()),
         gem: None,
+        mods: stats.map(|s| match_item(s, item, slot)).unwrap_or_default(),
         counted: true,
         catalog_item: appraisal.catalog_item,
         variant_key: appraisal.variant_key,
@@ -212,6 +229,7 @@ fn gem_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, gem: &PobGem,
         section: PobSection::Gems,
         slot,
         item: None,
+        mods: Vec::new(),
         counted: row.enabled,
         gem: Some(row),
         catalog_item: appraisal.catalog_item,

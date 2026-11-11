@@ -95,21 +95,21 @@ impl StatIndex {
     }
 
     /// Статы по нормализованному ключу (`normalize`), в порядке файла.
-    pub fn by_norm(&self, language: Language, key: &str) -> impl Iterator<Item = &TradeStat> {
+    pub fn by_norm(&self, language: Language, key: &str) -> impl Iterator<Item = &TradeStat> + Clone {
         self.resolve(self.keys(language).norm.get(key))
     }
 
     /// Статы по точному ключу (`exact_key`) — только у текстов с числами.
-    pub fn by_exact(&self, language: Language, key: &str) -> impl Iterator<Item = &TradeStat> {
+    pub fn by_exact(&self, language: Language, key: &str) -> impl Iterator<Item = &TradeStat> + Clone {
         self.resolve(self.keys(language).exact.get(key))
     }
 
     /// Все тексты стата (у одного id их бывает два).
-    pub fn by_id(&self, id: &str) -> impl Iterator<Item = &TradeStat> {
+    pub fn by_id(&self, id: &str) -> impl Iterator<Item = &TradeStat> + Clone {
         self.resolve(self.by_id.get(id))
     }
 
-    fn resolve<'a>(&'a self, list: Option<&'a Vec<u32>>) -> impl Iterator<Item = &'a TradeStat> {
+    fn resolve<'a>(&'a self, list: Option<&'a Vec<u32>>) -> impl Iterator<Item = &'a TradeStat> + Clone {
         list.into_iter().flatten().map(|&i| &self.stats[i as usize])
     }
 
