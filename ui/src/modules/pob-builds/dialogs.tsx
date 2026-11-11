@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Copy, Eye, Save, Trash2 } from "lucide-react";
-import { Banner, Button, Dialog, Field, fieldClasses, Input, Select, toast, cx } from "@/design-system";
+import { Copy, Eye, Save, Trash2, Upload } from "lucide-react";
+import { Banner, Button, Checkbox, Dialog, Field, fieldClasses, Input, Select, toast, cx } from "@/design-system";
 import type { PobBuild } from "@/generated/PobBuild";
 import type { PobLink } from "@/generated/PobLink";
 import { buildSubtitle, classLabel, decodeBuild, fetchBuild, looksLikeLink, NAME_MAX, normalizeCode, SITE_LABEL, type PobBuildGroup } from "./model";
 import { Fact, Portrait } from "./parts";
+import { useSharePrefs } from "./share";
 
 export const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
 
@@ -257,6 +258,36 @@ export function NameDialog({
           <Input id={id} value={name} maxLength={max} autoFocus onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
         )}
       </Field>
+    </Dialog>
+  );
+}
+
+/** Подтверждение публикации на pobb.in (решение 3.12). */
+export function PublishDialog({ name, onAnswer }: { name: string; onAnswer: (ok: boolean) => void }) {
+  const [skip, setSkip] = useState(false);
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => !open && onAnswer(false)}
+      title="Опубликовать на pobb.in?"
+      description={`У «${name}» ещё нет ссылки. Код сборки будет выгружен на pobb.in: ссылка станет доступна всем, кто её знает, удалить её оттуда нельзя.`}
+      footer={
+        <>
+          <Button onClick={() => onAnswer(false)}>Отмена</Button>
+          <Button
+            variant="primary"
+            icon={Upload}
+            onClick={() => {
+              if (skip) useSharePrefs.getState().setSkipConfirm(true);
+              onAnswer(true);
+            }}
+          >
+            Опубликовать
+          </Button>
+        </>
+      }
+    >
+      <Checkbox checked={skip} onCheckedChange={setSkip} label="Больше не спрашивать" />
     </Dialog>
   );
 }

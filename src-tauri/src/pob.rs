@@ -49,18 +49,74 @@ pub fn pob_open_page(app: tauri::AppHandle, url: String) -> Result<(), String> {
     app.opener().open_url(&link.url, None::<&str>).map_err(|e| e.to_string())
 }
 
-fn fetch(input: &str) -> Result<PobFetched, String> {
-    let link = pob_parser::parse_link(input).map_err(|e| e.to_string())?;
-    let site = link.site.label();
-    let agent: ureq::Agent = ureq::Agent::config_builder()
+/// Выгрузить код на pobb.in (решение 3.12: только по явному действию, интерфейс спрашивает
+/// подтверждение публикации) → ссылка на сборку. Как это делает сам PoB: `POST https://pobb.in/pob/`,
+/// тело — код, ответ — id сборки. User-Agent — свой, не PoB.
+#[tauri::command]
+pub async fn pob_share(code: String) -> Result<PobLink, String> {
+    tauri::async_runtime::spawn_blocking(move || share(&code)).await.map_err(|e| e.to_string())?
+}
+
+/// Открыть сборку в программе Path of Building: `pob://<сайт>/<id>` (обработчик протокола ставит
+/// установщик PoB Community; PoB сам скачивает код по ссылке). Адрес — только из белого списка.
+#[tauri::command]
+pub fn pob_open_in_pob(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    let link = pob_parser::parse_link(&url).map_err(|e| e.to_string())?;
+    let uri = format!("pob://{}/{}", link.site.protocol_id(), link.id_on_site);
+    app.opener()
+        .open_url(&uri, None::<&str>)
+        .map_err(|_| "Path of Building не открылся — проверьте, что он установлен (PoB Community), или скопируйте код".to_string())
+}
+
+fn agent() -> ureq::Agent {
+    ureq::Agent::config_builder()
         .https_only(true)
         .max_redirects(0)
         .http_status_as_error(false)
         .timeout_global(Some(FETCH_TIMEOUT))
         .user_agent(format!("poe-manager-desktop/{}", env!("CARGO_PKG_VERSION")))
         .build()
-        .into();
-    let mut response = agent.get(&link.raw_url).call().map_err(|e| transport_error(site, link.site, &e))?;
+        .into()
+}
+
+fn share(code: &str) -> Result<PobLink, String> {
+    let code: String = code.split_whitespace().collect();
+    // Не выгружать на чужой сайт то, что даже не сборка PoE1.
+    pob_parser::parse_code(&code).map_err(|e| e.to_string())?;
+    let site = PobSite::Pobbin.label();
+    let mut response = agent()
+        .post("https://pobb.in/pob/")
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .send(code.as_bytes())
+        .map_err(|e| transport_error(site, PobSite::Pobbin, &e))?;
+    let status = response.status().as_u16();
+    if !(200..300).contains(&status) {
+        if status == 429 {
+            return Err(format!("{site} просит подождать — попробуйте через минуту"));
+        }
+        // pobb.in сам разбирает сборку и отвечает `{"code":400,"message":"failed to parse build…"}`.
+        let reason = response
+            .body_mut()
+            .with_config()
+            .limit(4096)
+            .read_json::<serde_json::Value>()
+            .ok()
+            .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(str::to_string));
+        return Err(match reason {
+            Some(reason) => format!("{site} не принял сборку: {reason}"),
+            None => format!("{site} не принял сборку: HTTP {status}"),
+        });
+    }
+    let body = response.body_mut().with_config().limit(4096).read_to_string().map_err(|e| transport_error(site, PobSite::Pobbin, &e))?;
+    let id = body.trim();
+    pob_parser::parse_link(&format!("https://pobb.in/{id}")).map_err(|_| format!("{site} ответил непонятно — ссылка не получена"))
+}
+
+fn fetch(input: &str) -> Result<PobFetched, String> {
+    let link = pob_parser::parse_link(input).map_err(|e| e.to_string())?;
+    let site = link.site.label();
+    let mut response = agent().get(&link.raw_url).call().map_err(|e| transport_error(site, link.site, &e))?;
     let status = response.status().as_u16();
     match status {
         200..=299 => {}

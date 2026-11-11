@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
-import { ChevronLeft, ChevronRight, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
+import { AppWindow, ChevronLeft, ChevronRight, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader, cx, EmptyState, IconButton, Menu, Page, Pagination, SearchInput, usePageSize, type MenuEntry } from "@/design-system";
 import { useAccount } from "@/app/account";
 import { bySortKey, keyBetween, removeRecord, saveRecord, useRecords } from "@/app/user-data";
-import { AddBuildDialog, BuildSummaryDialog, ConfirmDialog, copyCode, fail, NameDialog, type AddForm } from "./dialogs";
+import { AddBuildDialog, BuildSummaryDialog, ConfirmDialog, copyCode, fail, NameDialog, PublishDialog, type AddForm } from "./dialogs";
 import {
   buildSubtitle,
   byCreatedDesc,
@@ -13,18 +13,17 @@ import {
   matchesQuery,
   NAME_MAX,
   newBuildRecord,
-  openSourcePage,
-  SITE_LABEL,
   type GroupFilter,
   type PobBuildGroup,
   type PobBuildRecord,
 } from "./model";
 import { Portrait } from "./parts";
 import { usePortraitsSync } from "./portraits";
+import { pageLabel, runShare, type ShareAction } from "./share";
 
 // Вкладка «Билды» (план shared/docs/pob-trader.md, P6): библиотека сборок Path of Building — группы
-// слева, список справа. Экран сборки с ценами (P7) и «Открыть в PoB» / выгрузка на pobb.in (L2)
-// добавятся следующими шагами.
+// слева, список справа; у строки — «Открыть на сайте» и «Открыть в Path of Building» (без ссылки —
+// выгрузка на pobb.in с подтверждением, share.ts). Экран сборки с ценами (P7) — следующим шагом.
 
 const ROW_HEIGHT = 56;
 const GROUP_ROW_HEIGHT = 36;
@@ -52,6 +51,9 @@ export function PobBuildsPage() {
   const [filter, setFilter] = useState<GroupFilter>({ kind: "all" });
   const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<Dialogs | null>(null);
+  const [publish, setPublish] = useState<{ build: PobBuildRecord; answer: (ok: boolean) => void } | null>(null);
+  const share = (build: PobBuildRecord, action: ShareAction) =>
+    void runShare(build, action, (b) => new Promise<boolean>((answer) => setPublish({ build: b, answer })));
 
   const all = builds ?? NO_BUILDS;
   const groups = useMemo(() => [...(groupRecords ?? NO_GROUPS)].sort(bySortKey), [groupRecords]);
@@ -144,11 +146,21 @@ export function PobBuildsPage() {
               onRename={(build) => setDialog({ kind: "rename-build", build })}
               onDelete={(build) => setDialog({ kind: "delete-build", build })}
               onMove={(b, groupId) => void moveTo(b, groupId)}
+              onShare={share}
             />
           )}
         </Card>
       </div>
 
+      {publish && (
+        <PublishDialog
+          name={publish.build.name}
+          onAnswer={(ok) => {
+            publish.answer(ok);
+            setPublish(null);
+          }}
+        />
+      )}
       {dialog?.kind === "add" && (
         <AddBuildDialog
           form={dialog.form}
@@ -374,6 +386,7 @@ function BuildList({
   onRename,
   onDelete,
   onMove,
+  onShare,
 }: {
   builds: PobBuildRecord[];
   groups: PobBuildGroup[];
@@ -382,6 +395,7 @@ function BuildList({
   onRename: (b: PobBuildRecord) => void;
   onDelete: (b: PobBuildRecord) => void;
   onMove: (b: PobBuildRecord, groupId: string | null) => void;
+  onShare: (b: PobBuildRecord, action: ShareAction) => void;
 }) {
   const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
   const [page, setPage] = useState(1);
@@ -399,7 +413,6 @@ function BuildList({
             const group = groupName(b);
             const menu: MenuEntry[] = [
               { label: "Переименовать", icon: Pencil, onSelect: () => onRename(b) },
-              ...(b.source ? [{ label: `Открыть на ${SITE_LABEL[b.source.site]}`, icon: ExternalLink, onSelect: () => void openSourcePage(b.source!.url).catch(fail("Страница не открыта")) }] : []),
               { type: "separator" },
               { type: "label", label: "В группу" },
               { label: "Без группы", icon: FolderMinus, disabled: !group, onSelect: () => onMove(b, null) },
@@ -430,6 +443,8 @@ function BuildList({
                     Открыть
                   </Button>
                   <IconButton icon={Copy} label="Скопировать код для PoB" onClick={() => copyCode(b.code)} />
+                  <IconButton icon={ExternalLink} label={b.source ? pageLabel(b) : `${pageLabel(b)} (выгрузить)`} onClick={() => onShare(b, "page")} />
+                  <IconButton icon={AppWindow} label="Открыть в Path of Building" onClick={() => onShare(b, "pob")} />
                   <Menu align="end" items={menu} trigger={<IconButton icon={Ellipsis} label={`Действия: ${b.name}`} />} />
                 </div>
               </li>

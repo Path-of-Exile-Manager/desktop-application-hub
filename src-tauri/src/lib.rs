@@ -157,6 +157,8 @@ pub fn run() {
             pob::pob_decode,
             pob::pob_fetch,
             pob::pob_open_page,
+            pob::pob_share,
+            pob::pob_open_in_pob,
             discord::discord_status,
             discord::discord_configure,
             discord::discord_reconnect,
