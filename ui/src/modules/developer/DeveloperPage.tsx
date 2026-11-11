@@ -514,7 +514,7 @@ function ApiProbe() {
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
 
-const SYNC_COLLECTIONS: SyncCollection[] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets"];
+const SYNC_COLLECTIONS: SyncCollection[] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets", "pobBuildGroups", "pobBuilds"];
 
 /** Синхронизация: user.db, состояние движка, записи коллекций, отвергнутые сервером, тестовые записи. */
 function SyncProbe() {
@@ -545,6 +545,31 @@ function SyncProbe() {
     await putRecord("bookmarks", { folderId: folders[0].id, title: "Headhunter", tradeType: "SEARCH", slug: "Ab12Cd34", completedAt: null, sortKey: await sortKeyBetween(null, null) });
   }
 
+  /** Билд в первой группе (группа создаётся, если её нет); код — не настоящий: сервер его не раскодирует. */
+  async function addPobBuild() {
+    let groups = await listRecords<{ id: string }>("pobBuildGroups");
+    if (!groups.length) {
+      await putRecord("pobBuildGroups", { name: "Проверка", sortKey: await sortKeyBetween(null, null) });
+      groups = await listRecords<{ id: string }>("pobBuildGroups");
+    }
+    const builds = await listRecords<{ sortKey: string }>("pobBuilds");
+    const last = builds.map((b) => b.sortKey).sort().at(-1) ?? null;
+    await putRecord("pobBuilds", {
+      name: `Билд ${new Date().toLocaleTimeString("ru-RU")}`,
+      code: "eNqzCXJ2DPEP8lUIdQ1y9_RL0bCy4uICAEG9BYE",
+      groupId: groups[0].id,
+      source: null,
+      className: "Witch",
+      ascendancy: "Elementalist",
+      level: 90,
+      notes: null,
+      manualPrices: { "1|Helmet": 120 },
+      filterOverrides: {},
+      sortKey: await sortKeyBetween(last, null),
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   return (
     <div className="grid min-h-0 flex-1 grid-cols-3 items-start gap-4">
       <div className="flex min-w-0 flex-col gap-4">
@@ -569,6 +594,9 @@ function SyncProbe() {
             </Button>
             <Button onClick={guard(addBookmark)} disabled={!inTauri}>
               + закладка
+            </Button>
+            <Button onClick={guard(addPobBuild)} disabled={!inTauri}>
+              + билд
             </Button>
             <Button
               variant="ghost"

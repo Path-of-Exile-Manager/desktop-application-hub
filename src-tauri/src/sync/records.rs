@@ -12,9 +12,14 @@ use serde_json::{Map, Value};
 use crate::account::parse_iso_ms;
 
 /// Коллекции в порядке отправки: папки раньше закладок.
-pub const COLLECTIONS: [&str; 7] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets"];
+/// Группы билдов — раньше билдов (как папки раньше закладок).
+pub const COLLECTIONS: [&str; 9] = [
+    "folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets", "pobBuildGroups", "pobBuilds",
+];
 
 const MAX_JSON_BYTES: usize = 64 * 1024;
+/// Билд — до 256 КБ: код гайда с этапами один бывает 100–200 КБ (`MAX_POB_BUILD_BYTES` на сервере).
+const MAX_POB_BUILD_BYTES: usize = 256 * 1024;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -199,6 +204,100 @@ fn check_map_regex_preset(r: &MapRegexPreset) -> Result<(), String> {
     json_size("набор", r)
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum PobBuildSite {
+    Pobbin,
+    Pastebin,
+    PoeNinja,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PobBuildSource {
+    site: PobBuildSite,
+    id_on_site: String,
+    url: String,
+}
+
+/// Билд вкладки «Билды» (`packages/domain/src/sync/pob-build.ts`). Код PoB хранится как есть;
+/// `filterOverrides` — форма интерфейса, сервер её не читает.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PobBuild {
+    id: String,
+    name: String,
+    code: String,
+    #[serde(default)]
+    group_id: Option<String>,
+    #[serde(default)]
+    source: Option<PobBuildSource>,
+    class_name: String,
+    #[serde(default)]
+    ascendancy: Option<String>,
+    #[serde(default)]
+    level: Option<u32>,
+    #[serde(default)]
+    notes: Option<String>,
+    manual_prices: BTreeMap<String, f64>,
+    filter_overrides: Map<String, Value>,
+    sort_key: String,
+    created_at: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PobBuildGroup {
+    id: String,
+    name: String,
+    sort_key: String,
+}
+
+const MAX_MANUAL_PRICES: usize = 1000;
+const MAX_ROW_KEY: usize = 200;
+const MAX_MANUAL_PRICE: f64 = 1_000_000_000.0;
+
+fn optional_text(field: &str, value: &Option<String>, max: usize) -> Result<(), String> {
+    match value {
+        Some(v) if v.chars().count() > max => Err(format!("{field}: не больше {max} символов")),
+        _ => Ok(()),
+    }
+}
+
+fn check_pob_build(r: &PobBuild) -> Result<(), String> {
+    record_id("id", &r.id)?;
+    text("name", &r.name, 150)?;
+    if r.code.is_empty() || !r.code.bytes().all(|b| b.is_ascii_alphanumeric() || b"_-+/=".contains(&b)) {
+        return Err("code: код экспорта PoB (символы base64)".into());
+    }
+    if let Some(group) = &r.group_id {
+        record_id("groupId", group)?;
+    }
+    if let Some(source) = &r.source {
+        let id_ok = (1..=100).contains(&source.id_on_site.len())
+            && source.id_on_site.bytes().all(|b| b.is_ascii_alphanumeric() || b"_/-".contains(&b));
+        if !id_ok || !source.url.starts_with("https://") || source.url.chars().count() > 500 {
+            return Err("source: id на сайте и ссылка https".into());
+        }
+    }
+    text("className", &r.class_name, 40)?;
+    optional_text("ascendancy", &r.ascendancy, 40)?;
+    if r.level.is_some_and(|level| !(1..=100).contains(&level)) {
+        return Err("level: 1–100".into());
+    }
+    optional_text("notes", &r.notes, 2000)?;
+    let prices_ok = r.manual_prices.len() <= MAX_MANUAL_PRICES
+        && r.manual_prices.iter().all(|(key, value)| {
+            !key.is_empty() && key.chars().count() <= MAX_ROW_KEY && value.is_finite() && (0.0..=MAX_MANUAL_PRICE).contains(value)
+        });
+    if !prices_ok {
+        return Err("manualPrices: ключ строки → цена в chaos от 0".into());
+    }
+    sort_key(&r.sort_key)?;
+    date("createdAt", &r.created_at)?;
+    json_size_max("билд", r, MAX_POB_BUILD_BYTES)
+}
+
 fn record_id(field: &str, id: &str) -> Result<(), String> {
     if (1..=100).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-') {
         Ok(())
@@ -243,9 +342,13 @@ fn optional_date(field: &str, value: &Option<String>) -> Result<(), String> {
 }
 
 fn json_size(field: &str, value: &impl Serialize) -> Result<(), String> {
+    json_size_max(field, value, MAX_JSON_BYTES)
+}
+
+fn json_size_max(field: &str, value: &impl Serialize, max: usize) -> Result<(), String> {
     let bytes = serde_json::to_vec(value).map_err(|e| e.to_string())?.len();
-    if bytes > MAX_JSON_BYTES {
-        Err(format!("{field}: больше 64 КБ JSON"))
+    if bytes > max {
+        Err(format!("{field}: больше {} КБ JSON", max / 1024))
     } else {
         Ok(())
     }
@@ -324,6 +427,18 @@ pub fn check(collection: &str, value: Value) -> Result<Value, String> {
         "mapRegexPresets" => {
             let r: MapRegexPreset = parse(value)?;
             check_map_regex_preset(&r)?;
+            serde_json::to_value(r)
+        }
+        "pobBuilds" => {
+            let r: PobBuild = parse(value)?;
+            check_pob_build(&r)?;
+            serde_json::to_value(r)
+        }
+        "pobBuildGroups" => {
+            let r: PobBuildGroup = parse(value)?;
+            record_id("id", &r.id)?;
+            text("name", &r.name, 100)?;
+            sort_key(&r.sort_key)?;
             serde_json::to_value(r)
         }
         other => return Err(format!("нет коллекции «{other}»")),

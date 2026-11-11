@@ -461,7 +461,7 @@ pub fn sync_resolve(service: State<SyncService>, choice: SyncChoice) -> Result<(
     Ok(())
 }
 
-/// Живые записи коллекции (`folders`, `bookmarks`, `history`, `pins`, `watchlist`, `settings`).
+/// Живые записи коллекции (`records::COLLECTIONS`).
 #[tauri::command]
 pub fn sync_records(service: State<SyncService>, collection: String) -> Result<Vec<Value>, String> {
     if !COLLECTIONS.contains(&collection.as_str()) {
