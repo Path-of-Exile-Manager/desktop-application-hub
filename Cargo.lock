@@ -2761,6 +2761,7 @@ dependencies = [
  "game-window",
  "item-parser",
  "keyring",
+ "pob-parser",
  "rusqlite",
  "serde",
  "serde_json",

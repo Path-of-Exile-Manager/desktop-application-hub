@@ -21,6 +21,7 @@ mod icons;
 mod leagues;
 mod overlay;
 mod paths;
+mod pob;
 mod prices;
 mod server;
 mod sync;
@@ -152,6 +153,7 @@ pub fn run() {
             overlay::overlay_open_main,
             extension::extension_status,
             extension::extension_open_trade,
+            pob::pob_decode,
             discord::discord_status,
             discord::discord_configure,
             discord::discord_reconnect,

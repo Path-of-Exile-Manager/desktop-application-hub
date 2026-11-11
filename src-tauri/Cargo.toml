@@ -23,6 +23,7 @@ game-window = { path = "../crates/game-window" }
 browser-bridge = { path = "../crates/browser-bridge" }
 discord-presence = { path = "../crates/discord-presence" }
 craft-engine = { path = "../crates/craft-engine" }
+pob-parser = { path = "../crates/pob-parser" }
 # HTTP-клиент для связи с сервером (BFF): маленький, синхронный — работает в своём потоке.
 # gzip включён явно: прайс лиги — ~13 МБ JSON, сжатым ~0,7 МБ (Accept-Encoding ставит сам ureq).
 ureq = { version = "3", features = ["json", "gzip"] }

@@ -1,10 +1,11 @@
 import type { ComponentType } from "react";
-import { Bookmark, Dices, Eye, Gem, History, LayoutGrid, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Bookmark, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
 import { MapRegexPage } from "@/modules/map-regex/MapRegexPage";
 import { ClustersPage } from "@/modules/clusters/ClustersPage";
+import { PobBuildsPage } from "@/modules/pob-builds/PobBuildsPage";
 import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
 import { BookmarksPage } from "@/modules/user-data/BookmarksPage";
 import { HistoryPage } from "@/modules/user-data/HistoryPage";
@@ -25,7 +26,7 @@ export type ModuleDef = {
   label: string;
   icon: LucideIcon;
   /** Группа навигации; `footer` — внизу сайдбара; `dev` — только при включённом режиме разработчика. */
-  group: "check" | "craft" | "data" | "dev" | "footer";
+  group: "check" | "builds" | "craft" | "data" | "dev" | "footer";
   component: ComponentType;
   /** Можно ли передать в модуль текущий предмет. */
   acceptsItem?: boolean;
@@ -101,6 +102,16 @@ const CLUSTERS: ModuleDef = {
   keywords: "кластер кластерный самоцвет cluster jewel крафт craft фоссил ископаемые fossil notable прибыль roi",
 };
 
+/** Библиотека сборок Path of Building (план shared/docs/pob-trader.md). */
+const POB_BUILDS: ModuleDef = {
+  id: "pob-builds",
+  label: "Билды",
+  icon: Library,
+  group: "builds",
+  component: PobBuildsPage,
+  keywords: "pob path of building билд сборка гайд библиотека группы pobb trade покупки",
+};
+
 const SETTINGS: ModuleDef = {
   id: "settings",
   label: "Настройки",
@@ -112,6 +123,7 @@ const SETTINGS: ModuleDef = {
 
 const GROUP_LABELS: Record<Exclude<ModuleDef["group"], "footer">, string> = {
   check: "Проверка",
+  builds: "Билды",
   craft: "Крафт",
   data: "Данные",
   dev: "Разработка",
@@ -128,7 +140,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, WATCHLIST, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
