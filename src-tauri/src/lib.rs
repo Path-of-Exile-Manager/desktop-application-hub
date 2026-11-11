@@ -9,6 +9,9 @@ mod account;
 mod api;
 mod appraise;
 mod capture;
+/// Расчёт «Выгодных кластеров» без Tauri: открыт для примера `clusters_offline`.
+pub mod cluster_plans;
+mod clusters;
 mod dataset;
 mod device;
 mod discord;
@@ -83,6 +86,7 @@ pub fn run() {
             dataset::start(app.handle(), &app_root);
             leagues::start(app.handle(), &app_root);
             prices::start(app.handle(), &app_root);
+            clusters::start(app.handle(), &app_root);
             account::start(app.handle(), &app.state::<paths::AppPaths>());
             sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
             app.manage(appraise::LastAppraisal::default());
@@ -130,6 +134,10 @@ pub fn run() {
             prices::price_get,
             prices::price_variants,
             prices::price_history,
+            clusters::clusters_status,
+            clusters::clusters_refresh,
+            clusters::clusters_list,
+            clusters::cluster_detail,
             appraise::item_appraise,
             appraise::item_last_appraisal,
             capture::capture_set_hotkey,

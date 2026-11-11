@@ -25,7 +25,7 @@ use ts_rs::TS;
 
 use crate::api::{Api, ApiCode, Call, Reply};
 pub use catalog::{normalize, Catalog};
-use catalog::{has_file, parse_map_search, MAP_SEARCH_FILE};
+use catalog::{has_file, parse_crafting, parse_map_search, CRAFTING_FILE, MAP_SEARCH_FILE};
 use model::{Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, MapSearch, SCHEMA_VERSION};
 pub use store::sha256_hex;
 use store::{verify, DatasetStore};
@@ -212,9 +212,10 @@ fn sync(api: &Api, store: &DatasetStore, current: Option<&str>) -> Result<Option
     let classes: Vec<ItemClass> = serde_json::from_slice(file("classes.json")?).map_err(|e| format!("classes.json не разобран: {e}"))?;
     // Необязательный файл: не разобран — набор всё равно ставим, ошибку увидит вкладка.
     let map_search = has_file(&manifest, MAP_SEARCH_FILE).then(|| file(MAP_SEARCH_FILE).and_then(parse_map_search));
+    let crafting = has_file(&manifest, CRAFTING_FILE).then(|| file(CRAFTING_FILE).and_then(parse_crafting));
 
     store.install(&manifest, &files).map_err(|e| format!("набор не сохранён: {e}"))?;
-    Ok(Some(Catalog::new(manifest, items, classes, map_search)))
+    Ok(Some(Catalog::new(manifest, items, classes, map_search, crafting)))
 }
 
 fn publish(app: &AppHandle, service: &DatasetService) {

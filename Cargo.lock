@@ -2742,6 +2742,7 @@ version = "0.1.0"
 dependencies = [
  "arboard",
  "browser-bridge",
+ "craft-engine",
  "discord-presence",
  "dotenvy",
  "game-window",

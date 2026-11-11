@@ -9,6 +9,14 @@ pub struct LocalizedName {
     pub ru: Option<String>,
 }
 
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct LocalizedLines {
+    #[serde(default)]
+    pub en: Vec<String>,
+    #[serde(default)]
+    pub ru: Vec<String>,
+}
+
 /// Вес по тегу. Списки весов идут в порядке игры: берётся первый тег, который есть у предмета.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Weight {
@@ -54,6 +62,9 @@ pub struct ClusterEnchant {
     /// Тег, который энчант даёт предмету: по нему считаются веса модов.
     pub tag: String,
     pub name: LocalizedName,
+    /// Строки энчанта без «Added Small Passive Skills grant: ».
+    #[serde(default)]
+    pub lines: LocalizedLines,
     #[serde(default)]
     pub trade_stat_ids: Vec<String>,
 }

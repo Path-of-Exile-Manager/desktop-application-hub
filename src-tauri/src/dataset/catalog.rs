@@ -2,11 +2,18 @@
 //! (русскому и английскому) и id сайта торговли; данные поиска карт, если они есть в наборе.
 
 use std::collections::HashMap;
+use std::sync::Arc;
+
+use craft_engine::Engine;
 
 use super::model::{CatalogItem, ItemClass, Manifest, MapSearch};
 use super::store::DatasetStore;
 
 pub const MAP_SEARCH_FILE: &str = "map-search.json";
+pub const CRAFTING_FILE: &str = "crafting.json";
+
+/// `crafting.json`: `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан.
+pub type CraftingFile = Option<Result<Arc<Engine>, String>>;
 
 pub struct Catalog {
     pub manifest: Manifest,
@@ -15,6 +22,8 @@ pub struct Catalog {
     /// `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан. Файл необязательный:
     /// его поломка (в том числе новый формат) не должна отнимать справочник и цены.
     pub map_search: Option<Result<MapSearch, String>>,
+    /// Данные движка крафта кластеров; необязательный, как и `map_search`.
+    pub crafting: CraftingFile,
     by_id: HashMap<String, usize>,
     /// Нормализованное название (ru и en) → предметы: одно имя бывает у нескольких записей
     /// (уникальный на разных базах).
@@ -32,10 +41,17 @@ impl Catalog {
             serde_json::from_slice(&store.read_file(id, &manifest, "classes.json")?).map_err(|e| format!("classes.json не разобран: {e}"))?;
         let map_search = has_file(&manifest, MAP_SEARCH_FILE)
             .then(|| store.read_file(id, &manifest, MAP_SEARCH_FILE).and_then(|bytes| parse_map_search(&bytes)));
-        Ok(Self::new(manifest, items, classes, map_search))
+        let crafting = has_file(&manifest, CRAFTING_FILE).then(|| store.read_file(id, &manifest, CRAFTING_FILE).and_then(|bytes| parse_crafting(&bytes)));
+        Ok(Self::new(manifest, items, classes, map_search, crafting))
     }
 
-    pub fn new(mut manifest: Manifest, items: Vec<CatalogItem>, classes: Vec<ItemClass>, map_search: Option<Result<MapSearch, String>>) -> Self {
+    pub fn new(
+        mut manifest: Manifest,
+        items: Vec<CatalogItem>,
+        classes: Vec<ItemClass>,
+        map_search: Option<Result<MapSearch, String>>,
+        crafting: CraftingFile,
+    ) -> Self {
         // По самому файлу: манифесты в кэше, записанные до появления этих счётчиков, их потеряли.
         if let Some(Ok(search)) = &map_search {
             manifest.counts.map_mods = search.mods.len() as u32;
@@ -55,7 +71,7 @@ impl Catalog {
                 by_trade_id.insert(trade_id.clone(), i);
             }
         }
-        Self { manifest, items, classes, map_search, by_id, by_name, by_trade_id }
+        Self { manifest, items, classes, map_search, crafting, by_id, by_name, by_trade_id }
     }
 
     pub fn get(&self, id: &str) -> Option<&CatalogItem> {
@@ -147,6 +163,10 @@ pub fn has_file(manifest: &Manifest, name: &str) -> bool {
 
 pub fn parse_map_search(bytes: &[u8]) -> Result<MapSearch, String> {
     serde_json::from_slice(bytes).map_err(|e| format!("{MAP_SEARCH_FILE} не разобран: {e}"))
+}
+
+pub fn parse_crafting(bytes: &[u8]) -> Result<Arc<Engine>, String> {
+    Engine::from_json(bytes).map(Arc::new).map_err(|e| format!("{CRAFTING_FILE} не разобран: {e}"))
 }
 
 /// Нижний регистр, «ё» → «е», лишние пробелы схлопнуты.

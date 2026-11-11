@@ -179,11 +179,23 @@ impl PricesService {
         self.board().map(|b| b.variants(item_id).into_iter().cloned().collect()).unwrap_or_default()
     }
 
+    /// Сводная цена простого предмета (`variantKey = ''`) в текущей лиге.
+    pub fn chaos(&self, item_id: &str) -> Option<f64> {
+        self.board().and_then(|b| b.get(item_id, "").map(|p| p.chaos_value))
+    }
+
+    /// Меняется, когда меняются цены лиги: лига, число ключей, самая свежая цена.
+    pub fn version(&self) -> Option<String> {
+        let inner = self.inner.lock().unwrap();
+        inner.board.as_ref()?;
+        Some(format!("{}|{}|{}", inner.status.league.as_deref().unwrap_or(""), inner.status.count, inner.status.newest_update.as_deref().unwrap_or("")))
+    }
+
     fn board(&self) -> Option<Arc<Board>> {
         self.inner.lock().unwrap().board.clone()
     }
 
-    fn league(&self) -> Option<String> {
+    pub fn league(&self) -> Option<String> {
         self.inner.lock().unwrap().status.league.clone()
     }
 
@@ -322,7 +334,7 @@ fn divine_chaos(app: &AppHandle, service: &PricesService) -> Option<f64> {
 }
 
 /// Сегмент пути: всё, кроме `[A-Za-z0-9-._~]`, — в `%XX` (`Hardcore Allflame` → `Hardcore%20Allflame`).
-fn encode_segment(segment: &str) -> String {
+pub(crate) fn encode_segment(segment: &str) -> String {
     let mut out = String::with_capacity(segment.len());
     for b in segment.bytes() {
         if b.is_ascii_alphanumeric() || matches!(b, b'-' | b'.' | b'_' | b'~') {
