@@ -130,6 +130,7 @@ pub fn run() {
             dataset::catalog_item,
             dataset::catalog_by_trade_ids,
             dataset::catalog_map_search,
+            dataset::catalog_ascendancies,
             leagues::leagues_status,
             leagues::leagues_refresh,
             prices::prices_status,

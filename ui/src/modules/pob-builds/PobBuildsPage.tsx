@@ -18,10 +18,11 @@ import {
   type PobBuildRecord,
 } from "./model";
 import { Portrait } from "./parts";
+import { usePortraitsSync } from "./portraits";
 
 // Вкладка «Билды» (план shared/docs/pob-trader.md, P6): библиотека сборок Path of Building — группы
 // слева, список справа. Экран сборки с ценами (P7), ссылки pobb.in / Pastebin / poe.ninja (L1),
-// «Открыть в PoB» (L2) и портреты (L4) добавятся следующими шагами.
+// «Открыть в PoB» (L2) добавятся следующими шагами.
 
 const ROW_HEIGHT = 56;
 const GROUP_ROW_HEIGHT = 36;
@@ -42,6 +43,7 @@ const NO_BUILDS: PobBuildRecord[] = [];
 const NO_GROUPS: PobBuildGroup[] = [];
 
 export function PobBuildsPage() {
+  usePortraitsSync();
   const builds = useRecords<PobBuildRecord>("pobBuilds");
   const groupRecords = useRecords<PobBuildGroup>("pobBuildGroups");
   const signedIn = useAccount((a) => a.status?.state === "signedIn");

@@ -25,8 +25,8 @@ use ts_rs::TS;
 
 use crate::api::{Api, ApiCode, Call, Reply};
 pub use catalog::{normalize, Catalog};
-use catalog::{has_file, parse_crafting, parse_map_search, CRAFTING_FILE, MAP_SEARCH_FILE};
-use model::{Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, MapSearch, SCHEMA_VERSION};
+use catalog::{has_file, parse_ascendancies, parse_crafting, parse_map_search, ASCENDANCIES_FILE, CRAFTING_FILE, MAP_SEARCH_FILE};
+use model::{Ascendancy, Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, MapSearch, SCHEMA_VERSION};
 pub use store::sha256_hex;
 use store::{verify, DatasetStore};
 
@@ -213,9 +213,10 @@ fn sync(api: &Api, store: &DatasetStore, current: Option<&str>) -> Result<Option
     // Необязательный файл: не разобран — набор всё равно ставим, ошибку увидит вкладка.
     let map_search = has_file(&manifest, MAP_SEARCH_FILE).then(|| file(MAP_SEARCH_FILE).and_then(parse_map_search));
     let crafting = has_file(&manifest, CRAFTING_FILE).then(|| file(CRAFTING_FILE).and_then(parse_crafting));
+    let ascendancies = has_file(&manifest, ASCENDANCIES_FILE).then(|| file(ASCENDANCIES_FILE).and_then(parse_ascendancies));
 
     store.install(&manifest, &files).map_err(|e| format!("набор не сохранён: {e}"))?;
-    Ok(Some(Catalog::new(manifest, items, classes, map_search, crafting)))
+    Ok(Some(Catalog::new(manifest, items, classes, map_search, crafting, ascendancies)))
 }
 
 fn publish(app: &AppHandle, service: &DatasetService) {
@@ -264,4 +265,11 @@ pub fn catalog_item(service: State<DatasetService>, id: String) -> Option<Catalo
 #[tauri::command]
 pub fn catalog_map_search(service: State<DatasetService>) -> Result<Option<MapSearch>, String> {
     service.catalog().and_then(|c| c.map_search.clone()).transpose()
+}
+
+/// Портреты классов и восхождений для вкладки «Билды». Пусто — справочника ещё нет, в наборе нет
+/// `ascendancies.json` или он не прочитан: тогда вкладка рисует монограммы.
+#[tauri::command]
+pub fn catalog_ascendancies(service: State<DatasetService>) -> Vec<Ascendancy> {
+    service.catalog().and_then(|c| c.ascendancies.as_ref().and_then(|a| a.as_ref().ok().cloned())).unwrap_or_default()
 }

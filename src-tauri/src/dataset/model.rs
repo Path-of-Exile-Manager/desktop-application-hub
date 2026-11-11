@@ -351,3 +351,18 @@ pub enum MapPropertyKind {
     #[serde(other)]
     Unknown,
 }
+
+/// Класс или восхождение с портретом — запись `ascendancies.json`. Портрет — иконка, как у предметов
+/// (`pmicon://<icon_sha256>`).
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct Ascendancy {
+    /// Имя строчными: `elementalist`, `witch`.
+    pub id: String,
+    /// Как пишет Path of Building: `Elementalist`.
+    pub name: String,
+    /// Класс восхождения (`witch`); у самого класса — нет.
+    pub class_id: Option<String>,
+    pub icon_sha256: String,
+}
