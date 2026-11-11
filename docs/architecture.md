@@ -75,7 +75,8 @@ desktop-application/
 ├─ crates/
 │  ├─ item-parser/            разбор предмета: чистый Rust, тесты через cargo test
 │  ├─ game-window/            поиск окна PoE через WinAPI: режим, фокус, права; пример fake_poe
-│  └─ craft-engine/           движок крафта кластеров: вероятности, методы, план; примеры evaluate, weights
+│  ├─ craft-engine/           движок крафта кластеров: вероятности, методы, план; примеры evaluate, weights
+│  └─ pob-parser/             код экспорта Path of Building → сборка (предметы, наборы, камни, деревья); пример dump
 ├─ ui/                        React + Vite: главное окно и оверлей
 │  └─ src/
 │     ├─ design-system/       токены, компоненты, оболочка (см. design-system.md)
