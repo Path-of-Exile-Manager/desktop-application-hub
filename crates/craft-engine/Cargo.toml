@@ -1,0 +1,10 @@
+[package]
+name = "craft-engine"
+description = "Движок крафта кластерных самоцветов PoE1: вероятности, ожидаемая стоимость, разброс"
+version.workspace = true
+edition.workspace = true
+
+# Чистая логика без сети, справочника и Tauri: вход — crafting.json, цель, цены.
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
