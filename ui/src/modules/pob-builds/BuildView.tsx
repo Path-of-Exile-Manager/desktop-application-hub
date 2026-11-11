@@ -34,6 +34,8 @@ import { copyCode, fail } from "./dialogs";
 import { buildSubtitle, decodeBuild, type PobBuildRecord } from "./model";
 import { Portrait } from "./parts";
 import { pageLabel, type ShareAction } from "./share";
+import { ItemCard } from "./ItemCard";
+import { applyOverride, modCounts, specError, tradeQuery, type SpecOverride } from "@/components/trade/spec";
 
 // Экран сборки (план shared/docs/pob-trader.md, P7): этап, набор камней и дерево → строки «что купить»
 // с ценой текущей лиги (ядро, `pob_stage`), сумма этапа, ручные цены (в записи билда), «Трейд ↗».
@@ -68,7 +70,7 @@ const SLOT_LABEL: Record<string, string> = {
 
 const slotLabel = (slot: string) => SLOT_LABEL[slot] ?? slot.replace(/^Flask (\d)$/, "Фласка $1").replace(" Abyssal Socket ", " · абисс. гнездо ");
 
-const tradeUrl = (league: string, query: unknown) => `https://www.pathofexile.com/trade/search/${encodeURIComponent(league)}?q=${encodeURIComponent(JSON.stringify(query))}`;
+
 
 const stageOf = (code: string, itemSet: number, skillSet: number, treeSpec: number) => invoke<PobStage>("pob_stage", { code, itemSet, skillSet, treeSpec });
 
@@ -156,6 +158,15 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
   }, [record.code, choice, pricesVersion]);
 
   const manual = record.manualPrices;
+  const overrides = record.filterOverrides as Record<string, SpecOverride>;
+  const [card, setCard] = useState<PobStageRow | null>(null);
+  const setOverride = (key: string, value: SpecOverride | undefined) => {
+    if (JSON.stringify(overrides[key]) === JSON.stringify(value)) return Promise.resolve();
+    const next = { ...overrides };
+    if (value) next[key] = value;
+    else delete next[key];
+    return saveRecord("pobBuilds", { ...record, filterOverrides: next }).then(() => undefined);
+  };
   const setManual = (key: string, value: number | null) => {
     const next = { ...manual };
     if (value === null) delete next[key];
@@ -255,12 +266,15 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
               items={SECTIONS.map((s) => ({ value: s.id, label: `${s.label} ${rowsBySection.get(s.id)?.length ?? 0}`, disabled: !rowsBySection.get(s.id)?.length }))}
             />
             {stage ? (
-              <RowList key={section} rows={rowsBySection.get(section) ?? []} league={stage.league} manual={manual} onManual={setManual} />
+              <RowList key={section} rows={rowsBySection.get(section) ?? []} league={stage.league} manual={manual} onManual={setManual} overrides={overrides} onOpen={setCard} />
             ) : (
               <Skeleton className="mt-4 h-40 w-full" />
             )}
           </Card>
         </>
+      )}
+      {card && stage && (
+        <ItemCard key={card.key} row={card} league={stage.league} override={overrides[card.key]} onSave={(o) => setOverride(card.key, o)} onClose={() => setCard(null)} />
       )}
     </Page>
   );
@@ -275,7 +289,21 @@ function StageSelect({ label, value, options, onChange }: { label: string; value
   );
 }
 
-function RowList({ rows, league, manual, onManual }: { rows: PobStageRow[]; league: string | null; manual: Record<string, number>; onManual: (key: string, value: number | null) => Promise<void> }) {
+function RowList({
+  rows,
+  league,
+  manual,
+  onManual,
+  overrides,
+  onOpen,
+}: {
+  rows: PobStageRow[];
+  league: string | null;
+  manual: Record<string, number>;
+  onManual: (key: string, value: number | null) => Promise<void>;
+  overrides: Record<string, SpecOverride>;
+  onOpen: (row: PobStageRow) => void;
+}) {
   const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
   const [page, setPage] = useState(1);
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
@@ -288,7 +316,7 @@ function RowList({ rows, league, manual, onManual }: { rows: PobStageRow[]; leag
       <div ref={ref} className="min-h-0 flex-1 overflow-hidden">
         <ul className="flex flex-col">
           {rows.slice((page - 1) * pageSize, page * pageSize).map((row) => (
-            <StageRow key={row.key} row={row} league={league} manual={manual[row.key] ?? null} onManual={(v) => onManual(row.key, v)} />
+            <StageRow key={row.key} row={row} league={league} manual={manual[row.key] ?? null} onManual={(v) => onManual(row.key, v)} override={overrides[row.key]} onOpen={() => onOpen(row)} />
           ))}
         </ul>
       </div>
@@ -297,7 +325,24 @@ function RowList({ rows, league, manual, onManual }: { rows: PobStageRow[]; leag
   );
 }
 
-function StageRow({ row, league, manual, onManual }: { row: PobStageRow; league: string | null; manual: number | null; onManual: (v: number | null) => Promise<void> }) {
+function StageRow({
+  row,
+  league,
+  manual,
+  onManual,
+  override,
+  onOpen,
+}: {
+  row: PobStageRow;
+  league: string | null;
+  manual: number | null;
+  onManual: (v: number | null) => Promise<void>;
+  override: SpecOverride | undefined;
+  onOpen: () => void;
+}) {
+  const spec = row.spec ? applyOverride(row.spec, override) : null;
+  const counts = spec ? modCounts(spec) : { searched: 0, unavailable: 0 };
+  const error = spec ? specError(spec) : "нет данных для поиска";
   const item = row.item;
   const gem = row.gem;
   const rarity = rarityOf(row);
@@ -310,19 +355,20 @@ function StageRow({ row, league, manual, onManual }: { row: PobStageRow; league:
         slotLabel(row.slot),
         item.itemLevel ? `ilvl ${item.itemLevel}` : null,
         item.sockets && item.sockets.links >= 5 ? `${item.sockets.links}L` : null,
-        row.modsSearched || row.modsUnavailable ? modsLabel(row.modsSearched, row.modsUnavailable) : null,
+        counts.searched || counts.unavailable ? modsLabel(counts.searched, counts.unavailable) : null,
+        override ? "фильтры изменены" : null,
       ];
   return (
     <li style={{ height: ROW_HEIGHT }} className={cx("flex items-center gap-3 border-b border-border-subtle last:border-b-0", !row.counted && "opacity-50")}>
       <ItemIcon variant="thumb" size={thumbSize(size)} src={iconUrl(row.catalogItem?.iconSha256)} alt={name ?? ""} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className={cx("truncate text-body font-medium", RARITY_TEXT[rarity])}>
+      <button type="button" onClick={onOpen} disabled={!spec} title="Фильтры поиска" className="flex min-w-0 flex-1 flex-col text-left enabled:cursor-pointer">
+        <span className={cx("truncate text-body font-medium hover:underline", RARITY_TEXT[rarity])}>
           {name}
           {(item?.corrupted || gem?.gem.corrupted) && <span className="ml-2 text-label font-normal text-status-danger-fg">осквернён</span>}
           {!row.counted && <span className="ml-2 text-label font-normal text-text-muted">выключен в PoB</span>}
         </span>
         <span className="truncate text-label text-text-secondary">{(detail ?? []).filter(Boolean).join(" · ")}</span>
-      </div>
+      </button>
       {row.notes.length > 0 && (
         <Tooltip content={row.notes.join("\n")}>
           <span className="text-icon-default">
@@ -346,14 +392,23 @@ function StageRow({ row, league, manual, onManual }: { row: PobStageRow; league:
         )}
       </div>
       <ManualPrice value={manual} auto={row.price?.chaosValue ?? null} onSave={onManual} />
-      <Button
-        variant="ghost"
-        icon={ExternalLink}
-        disabled={!league || !row.trade}
-        onClick={() => league && row.trade && openTrade(tradeUrl(league, row.trade)).catch(fail("Сайт торговли не открылся"))}
-      >
-        Трейд
-      </Button>
+      <Tooltip content={error ?? (league ? null : "Лига не выбрана")}>
+        <span>
+          <Button
+            variant="ghost"
+            icon={ExternalLink}
+            disabled={!league || !spec || !!error}
+            onClick={() =>
+              spec &&
+              tradeQuery(spec, league)
+                .then((q) => q.url && openTrade(q.url))
+                .catch(fail("Сайт торговли не открылся"))
+            }
+          >
+            Трейд
+          </Button>
+        </span>
+      </Tooltip>
     </li>
   );
 }
