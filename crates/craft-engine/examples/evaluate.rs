@@ -8,7 +8,8 @@ use std::time::Instant;
 
 use craft_engine::{
     AltPolicy, Base, BaseOffer, Engine, Method, Prices, Rarity, alt_policy_probability,
-    plan_target, reroll_hit_probability, simulate_alt_policy, simulate_reroll,
+    harvest_hit_probability, plan_target, reroll_hit_probability, simulate_alt_policy,
+    simulate_harvest, simulate_reroll,
 };
 
 /// Цели вида «размер, notable…» — самые играемые на Allflame (11.11.2026).
@@ -114,6 +115,13 @@ fn main() {
                 simulate_reroll(&pool, Rarity::RareJewel, runs, 5),
                 runs,
             ));
+
+            for tag in pool.target_tags() {
+                let exact = harvest_hit_probability(&pool, &tag);
+                let simulated = simulate_harvest(&pool, &tag, runs, 9);
+
+                worst_z = worst_z.max(report(&format!("harvest {tag}"), exact, simulated, runs));
+            }
         }
 
         // Базы: все подходящие энчанты, уровень 84, условная цена 2c (дороже на «популярных»).
@@ -184,6 +192,7 @@ fn method_label(engine: &Engine, method: &Method) -> String {
         Method::AltAugRegal => "перем.+усил.+царь".to_owned(),
         Method::AltAugRegalExalt => "перем.+усил.+царь+возв.".to_owned(),
         Method::Chaos => "хаос".to_owned(),
+        Method::Harvest { craft, .. } => format!("Harvest {craft}"),
         Method::Fossil { fossils, .. } => fossils
             .iter()
             .filter_map(|id| engine.fossil(id))
@@ -222,6 +231,12 @@ fn example_prices(engine: &Engine) -> Prices {
 
         for id in &resonator.item_ids {
             set(id, price);
+        }
+    }
+
+    if let Some(harvest) = &engine.data().harvest {
+        for (colour, id) in &harvest.lifeforce {
+            set(id, if colour == "vivid" { 0.28 } else { 0.035 });
         }
     }
 

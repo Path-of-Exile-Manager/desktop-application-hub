@@ -84,6 +84,38 @@ pub fn simulate_alt_policy(pool: &Pool, policy: AltPolicy, attempts: u32, seed: 
     f64::from(hits) / f64::from(attempts)
 }
 
+/// Доля перековок Harvest «…включая свойство `tag`» из `runs`, давших все notable цели.
+pub fn simulate_harvest(pool: &Pool, tag: &str, runs: u32, seed: u64) -> f64 {
+    if runs == 0 {
+        return 0.0;
+    }
+
+    let mut rng = Rng::new(seed);
+    let mut item = Item::new(pool);
+    let limits = Rarity::RareJewel.limits();
+    let mut hits = 0u32;
+
+    for _ in 0..runs {
+        item.clear();
+
+        if !item.add(limits, Some(tag), &mut rng) {
+            continue;
+        }
+
+        for _ in 1..pick_count(Rarity::RareJewel, &mut rng) {
+            if !item.add_one(limits, &mut rng) {
+                break;
+            }
+        }
+
+        if pool.hit(item.state.taken) {
+            hits += 1;
+        }
+    }
+
+    f64::from(hits) / f64::from(runs)
+}
+
 /// Предмет в Монте-Карло: выпавшие моды по группам, сторонам и корзинам.
 struct Item<'a> {
     pool: &'a Pool,
@@ -106,11 +138,15 @@ impl<'a> Item<'a> {
         }
     }
 
-    fn reroll(&mut self, rarity: Rarity, rng: &mut Rng) {
+    fn clear(&mut self) {
         self.state = State::EMPTY;
         self.groups = 0;
         self.prefixes = 0;
         self.suffixes = 0;
+    }
+
+    fn reroll(&mut self, rarity: Rarity, rng: &mut Rng) {
+        self.clear();
 
         for _ in 0..pick_count(rarity, rng) {
             if !self.add_one(rarity.limits(), rng) {
@@ -121,6 +157,11 @@ impl<'a> Item<'a> {
 
     /// Добавляет один мод; false — добавить нечего.
     fn add_one(&mut self, limits: Limits, rng: &mut Rng) -> bool {
+        self.add(limits, None, rng)
+    }
+
+    /// Добавляет один мод, при `tag` — только из модов этого тега.
+    fn add(&mut self, limits: Limits, tag: Option<&str>, rng: &mut Rng) -> bool {
         let mut total = 0.0;
 
         for (index, pool_mod) in self.pool.mods.iter().enumerate() {
@@ -128,8 +169,9 @@ impl<'a> Item<'a> {
                 Affix::Prefix => self.prefixes < limits.prefixes,
                 Affix::Suffix => self.suffixes < limits.suffixes,
             };
+            let tagged = tag.is_none_or(|tag| self.pool.mod_has_tag(index, tag));
 
-            self.weights[index] = if room && self.groups & pool_mod.groups == 0 {
+            self.weights[index] = if room && tagged && self.groups & pool_mod.groups == 0 {
                 pool_mod.weight(self.state.dynamic)
             } else {
                 0.0

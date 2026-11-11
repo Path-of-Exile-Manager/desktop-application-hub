@@ -30,6 +30,36 @@ pub struct CraftingData {
     pub clusters: Clusters,
     pub fossils: Vec<Fossil>,
     pub currency: Currency,
+    /// Нет в документах до 11.11.2026.
+    #[serde(default)]
+    pub harvest: Option<Harvest>,
+}
+
+/// Перековки редкого предмета на станции Harvest.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Harvest {
+    pub patch: String,
+    /// Ключи справочника жизненной силы: `wild`, `vivid`, `primal`.
+    pub lifeforce: std::collections::HashMap<String, String>,
+    pub crafts: Vec<HarvestCraft>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HarvestCraft {
+    /// Id в игре (`ReforgeAttack`).
+    pub id: String,
+    /// `reforgeWithTag` — новый редкий предмет с хотя бы одним модом тега; `reforgeAffinity` —
+    /// моды прежних типов вероятнее или реже.
+    pub kind: String,
+    pub tag: Option<String>,
+    pub multiplier: Option<i32>,
+    /// `wild`, `vivid`, `primal`.
+    pub lifeforce: String,
+    /// Жизненной силы за крафт.
+    pub cost: u32,
+    pub text: LocalizedName,
 }
 
 #[derive(Debug, Clone, Deserialize)]

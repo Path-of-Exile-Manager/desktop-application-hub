@@ -21,7 +21,7 @@ const SEEDS: Seed[] = [
   ["medium", 4, ["Empowered Envoy", "Endbringer"], 0.055, 250, 3, 200, "chaos", "Damage while you have a Herald"],
   ["medium", 4, ["Unwaveringly Evil"], 0.042, 22, 2, 3.9, "altAug", "Chaos Damage over Time"],
   ["medium", 4, ["Wicked Pall"], 0.031, 18, 2, 4.5, "alteration", "Chaos Damage over Time"],
-  ["small", 2, ["Prodigious Defence"], 0.079, 6, 1, 4.3, "altAug", "Chance to Block Spell Damage"],
+  ["small", 2, ["Prodigious Defence"], 0.079, 6, 1, 3.2, "harvest", "Chance to Block Spell Damage"],
   ["small", 2, ["Enduring Composure"], 0.051, 4, 1, 11.6, "altAug", "Armour"],
   ["small", 2, ["Prismatic Heart"], 0.144, 1, 0.9, 0.5, "altAug", "Fire Resistance"],
   ["large", 8, ["Smite the Weak"], 0.021, null, 1, 2.0, "altAug", "Dagger and Claw Damage"],
@@ -38,6 +38,7 @@ function demoDetail(row: ClusterRow): ClusterDetail {
     method,
     fossils: [],
     resonatorSockets: null,
+    harvest: null,
     probability: best.probability / factor,
     attempts: { mean: best.attempts.mean * factor, p50: Math.ceil(best.attempts.p50 * factor), p90: Math.ceil(best.attempts.p90 * factor) },
     craftCost: { mean: best.craftCost.mean * factor, p50: best.craftCost.p50 * factor, p90: best.craftCost.p90 * factor },
@@ -83,6 +84,10 @@ export function clustersDemo(): { status: ClustersStatus; rows: ClusterRow[]; de
         method,
         fossils: method === "fossil" ? [{ itemId: "fossil", name: { en: "Prismatic Fossil", ru: "Призматическое ископаемое" } }] : [],
         resonatorSockets: method === "fossil" ? 1 : null,
+        harvest:
+          method === "harvest"
+            ? { craft: "ReforgeAttack", tag: "attack", lifeforce: "wild", lifeforceCost: 75, text: { en: "Reforge a Rare item with random modifiers, including an Attack modifier", ru: "Перековать редкий предмет, наделяя его случайными свойствами, включая свойство атак" } }
+            : null,
         enchantId: enchant,
         enchant: { en: enchant, ru: null },
         itemLevel: notables.length > 1 ? 75 : 1,

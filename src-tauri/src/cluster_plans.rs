@@ -131,6 +131,24 @@ pub enum CraftMethodKind {
     Chaos,
     /// Резонатор с ископаемыми.
     Fossil,
+    /// Алхимия, затем перековка Harvest с тегом.
+    Harvest,
+}
+
+/// Перековка Harvest «…включая свойство тега».
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct CraftHarvest {
+    /// Id крафта в игре (`ReforgeAttack`).
+    pub craft: String,
+    pub tag: String,
+    /// `wild`, `vivid`, `primal`.
+    pub lifeforce: String,
+    /// Жизненной силы за попытку.
+    pub lifeforce_cost: u32,
+    /// Текст крафта на станции.
+    pub text: ClusterName,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -158,6 +176,8 @@ pub struct CraftPlan {
     /// Ископаемые (только у `fossil`).
     pub fossils: Vec<CraftFossil>,
     pub resonator_sockets: Option<u8>,
+    /// Перековка Harvest (только у `harvest`).
+    pub harvest: Option<CraftHarvest>,
     pub enchant_id: String,
     pub enchant: ClusterName,
     /// Уровень базы (ступень цен poe.ninja: 1, 50, 68, 75, 84 и выше).
@@ -267,6 +287,13 @@ pub fn craft_currency_ids(engine: &Engine) -> Vec<(&'static str, String)> {
     }
     ids.push(("chaos", currency.chaos.clone()));
     ids.push(("scouring", currency.scouring.clone()));
+    if let Some(harvest) = &engine.data().harvest {
+        for colour in ["wild", "vivid", "primal"] {
+            if let Some(id) = harvest.lifeforce.get(colour) {
+                ids.push((colour, id.clone()));
+            }
+        }
+    }
     ids
 }
 
@@ -321,6 +348,7 @@ fn market_prices(engine: &Engine, data: &dyn MarketData, own: &HashMap<String, f
     ids.extend(currency.alchemy.iter());
     ids.extend(currency.resonators.iter().flat_map(|r| r.item_ids.iter()));
     ids.extend(engine.data().fossils.iter().map(|f| &f.item_id));
+    ids.extend(engine.data().harvest.iter().flat_map(|h| h.lifeforce.values()));
 
     let mut map = HashMap::new();
     for id in ids {
@@ -522,6 +550,20 @@ fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &Tar
                 .collect(),
             Some(*resonator_sockets),
         ),
+        Method::Harvest { .. } => (CraftMethodKind::Harvest, Vec::new(), None),
+    };
+    let harvest = match &plan.estimate.method {
+        Method::Harvest { craft, tag, lifeforce, lifeforce_cost } => {
+            let text = engine.data().harvest.as_ref().and_then(|h| h.crafts.iter().find(|c| c.id == *craft)).map(|c| ClusterName { en: c.text.en.clone(), ru: c.text.ru.clone() });
+            Some(CraftHarvest {
+                craft: craft.clone(),
+                tag: tag.clone(),
+                lifeforce: lifeforce.clone(),
+                lifeforce_cost: *lifeforce_cost,
+                text: text.unwrap_or_else(|| ClusterName { en: craft.clone(), ru: None }),
+            })
+        }
+        _ => None,
     };
     let spread = |s: craft_engine::Spread| CraftSpread { mean: s.mean, p50: s.p50, p90: s.p90 };
 
@@ -529,6 +571,7 @@ fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &Tar
         method,
         fossils,
         resonator_sockets,
+        harvest,
         enchant_id: plan.base.enchant.clone(),
         enchant: enchant_name(engine, &target.size, &plan.base.enchant),
         trade_base: base_query(engine, target, &plan.base.enchant, plan.base.item_level),

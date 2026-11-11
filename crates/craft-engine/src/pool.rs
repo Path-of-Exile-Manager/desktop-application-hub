@@ -46,6 +46,8 @@ pub(crate) struct PoolMod {
     pub bucket: usize,
     /// Индекс в `crafting.clusters.mods`.
     source: usize,
+    /// Теги мода (`implicit_tags`): по ним ископаемые и Harvest.
+    tags: Vec<String>,
     spawn: Vec<(TagMatch, f64)>,
     generation: Vec<(TagMatch, f64)>,
     factor: f64,
@@ -187,6 +189,7 @@ impl Pool {
                 target: target_index,
                 bucket: 0,
                 source,
+                tags: cluster_mod.implicit_tags.clone(),
                 spawn: resolve(&cluster_mod.spawn_weights),
                 generation: resolve(&cluster_mod.generation_weights),
                 factor: fossil_factor(cluster_mod, &effects),
@@ -288,6 +291,40 @@ impl Pool {
     /// Каждый notable цели может выпасть на этой базе хотя бы при каком-то наборе модов.
     pub fn target_reachable(&self) -> bool {
         self.target_buckets.iter().all(|mask| *mask != 0)
+    }
+
+    /// Веса корзин при этих динамических тегах, считая только моды с тегом `tag` (Harvest).
+    pub(crate) fn bucket_weights_tagged(&self, dynamic: u64, tag: &str) -> Vec<f64> {
+        self.buckets
+            .iter()
+            .map(|bucket| {
+                bucket
+                    .mods
+                    .iter()
+                    .map(|&index| &self.mods[index])
+                    .filter(|pool_mod| pool_mod.tags.iter().any(|t| t == tag))
+                    .map(|pool_mod| pool_mod.weight(dynamic))
+                    .sum()
+            })
+            .collect()
+    }
+
+    /// Есть ли у мода тег (для Монте-Карло).
+    pub(crate) fn mod_has_tag(&self, index: usize, tag: &str) -> bool {
+        self.mods[index].tags.iter().any(|t| t == tag)
+    }
+
+    /// Теги notable цели: какие крафты Harvest имеет смысл пробовать.
+    pub fn target_tags(&self) -> Vec<String> {
+        let mut tags: Vec<String> = self
+            .mods
+            .iter()
+            .filter(|m| m.target.is_some())
+            .flat_map(|m| m.tags.iter().cloned())
+            .collect();
+        tags.sort();
+        tags.dedup();
+        tags
     }
 
     /// Веса корзин при этих динамических тегах.

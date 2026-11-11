@@ -77,6 +77,13 @@ fn main() {
         *issues.entry(row.issue.map_or("—".to_owned(), |issue| format!("{issue:?}"))).or_default() += 1;
     }
     let planned = computed.rows.iter().filter(|row| row.best.is_some()).count();
+    let mut methods: HashMap<String, u32> = HashMap::new();
+    for row in &computed.rows {
+        if let Some(best) = &row.best {
+            *methods.entry(format!("{:?}", best.method)).or_default() += 1;
+        }
+    }
+    println!("лучший способ: {methods:?}");
     println!("целей {}, с планом {planned}, расчёт {:.2} с; проблемы: {issues:?}", computed.rows.len(), elapsed.as_secs_f64());
 
     let mut ranked: Vec<_> = computed.rows.iter().filter_map(|row| row.best.as_ref().and_then(|best| best.roi.map(|roi| (roi, row, best)))).collect();

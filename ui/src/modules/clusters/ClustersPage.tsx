@@ -28,7 +28,7 @@ import {
   formatRoi,
   formatShare,
   ISSUE_LABEL,
-  METHOD_LABEL,
+  methodName,
   shareTrend,
   SIZE_LABEL,
   SIZES,
@@ -153,7 +153,7 @@ function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
         {best ? (
           <>
             <p className="truncate text-label text-text-primary">
-              {best.method === "fossil" ? best.fossils.map((f) => f.name.ru ?? f.name.en).join(" + ") : METHOD_LABEL[best.method]}
+              {best.method === "fossil" ? best.fossils.map((f) => f.name.ru ?? f.name.en).join(" + ") : methodName(best)}
             </p>
             <p className="truncate text-caption text-text-secondary">
               {best.enchant.ru ?? best.enchant.en} · ilvl {best.itemLevel} · шанс {(best.probability * 100).toFixed(best.probability < 0.01 ? 2 : 1)} %
@@ -219,9 +219,12 @@ export function ClustersPage() {
   const ownCount = useOwnPrices((s) => Object.keys(s.prices).length);
   const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
 
-  // Только dev: `?dialog=card` открывает карточку первой цели (скриншоты).
+  // Только dev: `?dialog=card[&target=<часть ключа>]` открывает карточку цели (скриншоты).
   useEffect(() => {
-    if (import.meta.env.DEV && !selected && rows.length > 0 && new URLSearchParams(location.search).get("dialog") === "card") setSelected(rows.find((r) => r.best?.roi) ?? rows[0]);
+    const q = new URLSearchParams(location.search);
+    const part = q.get("target");
+    if (import.meta.env.DEV && !selected && rows.length > 0 && q.get("dialog") === "card")
+      setSelected(rows.find((r) => (part ? r.key.includes(part) : r.best?.roi)) ?? rows[0]);
   }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => applyFilters(rows, filters), [rows, filters]);

@@ -101,7 +101,17 @@ export const METHOD_LABEL: Record<CraftMethodKind, string> = {
   altAugRegalExalt: "Перемены + усиление + царь + возвышение",
   chaos: "Хаос",
   fossil: "Ископаемые",
+  harvest: "Harvest",
 };
+
+const LIFEFORCE_LABEL: Record<string, string> = { wild: "дикой (Wild)", vivid: "яркой (Vivid)", primal: "первородной (Primal)" };
+
+/** Название способа: ископаемые и крафт Harvest — по именам. */
+export function methodName(plan: CraftPlan): string {
+  if (plan.method === "fossil") return `Ископаемые: ${plan.fossils.map((f) => f.name.ru ?? f.name.en).join(" + ")}`;
+  if (plan.method === "harvest" && plan.harvest) return `Harvest: перековка с тегом ${plan.harvest.tag}`;
+  return METHOD_LABEL[plan.method];
+}
 
 /** Шаги метода словами: что купить и что делать до попадания. */
 export function methodSteps(plan: CraftPlan, notables: string): string[] {
@@ -131,6 +141,11 @@ export function methodSteps(plan: CraftPlan, notables: string): string[] {
       ];
     case "chaos":
       return [base, "Сфера алхимии.", `Сферы хаоса, пока не выпадет цель. ${target}`];
+    case "harvest": {
+      const h = plan.harvest;
+      const craft = h ? `«${h.text.ru ?? h.text.en}» — ${h.lifeforceCost} ${LIFEFORCE_LABEL[h.lifeforce] ?? h.lifeforce} жизненной силы` : "перековка Harvest";
+      return [base, "Сфера алхимии.", `На станции Harvest: ${craft}; повторять до попадания. ${target}`];
+    }
     case "fossil": {
       const fossils = plan.fossils.map((f) => f.name.ru ?? f.name.en).join(", ");
       const sockets = plan.resonatorSockets ?? plan.fossils.length;

@@ -115,6 +115,36 @@ impl Hasher for MaskHasher {
 
 type FastMap<K, V> = HashMap<K, V, BuildHasherDefault<MaskHasher>>;
 
+/// Вероятность, что перековка Harvest «…включая свойство `tag`» даст все notable цели: первый мод
+/// выпадает только из модов с тегом (по их весам), остальные — как при сфере хаоса; число модов —
+/// как у редкого самоцвета, считая и первый (так же считает Craft of Exile). Ноль — модов с тегом
+/// на базе нет.
+pub fn harvest_hit_probability(pool: &Pool, tag: &str) -> f64 {
+    if !pool.target_reachable() {
+        return 0.0;
+    }
+
+    let mut solver = Solver::new(pool, Rarity::RareJewel.limits());
+    let first = solver.options_tagged(State::EMPTY, tag);
+    let total: f64 = first.iter().map(|(_, weight)| weight).sum();
+
+    if total <= 0.0 {
+        return 0.0;
+    }
+
+    let mut chance = 0.0;
+
+    for &(count, share) in Rarity::RareJewel.mod_counts() {
+        for &(bucket, weight) in &first {
+            let next = solver.with(State::EMPTY, bucket);
+
+            chance += share * weight / total * solver.solve(next.taken, next.dynamic, count - 1);
+        }
+    }
+
+    chance
+}
+
 pub(crate) struct Solver<'a> {
     pool: &'a Pool,
     limits: Limits,
@@ -183,7 +213,15 @@ impl<'a> Solver<'a> {
         }
     }
 
-    fn with(&self, state: State, bucket: usize) -> State {
+    /// Корзины, которые могут выпасть следующими, с весами только модов тега `tag`.
+    pub fn options_tagged(&self, state: State, tag: &str) -> Vec<(usize, f64)> {
+        let pool = self.pool;
+        let weights = pool.bucket_weights_tagged(state.dynamic, tag);
+
+        filter_options(pool, self.limits, state.taken, &weights)
+    }
+
+    pub(crate) fn with(&self, state: State, bucket: usize) -> State {
         State {
             taken: state.taken | (1 << bucket),
             dynamic: state.dynamic | self.pool.buckets[bucket].adds,
@@ -232,10 +270,18 @@ impl<'a> Solver<'a> {
             .weights
             .entry(dynamic)
             .or_insert_with(|| pool.bucket_weights(dynamic));
+
+        filter_options(pool, self.limits, taken, weights)
+    }
+}
+
+/// Корзины с местом, без общих групп с выпавшими и с весом больше нуля.
+fn filter_options(pool: &Pool, limits: Limits, taken: u128, weights: &[f64]) -> Vec<(usize, f64)> {
+    {
         let prefixes = (taken & pool.prefix_buckets).count_ones();
         let suffixes = taken.count_ones() - prefixes;
-        let prefix_room = prefixes < self.limits.prefixes;
-        let suffix_room = suffixes < self.limits.suffixes;
+        let prefix_room = prefixes < limits.prefixes;
+        let suffix_room = suffixes < limits.suffixes;
 
         pool.buckets
             .iter()

@@ -3,7 +3,7 @@ import { Copy, ExternalLink } from "lucide-react";
 import { Button, cx, Dialog, Price, toast } from "@/design-system";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
-import { formatRoi, formatShare, METHOD_LABEL, methodSteps, SIZE_LABEL } from "./model";
+import { formatRoi, formatShare, methodName, methodSteps, SIZE_LABEL } from "./model";
 import { clusterDetail, tradeUrl, useClustersData, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -15,9 +15,6 @@ function open(league: string | null | undefined, query: unknown) {
 
 const chaos = (amount: number) => `${amount < 10 ? amount.toFixed(1) : Math.round(amount).toLocaleString("ru-RU")} c`;
 
-function methodName(plan: CraftPlan): string {
-  return plan.method === "fossil" ? `Ископаемые: ${plan.fossils.map((f) => f.name.ru ?? f.name.en).join(" + ")}` : METHOD_LABEL[plan.method];
-}
 
 /** Числа плана: шанс, попытки, стоимость с разбросом. */
 function Figures({ plan }: { plan: CraftPlan }) {

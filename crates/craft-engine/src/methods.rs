@@ -10,7 +10,9 @@ use std::collections::HashMap;
 use serde::Serialize;
 
 use crate::data::Fossil;
-use crate::exact::{Rarity, reroll_hit_probability};
+use crate::data::Harvest;
+use crate::exact::{Rarity, harvest_hit_probability, reroll_hit_probability};
+use crate::pool::Pool;
 use crate::pool::{Base, fossil_applies};
 use crate::strategy::{AltCosts, AltPolicy, Decider};
 use crate::{Engine, EngineError};
@@ -62,6 +64,17 @@ pub enum Method {
         fossils: Vec<String>,
         resonator_sockets: u8,
     },
+    /// Алхимия, затем перековка Harvest «…включая свойство тега» на каждую попытку.
+    #[serde(rename_all = "camelCase")]
+    Harvest {
+        /// Id крафта в игре (`ReforgeAttack`).
+        craft: String,
+        tag: String,
+        /// `wild`, `vivid`, `primal`.
+        lifeforce: String,
+        /// Жизненной силы за попытку.
+        lifeforce_cost: u32,
+    },
 }
 
 impl Method {
@@ -74,6 +87,7 @@ impl Method {
             Method::AltAugRegalExalt => "altAugRegalExalt",
             Method::Chaos => "chaos",
             Method::Fossil { .. } => "fossil",
+            Method::Harvest { .. } => "harvest",
         }
     }
 }
@@ -200,11 +214,64 @@ pub fn evaluate_base(
         estimates.extend(estimate(Method::Chaos, probability, alchemy - chaos, chaos));
     }
 
+    if let (Some(alchemy), Some(harvest)) =
+        (price(currency.alchemy.as_ref()), &engine.data().harvest)
+    {
+        estimates.extend(best_harvest(&pool, harvest, prices, alchemy));
+    }
+
     if with_fossils {
         estimates.extend(best_fossils(engine, base, target, prices)?);
     }
 
     Ok(estimates)
+}
+
+/// Лучшая перековка Harvest с тегом: пробуются теги notable цели, у которых есть цена жизненной
+/// силы. Сначала алхимия (её собственный шанс попасть не учитывается), затем перековки.
+fn best_harvest(pool: &Pool, harvest: &Harvest, prices: &Prices, alchemy: f64) -> Option<Estimate> {
+    let tags = pool.target_tags();
+    let mut best: Option<Estimate> = None;
+
+    for craft in &harvest.crafts {
+        let Some(tag) = craft
+            .tag
+            .as_deref()
+            .filter(|tag| craft.kind == "reforgeWithTag" && tags.iter().any(|t| t == tag))
+        else {
+            continue;
+        };
+        let Some(unit) = harvest
+            .lifeforce
+            .get(&craft.lifeforce)
+            .and_then(|id| prices.get(id))
+        else {
+            continue;
+        };
+        let method = Method::Harvest {
+            craft: craft.id.clone(),
+            tag: tag.to_owned(),
+            lifeforce: craft.lifeforce.clone(),
+            lifeforce_cost: craft.cost,
+        };
+        let Some(candidate) = estimate(
+            method,
+            harvest_hit_probability(pool, tag),
+            alchemy,
+            unit * f64::from(craft.cost),
+        ) else {
+            continue;
+        };
+
+        if best
+            .as_ref()
+            .is_none_or(|current| candidate.cost.mean < current.cost.mean)
+        {
+            best = Some(candidate);
+        }
+    }
+
+    best
 }
 
 /// Перебор наборов ископаемых: кандидаты — применимые к базе, без своих модов, с ценой и с

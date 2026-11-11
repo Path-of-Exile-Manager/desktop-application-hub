@@ -5,7 +5,7 @@
 //! - [`reroll_hit_probability`] — точная вероятность попадания за перекрафт;
 //! - [`simulate_reroll`], [`simulate_alt_policy`] — Монте-Карло для проверки точного расчёта;
 //! - [`evaluate_base`] — методы на одной базе (перемены с усилением, царём и возвышением, хаос,
-//!   ископаемые): шанс попытки, попытки, стоимость;
+//!   ископаемые, перековка Harvest с тегом): шанс попытки, попытки, стоимость;
 //! - [`plan_target`] — лучшая база и метод цели по вложениям и прибыли.
 //!
 //! Сети, справочника и Tauri здесь нет: цены приходят от приложения. План — `shared/docs/cluster-crafting.md`.
@@ -20,11 +20,11 @@ mod strategy;
 
 use std::fmt;
 
-pub use exact::{Limits, Rarity, reroll_hit_probability};
+pub use exact::{Limits, Rarity, harvest_hit_probability, reroll_hit_probability};
 pub use methods::{Estimate, Method, Prices, Spread, attempts_quantile, evaluate_base};
 pub use plan::{BaseOffer, Plan, plan_target};
 pub use pool::{Base, Pool};
-pub use simulate::{Rng, simulate_alt_policy, simulate_reroll};
+pub use simulate::{Rng, simulate_alt_policy, simulate_harvest, simulate_reroll};
 pub use strategy::AltPolicy;
 
 /// Точный шанс попытки метода на сферах перемен (для проверки Монте-Карло).
