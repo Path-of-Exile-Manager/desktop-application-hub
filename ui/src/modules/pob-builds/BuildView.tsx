@@ -86,6 +86,14 @@ function matchStage(build: PobBuild, item: number, fallback: { skill: number; tr
 /** Цена строки для суммы: ручная, иначе автоматическая. */
 const rowPrice = (row: PobStageRow, manual: Record<string, number>) => manual[row.key] ?? row.price?.chaosValue ?? null;
 
+/** «5 модов в поиске · 1 недоступен». */
+function modsLabel(searched: number, unavailable: number): string {
+  const n = (k: number, one: string, few: string, many: string) => (k % 10 === 1 && k % 100 !== 11 ? one : k % 10 >= 2 && k % 10 <= 4 && (k % 100 < 12 || k % 100 > 14) ? few : many);
+  const parts = [`${searched} ${n(searched, "мод", "мода", "модов")} в поиске`];
+  if (unavailable) parts.push(`${unavailable} ${n(unavailable, "недоступен", "недоступно", "недоступно")}`);
+  return parts.join(" · ");
+}
+
 /** Миниатюра 44×44 — 4 клетки: иконка растягивается по большей стороне (камень 1×1 иначе выходит 10 px). */
 function thumbSize(size: { w: number; h: number } | undefined): [number, number] {
   const w = size?.w ?? 1;
@@ -297,7 +305,13 @@ function StageRow({ row, league, manual, onManual }: { row: PobStageRow; league:
   const name = gem ? gem.gem.name : item && (item.rarity === "rare" && item.name === "New Item" ? item.base : item.name);
   const detail = gem
     ? [`${gem.gem.level}/${gem.gem.quality}`, gem.groupLabel ? slotLabel(gem.groupLabel) : `связка ${gem.group + 1}`]
-    : item && [item.rarity === "unique" || item.rarity === "relic" || item.rarity === "rare" ? item.base : null, slotLabel(row.slot), item.itemLevel ? `ilvl ${item.itemLevel}` : null, item.sockets && item.sockets.links >= 5 ? `${item.sockets.links}L` : null];
+    : item && [
+        item.rarity === "unique" || item.rarity === "relic" || item.rarity === "rare" ? item.base : null,
+        slotLabel(row.slot),
+        item.itemLevel ? `ilvl ${item.itemLevel}` : null,
+        item.sockets && item.sockets.links >= 5 ? `${item.sockets.links}L` : null,
+        row.modsSearched || row.modsUnavailable ? modsLabel(row.modsSearched, row.modsUnavailable) : null,
+      ];
   return (
     <li style={{ height: ROW_HEIGHT }} className={cx("flex items-center gap-3 border-b border-border-subtle last:border-b-0", !row.counted && "opacity-50")}>
       <ItemIcon variant="thumb" size={thumbSize(size)} src={iconUrl(row.catalogItem?.iconSha256)} alt={name ?? ""} />

@@ -28,6 +28,8 @@ use crate::dataset::DatasetService;
 struct Keys {
     norm: HashMap<String, Vec<u32>>,
     exact: HashMap<String, Vec<u32>>,
+    /// Текст стата с выбранным вариантом вместо `#` (точный ключ) → (стат, id варианта).
+    options: HashMap<String, Vec<(u32, u32)>>,
 }
 
 impl Keys {
@@ -82,6 +84,13 @@ impl StatIndex {
             if let Some(text) = &stat.text.ru {
                 ru.add(text, i, Language::Ru);
             }
+            // «Allocates #» + «Like Clockwork» → «Allocates Like Clockwork»: так строка выглядит на предмете.
+            for option in stat.options.iter().flatten() {
+                en.options.entry(exact_key(&stat.text.en.replacen('#', &option.text.en, 1), Language::En)).or_default().push((i, option.id));
+                if let (Some(text), Some(option_text)) = (&stat.text.ru, &option.text.ru) {
+                    ru.options.entry(exact_key(&text.replacen('#', option_text, 1), Language::Ru)).or_default().push((i, option.id));
+                }
+            }
             by_id.entry(stat.id.clone()).or_default().push(i);
         }
         Self { sections: file.sections, stats: file.stats, en, ru, by_id }
@@ -102,6 +111,11 @@ impl StatIndex {
     /// Статы по точному ключу (`exact_key`) — только у текстов с числами.
     pub fn by_exact(&self, language: Language, key: &str) -> impl Iterator<Item = &TradeStat> + Clone {
         self.resolve(self.keys(language).exact.get(key))
+    }
+
+    /// Статы-с-выбором по тексту с подставленным вариантом (`exact_key`): (стат, id варианта).
+    pub fn by_option(&self, language: Language, key: &str) -> impl Iterator<Item = (&TradeStat, u32)> + Clone {
+        self.keys(language).options.get(key).into_iter().flatten().map(|&(i, option)| (&self.stats[i as usize], option))
     }
 
     /// Все тексты стата (у одного id их бывает два).

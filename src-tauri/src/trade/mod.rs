@@ -2,4 +2,5 @@
 //! shared/docs/pob-trader.md, P2–P4).
 
 pub mod matcher;
+pub mod query;
 pub mod stats;

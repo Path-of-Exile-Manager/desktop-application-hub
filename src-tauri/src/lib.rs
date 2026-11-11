@@ -134,6 +134,7 @@ pub fn run() {
             dataset::catalog_map_search,
             dataset::catalog_ascendancies,
             trade::stats::trade_stats_lookup,
+            trade::query::trade_query,
             leagues::leagues_status,
             leagues::leagues_refresh,
             prices::prices_status,

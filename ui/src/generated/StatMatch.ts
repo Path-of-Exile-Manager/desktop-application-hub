@@ -28,4 +28,8 @@ flipped: boolean,
 /**
  * У стата нет числа (или оно в id): в запрос идёт без MIN/MAX.
  */
-fixedText: boolean, pseudo: PseudoStat | null, };
+fixedText: boolean, 
+/**
+ * Стат с выбором («Allocates #»): id выбранного варианта; в запрос идёт `{ option }`.
+ */
+option: number | null, pseudo: PseudoStat | null, };

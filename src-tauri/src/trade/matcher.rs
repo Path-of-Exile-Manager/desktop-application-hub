@@ -18,14 +18,14 @@ use std::collections::HashMap;
 
 use item_parser::Language;
 use pob_parser::{PobItem, PobModKind};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use super::stats::{exact_key, normalize, StatIndex};
 use crate::dataset::model::TradeStat;
 
 /// Псевдостат, в котором сайт складывает этот мод со всех мест предмета.
-#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct PseudoStat {
@@ -53,6 +53,8 @@ pub struct StatMatch {
     pub flipped: bool,
     /// У стата нет числа (или оно в id): в запрос идёт без MIN/MAX.
     pub fixed_text: bool,
+    /// Стат с выбором («Allocates #»): id выбранного варианта; в запрос идёт `{ option }`.
+    pub option: Option<u32>,
     pub pseudo: Option<PseudoStat>,
 }
 
@@ -188,7 +190,23 @@ pub fn match_mod(index: &StatIndex, query: &ModQuery, slot: &str) -> Option<Stat
     let mut local = false;
     let mut flipped = false;
 
-    let mut found = pick(index.by_exact(language, &exact_key(query.line, language)), order);
+    let exact = exact_key(query.line, language);
+    let options = index.by_option(language, &exact);
+    if let Some((stat, option)) = order.iter().find_map(|section| options.clone().find(|(s, _)| s.section == *section)) {
+        return Some(StatMatch {
+            stat_id: stat.id.clone(),
+            section: stat.section.clone(),
+            text: stat.text.en.clone(),
+            values: Vec::new(),
+            average: None,
+            local: false,
+            flipped: false,
+            fixed_text: true,
+            option: Some(option),
+            pseudo: None,
+        });
+    }
+    let mut found = pick(index.by_exact(language, &exact), order);
     let not_implicit = !matches!(query.kind, PobModKind::Implicit | PobModKind::Enchant);
     if found.is_none() && prefers_local(slot) && not_implicit {
         let suffix = match language {
@@ -249,12 +267,13 @@ pub fn match_mod(index: &StatIndex, query: &ModQuery, slot: &str) -> Option<Stat
         local,
         flipped,
         fixed_text: !stat.text.en.contains('#') || stat.id.contains('|'),
+        option: None,
         pseudo: if language == Language::En { pseudo(index, &norm) } else { None },
     })
 }
 
 /// Почему у строки нет фильтра.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub enum ModUnavailable {

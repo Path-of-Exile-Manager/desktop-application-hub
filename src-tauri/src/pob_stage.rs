@@ -9,7 +9,7 @@ use item_parser::variant::PriceVariant;
 use item_parser::{Influence, Language, ModKind, ParsedItem, ParsedMod, Rarity, Sockets};
 use pob_parser::{PobBuild, PobGem, PobInfluence, PobItem, PobModKind, PobRarity};
 use serde::Serialize;
-use serde_json::{Value, json};
+use serde_json::Value;
 use tauri::{AppHandle, Manager};
 use ts_rs::TS;
 
@@ -17,7 +17,8 @@ use crate::appraise::{PriceMatch, appraise_item};
 use crate::dataset::model::{CatalogItem, ItemKind};
 use crate::dataset::{Catalog, DatasetService};
 use crate::prices::{Price, PricesService};
-use crate::trade::matcher::{match_item, ModRow};
+use crate::trade::matcher::match_item;
+use crate::trade::query::{build_query, TradeSearchSpec, DEFAULT_TOLERANCE};
 use crate::trade::stats::StatIndex;
 
 /// Секция экрана сборки.
@@ -64,9 +65,13 @@ pub struct PobStageRow {
     pub variant_key: Option<String>,
     pub price: Option<Price>,
     pub price_match: Option<PriceMatch>,
-    /// Моды предмета с фильтрами сайта торговли; пусто у камней и без `trade-stats.json`.
-    pub mods: Vec<ModRow>,
-    /// Запрос сайта торговли (`?q=`): по имени уникального, базе, камню, связям. Без модов (это P4).
+    /// Что искать на сайте торговли (умолчания ядра): тип, моды с MIN/MAX, сокеты, осквернение.
+    /// Моды — только при `trade-stats.json` в наборе. Правки интерфейса — по `trade_query`.
+    pub spec: Option<TradeSearchSpec>,
+    /// Модов в поиске и недоступных по умолчаниям.
+    pub mods_searched: u32,
+    pub mods_unavailable: u32,
+    /// Тело поиска по умолчаниям (`?q=`).
     pub trade: Option<Value>,
     pub notes: Vec<String>,
 }
@@ -198,14 +203,28 @@ fn item_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, stats: Optio
         price = None;
         price_match = None;
     }
-    let trade = Some(item_query(item, unique_name.as_deref(), appraisal.catalog_item.as_ref(), catalog));
+    let unique = matches!(item.rarity, PobRarity::Unique | PobRarity::Relic);
+    let entry = appraisal.catalog_item.as_ref();
+    let base = if unique {
+        entry.and_then(|u| u.base_id.as_deref()).and_then(|b| catalog.get(b)).map_or_else(|| base_name(&item.base).to_string(), |b| b.name.en.clone())
+    } else if matches!(item.rarity, PobRarity::Rare) {
+        base_name(&item.base).to_string()
+    } else {
+        entry.map_or_else(|| base_name(&item.base).to_string(), |b| b.name.en.clone())
+    };
+    let mods = stats.map(|s| match_item(s, item, slot)).unwrap_or_default();
+    let spec = TradeSearchSpec::item(item, unique_name, base, &mods, DEFAULT_TOLERANCE);
+    let (mods_searched, mods_unavailable) = spec.counts();
+    let trade = build_query(&spec).ok();
     PobStageRow {
         key,
         section,
         slot: slot.to_string(),
         item: Some(item.clone()),
         gem: None,
-        mods: stats.map(|s| match_item(s, item, slot)).unwrap_or_default(),
+        spec: Some(spec),
+        mods_searched,
+        mods_unavailable,
         counted: true,
         catalog_item: appraisal.catalog_item,
         variant_key: appraisal.variant_key,
@@ -223,13 +242,23 @@ fn gem_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, gem: &PobGem,
         parsed.name = entry.name.en.clone();
     }
     let appraisal = appraise_item(catalog, prices, parsed);
-    let trade = appraisal.catalog_item.as_ref().map(|c| gem_query(gem, c, catalog));
+    // `base:<путь камня>:alt_x` — трансфигурированный: на сайте это базовый камень с дискриминатором.
+    let spec = appraisal.catalog_item.as_ref().map(|entry| match entry.id.rsplit_once(':') {
+        Some((base_id, disc)) if disc.starts_with("alt_") => {
+            let base = catalog.get(base_id).map_or_else(|| entry.name.en.clone(), |b| b.name.en.clone());
+            TradeSearchSpec::gem(base, Some(disc.to_string()), gem.level, gem.quality, gem.corrupted)
+        }
+        _ => TradeSearchSpec::gem(entry.name.en.clone(), None, gem.level, gem.quality, gem.corrupted),
+    });
+    let trade = spec.as_ref().and_then(|s| build_query(s).ok());
     PobStageRow {
         key,
         section: PobSection::Gems,
         slot,
         item: None,
-        mods: Vec::new(),
+        spec,
+        mods_searched: 0,
+        mods_unavailable: 0,
         counted: row.enabled,
         gem: Some(row),
         catalog_item: appraisal.catalog_item,
@@ -395,83 +424,3 @@ fn influence(influence: PobInfluence) -> Option<Influence> {
     }
 }
 
-const INFLUENCE_FILTERS: [(PobInfluence, &str); 6] = [
-    (PobInfluence::Shaper, "shaper_item"),
-    (PobInfluence::Elder, "elder_item"),
-    (PobInfluence::Crusader, "crusader_item"),
-    (PobInfluence::Redeemer, "redeemer_item"),
-    (PobInfluence::Hunter, "hunter_item"),
-    (PobInfluence::Warlord, "warlord_item"),
-];
-
-/// Запрос предмета: уникальный — имя и база; остальные — база (обычный и волшебный — по справочнику),
-/// уровень предмета не ниже, влияния; у всех — связи от 5 и осквернение.
-fn item_query(item: &PobItem, unique_name: Option<&str>, entry: Option<&CatalogItem>, catalog: &Catalog) -> Value {
-    let mut query = json!({ "status": { "option": "online" }, "stats": [{ "type": "and", "filters": [] }] });
-    let unique = matches!(item.rarity, PobRarity::Unique | PobRarity::Relic);
-    let base = if unique {
-        entry.and_then(|u| u.base_id.as_deref()).and_then(|b| catalog.get(b)).map_or_else(|| base_name(&item.base).to_string(), |b| b.name.en.clone())
-    } else if matches!(item.rarity, PobRarity::Rare) {
-        base_name(&item.base).to_string()
-    } else {
-        entry.map_or_else(|| item.base.clone(), |b| b.name.en.clone())
-    };
-    if unique {
-        query["name"] = json!(unique_name.unwrap_or(&item.name));
-    }
-    query["type"] = json!(base);
-
-    let mut misc = serde_json::Map::new();
-    if !unique {
-        if let Some(ilvl) = item.item_level.filter(|l| *l > 1) {
-            misc.insert("ilvl".into(), json!({ "min": ilvl }));
-        }
-        for (influence, filter) in INFLUENCE_FILTERS {
-            if item.influences.contains(&influence) {
-                misc.insert(filter.into(), json!({ "option": "true" }));
-            }
-        }
-    }
-    if item.corrupted {
-        misc.insert("corrupted".into(), json!({ "option": "true" }));
-    }
-    let mut filters = serde_json::Map::new();
-    if !misc.is_empty() {
-        filters.insert("misc_filters".into(), json!({ "filters": misc }));
-    }
-    if let Some(links) = item.sockets.as_ref().map(|s| s.links).filter(|l| *l >= 5) {
-        filters.insert("socket_filters".into(), json!({ "filters": { "links": { "min": links } } }));
-    }
-    if !unique && matches!(item.rarity, PobRarity::Normal) {
-        filters.insert("type_filters".into(), json!({ "filters": { "rarity": { "option": "normal" } } }));
-    }
-    if !filters.is_empty() {
-        query["filters"] = Value::Object(filters);
-    }
-    json!({ "query": query, "sort": { "price": "asc" } })
-}
-
-/// Запрос камня: тип (трансфигурированный — базовый камень и `discriminator`), уровень и качество
-/// не ниже, осквернение.
-fn gem_query(gem: &PobGem, entry: &CatalogItem, catalog: &Catalog) -> Value {
-    // `base:<путь камня>:alt_x` — трансфигурированный: на сайте это базовый камень с дискриминатором.
-    let ty = match entry.id.rsplit_once(':') {
-        Some((base_id, disc)) if disc.starts_with("alt_") => {
-            let base = catalog.get(base_id).map_or_else(|| entry.name.en.clone(), |b| b.name.en.clone());
-            json!({ "option": base, "discriminator": disc })
-        }
-        _ => json!(entry.name.en),
-    };
-    let mut misc = serde_json::Map::new();
-    if gem.level > 1 {
-        misc.insert("gem_level".into(), json!({ "min": gem.level }));
-    }
-    if gem.quality > 0 {
-        misc.insert("quality".into(), json!({ "min": gem.quality }));
-    }
-    misc.insert("corrupted".into(), json!({ "option": if gem.corrupted { "true" } else { "false" } }));
-    json!({
-        "query": { "status": { "option": "online" }, "type": ty, "stats": [{ "type": "and", "filters": [] }], "filters": { "misc_filters": { "filters": misc } } },
-        "sort": { "price": "asc" }
-    })
-}
