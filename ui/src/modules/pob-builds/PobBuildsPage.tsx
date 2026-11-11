@@ -17,13 +17,14 @@ import {
   type PobBuildGroup,
   type PobBuildRecord,
 } from "./model";
+import { BuildView } from "./BuildView";
 import { Portrait } from "./parts";
 import { usePortraitsSync } from "./portraits";
 import { pageLabel, runShare, type ShareAction } from "./share";
 
 // Вкладка «Билды» (план shared/docs/pob-trader.md, P6): библиотека сборок Path of Building — группы
 // слева, список справа; у строки — «Открыть на сайте» и «Открыть в Path of Building» (без ссылки —
-// выгрузка на pobb.in с подтверждением, share.ts). Экран сборки с ценами (P7) — следующим шагом.
+// выгрузка на pobb.in с подтверждением, share.ts). «Открыть» — экран сборки с ценами (BuildView.tsx).
 
 const ROW_HEIGHT = 56;
 const GROUP_ROW_HEIGHT = 36;
@@ -55,6 +56,17 @@ export function PobBuildsPage() {
   const [publish, setPublish] = useState<{ build: PobBuildRecord; answer: (ok: boolean) => void } | null>(null);
   const share = (build: PobBuildRecord, action: ShareAction) =>
     void runShare(build, action, (b) => new Promise<boolean>((answer) => setPublish({ build: b, answer })));
+  const [openId, setOpenId] = useState<string | null>(null);
+  const opened = openId ? (builds ?? NO_BUILDS).find((b) => b.id === openId) : undefined;
+  const publishDialog = publish && (
+    <PublishDialog
+      name={publish.build.name}
+      onAnswer={(ok) => {
+        publish.answer(ok);
+        setPublish(null);
+      }}
+    />
+  );
 
   const all = builds ?? NO_BUILDS;
   const groups = useMemo(() => [...(groupRecords ?? NO_GROUPS)].sort(bySortKey), [groupRecords]);
@@ -84,6 +96,18 @@ export function PobBuildsPage() {
     const last = [...all].sort(bySortKey).at(-1)?.sortKey ?? null;
     await saveRecord("pobBuilds", newBuildRecord({ ...input, sortKey: await keyBetween(last, null) }));
   };
+
+  // Открытый билд удалили (здесь или на другом устройстве) — назад к списку.
+  useEffect(() => {
+    if (openId && builds && !opened) setOpenId(null);
+  }, [openId, builds, opened]);
+  if (opened)
+    return (
+      <>
+        <BuildView key={opened.id} record={opened} onBack={() => setOpenId(null)} onShare={share} />
+        {publishDialog}
+      </>
+    );
 
   const title = filter.kind === "all" ? "Все билды" : filter.kind === "none" ? "Без группы" : (activeGroup?.name ?? "Группа");
   const defaultGroup = filter.kind === "group" ? filter.id : null;
@@ -148,7 +172,7 @@ export function PobBuildsPage() {
               builds={shown}
               groups={groups}
               groupName={groupName}
-              onOpen={(b) => setDialog({ kind: "summary", title: b.name, code: b.code })}
+              onOpen={(b) => setOpenId(b.id)}
               onRename={(build) => setDialog({ kind: "rename-build", build })}
               onDelete={(build) => setDialog({ kind: "delete-build", build })}
               onMove={(b, groupId) => void moveTo(b, groupId)}
@@ -158,15 +182,7 @@ export function PobBuildsPage() {
         </Card>
       </div>
 
-      {publish && (
-        <PublishDialog
-          name={publish.build.name}
-          onAnswer={(ok) => {
-            publish.answer(ok);
-            setPublish(null);
-          }}
-        />
-      )}
+      {publishDialog}
       {dialog?.kind === "import" && <ImportDialog builds={all} groups={groups} onClose={() => setDialog(null)} />}
       {dialog?.kind === "add" && (
         <AddBuildDialog
