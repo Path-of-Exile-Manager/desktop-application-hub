@@ -42,6 +42,10 @@ pub(crate) struct PoolMod {
     pub adds: u64,
     /// Индекс notable в цели.
     pub target: Option<usize>,
+    /// Корзина мода.
+    pub bucket: usize,
+    /// Индекс в `crafting.clusters.mods`.
+    source: usize,
     spawn: Vec<(TagMatch, f64)>,
     generation: Vec<(TagMatch, f64)>,
     factor: f64,
@@ -162,7 +166,7 @@ impl Pool {
         let mut group_bits: HashMap<&str, u32> = HashMap::new();
         let mut mods = Vec::new();
 
-        for cluster_mod in &data.clusters.mods {
+        for (source, cluster_mod) in data.clusters.mods.iter().enumerate() {
             if cluster_mod.required_level > base.item_level {
                 continue;
             }
@@ -181,6 +185,8 @@ impl Pool {
                 groups: 0,
                 adds,
                 target: target_index,
+                bucket: 0,
+                source,
                 spawn: resolve(&cluster_mod.spawn_weights),
                 generation: resolve(&cluster_mod.generation_weights),
                 factor: fossil_factor(cluster_mod, &effects),
@@ -220,7 +226,7 @@ impl Pool {
         let mut buckets: Vec<Bucket> = Vec::new();
         let mut bucket_groups: Vec<u128> = Vec::new();
 
-        for (index, pool_mod) in mods.iter().enumerate() {
+        for (index, pool_mod) in mods.iter_mut().enumerate() {
             let key = (
                 pool_mod.affix,
                 pool_mod.groups,
@@ -240,6 +246,7 @@ impl Pool {
             });
 
             buckets[bucket].mods.push(index);
+            pool_mod.bucket = bucket;
         }
 
         if buckets.len() > MAX_BUCKETS {
@@ -300,6 +307,20 @@ impl Pool {
     /// Все notable цели среди выпавших корзин.
     pub(crate) fn hit(&self, taken: u128) -> bool {
         self.target_buckets.iter().all(|mask| taken & mask != 0)
+    }
+
+    /// Веса модов пустого предмета: индекс в `crafting.clusters.mods` и вес (для сверки с
+    /// таблицей весов Craft of Exile).
+    pub fn mod_weights(&self) -> Vec<(usize, f64)> {
+        self.mods
+            .iter()
+            .map(|pool_mod| (pool_mod.source, pool_mod.weight(0)))
+            .collect()
+    }
+
+    /// Выпал хотя бы один notable цели.
+    pub(crate) fn any_target(&self, taken: u128) -> bool {
+        self.target_buckets.iter().any(|mask| taken & mask != 0)
     }
 
     pub(crate) fn missing(&self, taken: u128) -> u32 {

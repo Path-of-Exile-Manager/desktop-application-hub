@@ -1,5 +1,9 @@
-//! Методы крафта в один шаг — перекрафт до попадания: сфера перемен (магический), хаоса и
-//! ископаемые (редкий). Каждая попытка независима, число попыток — геометрическое.
+//! Методы крафта на одной базе: шанс попытки, попытки и стоимость.
+//!
+//! Любой метод — повторение одинаковых независимых попыток до успеха (неудача после царя
+//! возвращает к сферам перемен), поэтому число попыток — геометрическое с шансом попытки `π`:
+//! стоимость = добавка первой попытки + цена попытки × попытки. Квантили стоимости берутся по
+//! квантилям числа попыток (разброс цены внутри попытки — усиления, цари — не учитывается).
 
 use std::collections::HashMap;
 
@@ -8,13 +12,14 @@ use serde::Serialize;
 use crate::data::Fossil;
 use crate::exact::{Rarity, reroll_hit_probability};
 use crate::pool::{Base, fossil_applies};
+use crate::strategy::{AltCosts, AltPolicy, Decider};
 use crate::{Engine, EngineError};
 
 /// Ископаемые-кандидаты, из которых перебираются наборы (лучшие по одиночной вероятности).
-const FOSSIL_CANDIDATES: usize = 6;
+const FOSSIL_CANDIDATES: usize = 5;
 
-/// В резонаторе не больше 4 гнёзд.
-const MAX_FOSSILS: usize = 4;
+/// В резонаторе не больше 4 гнёзд; наборы больше трёх почти не нужны и дороги в переборе.
+const MAX_FOSSILS: usize = 3;
 
 /// Цены в хаосах по ключу предмета справочника.
 #[derive(Debug, Clone, Default)]
@@ -38,12 +43,18 @@ impl Prices {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Method {
-    /// Сфера превращения, затем сферы перемен до попадания.
+    /// Превращение, затем сферы перемен.
     Alteration,
-    /// Сфера алхимии, затем сферы хаоса до попадания.
+    /// Перемены и усиление, если оно может закончить цель.
+    AltAug,
+    /// Перемены, усиление, царь на предмете с notable цели; неудача — очищение и заново.
+    AltAugRegal,
+    /// То же и возвышение после царя.
+    AltAugRegalExalt,
+    /// Алхимия, затем сферы хаоса.
     Chaos,
     /// Резонатор с ископаемыми на каждую попытку.
     #[serde(rename_all = "camelCase")]
@@ -51,6 +62,20 @@ pub enum Method {
         fossils: Vec<String>,
         resonator_sockets: u8,
     },
+}
+
+impl Method {
+    /// Метод без подробностей — для выбора лучшего плана каждого вида.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Method::Alteration => "alteration",
+            Method::AltAug => "altAug",
+            Method::AltAugRegal => "altAugRegal",
+            Method::AltAugRegalExalt => "altAugRegalExalt",
+            Method::Chaos => "chaos",
+            Method::Fossil { .. } => "fossil",
+        }
+    }
 }
 
 /// Среднее и квантили.
@@ -65,71 +90,125 @@ pub struct Spread {
 #[serde(rename_all = "camelCase")]
 pub struct Estimate {
     pub method: Method,
-    /// Вероятность попадания за попытку.
+    /// Вероятность закончить цель одной попыткой.
     pub probability: f64,
     pub attempts: Spread,
-    /// Первая попытка (превращение, алхимия), в хаосах.
-    pub start_cost: f64,
-    /// Каждая следующая попытка, в хаосах.
+    /// Ожидаемая цена попытки, в хаосах.
     pub attempt_cost: f64,
     /// Стоимость крафта без базы, в хаосах.
     pub cost: Spread,
 }
 
-/// Оценки одношаговых методов для цели на базе; методы без цен или с нулевым шансом пропущены.
-/// Из наборов ископаемых — один, с наименьшей ожидаемой стоимостью.
-pub fn evaluate_one_step(
+/// Оценки всех методов цели на базе; методы без цен или с нулевым шансом пропущены. Из наборов
+/// ископаемых — один, с наименьшей ожидаемой стоимостью (если `with_fossils`).
+pub fn evaluate_base(
     engine: &Engine,
     base: Base,
     target: &[String],
     prices: &Prices,
+    with_fossils: bool,
 ) -> Result<Vec<Estimate>, EngineError> {
     let currency = &engine.data().currency;
-    let plain = engine.pool(base, &[], target)?;
+    let pool = engine.pool(base, &[], target)?;
     let mut estimates = Vec::new();
 
-    if !plain.target_reachable() {
+    if !pool.target_reachable() {
         return Ok(estimates);
     }
 
-    let starts = [
-        (
-            Method::Alteration,
-            Rarity::Magic,
-            currency.transmutation.as_deref(),
-            &currency.alteration,
-        ),
-        (
-            Method::Chaos,
-            Rarity::RareJewel,
-            currency.alchemy.as_deref(),
-            &currency.chaos,
-        ),
-    ];
+    let price = |id: Option<&String>| id.and_then(|id| prices.get(id));
 
-    for (method, rarity, start, attempt) in starts {
-        let (Some(start), Some(attempt)) =
-            (start.and_then(|id| prices.get(id)), prices.get(attempt))
-        else {
-            continue;
+    if let (Some(transmutation), Some(alteration)) = (
+        price(currency.transmutation.as_ref()),
+        price(Some(&currency.alteration)),
+    ) {
+        let costs = AltCosts {
+            alteration,
+            augmentation: price(Some(&currency.augmentation)).unwrap_or(f64::INFINITY),
+            regal: price(Some(&currency.regal)).unwrap_or(f64::INFINITY),
+            exalted: price(Some(&currency.exalted)).unwrap_or(f64::INFINITY),
+            reset: price(Some(&currency.scouring)).unwrap_or(f64::INFINITY) + transmutation
+                - alteration,
         };
-        let probability = reroll_hit_probability(&plain, rarity);
+        let mut decider = Decider::new(&pool);
+        let methods = [
+            (
+                Method::Alteration,
+                AltPolicy {
+                    augment: false,
+                    regal: false,
+                    exalt: false,
+                },
+            ),
+            (
+                Method::AltAug,
+                AltPolicy {
+                    augment: true,
+                    regal: false,
+                    exalt: false,
+                },
+            ),
+            (
+                Method::AltAugRegal,
+                AltPolicy {
+                    augment: true,
+                    regal: true,
+                    exalt: false,
+                },
+            ),
+            (
+                Method::AltAugRegalExalt,
+                AltPolicy {
+                    augment: true,
+                    regal: true,
+                    exalt: true,
+                },
+            ),
+        ];
+        let mut seen: Vec<(f64, f64)> = Vec::new();
 
-        if let Some(estimate) = estimate(method, probability, start, attempt) {
-            estimates.push(estimate);
+        for (method, policy) in methods {
+            let attempt = decider.attempt(policy, costs);
+
+            // Метод, не меняющий ни шанса, ни цены попытки (одиночная цель: царь не нужен),
+            // повторял бы предыдущий.
+            if seen.iter().any(|(success, cost)| {
+                (success - attempt.success).abs() < 1e-12 && (cost - attempt.cost).abs() < 1e-12
+            }) {
+                continue;
+            }
+
+            seen.push((attempt.success, attempt.cost));
+
+            if attempt.cost.is_finite() {
+                estimates.extend(estimate(
+                    method,
+                    attempt.success,
+                    transmutation - alteration,
+                    attempt.cost,
+                ));
+            }
         }
     }
 
-    if let Some(fossil) = best_fossils(engine, base, target, prices)? {
-        estimates.push(fossil);
+    if let (Some(alchemy), Some(chaos)) = (
+        price(currency.alchemy.as_ref()),
+        price(Some(&currency.chaos)),
+    ) {
+        let probability = reroll_hit_probability(&pool, Rarity::RareJewel);
+
+        estimates.extend(estimate(Method::Chaos, probability, alchemy - chaos, chaos));
+    }
+
+    if with_fossils {
+        estimates.extend(best_fossils(engine, base, target, prices)?);
     }
 
     Ok(estimates)
 }
 
 /// Перебор наборов ископаемых: кандидаты — применимые к базе, без своих модов, с ценой и с
-/// попаданием больше нуля в одиночку; из них берутся лучшие по вероятности и все их наборы
-/// до 4 штук.
+/// попаданием больше нуля в одиночку; из них берутся лучшие по вероятности и их наборы.
 fn best_fossils(
     engine: &Engine,
     base: Base,
@@ -164,8 +243,8 @@ fn best_fossils(
             continue;
         }
 
-        let probability =
-            reroll_hit_probability(&engine.pool(base, &[fossil], target)?, Rarity::RareJewel);
+        let pool = engine.pool(base, &[fossil], target)?;
+        let probability = reroll_hit_probability(&pool, Rarity::RareJewel);
 
         if probability > 0.0 {
             singles.push((fossil, price, probability));
@@ -184,12 +263,12 @@ fn best_fossils(
             .filter(|(index, _)| mask & (1 << index) != 0)
             .map(|(_, single)| single)
             .collect();
-        let sockets = chosen.len() as u8;
 
         if chosen.len() > MAX_FOSSILS {
             continue;
         }
 
+        let sockets = chosen.len() as u8;
         let Some(resonator) = resonators.get(&sockets) else {
             continue;
         };
@@ -208,8 +287,8 @@ fn best_fossils(
             resonator_sockets: sockets,
         };
 
-        // Ископаемые расходуются уже на первой попытке: отдельного начала нет.
-        let Some(candidate) = estimate(method, probability, attempt, attempt) else {
+        // Ископаемые расходуются уже на первой попытке: добавки нет.
+        let Some(candidate) = estimate(method, probability, 0.0, attempt) else {
             continue;
         };
 
@@ -224,10 +303,11 @@ fn best_fossils(
     Ok(best)
 }
 
+/// Оценка по шансу попытки, добавке первой попытки и цене попытки.
 fn estimate(
     method: Method,
     probability: f64,
-    start_cost: f64,
+    first_extra: f64,
     attempt_cost: f64,
 ) -> Option<Estimate> {
     if probability.is_nan() || probability <= 0.0 {
@@ -239,13 +319,12 @@ fn estimate(
         p50: attempts_quantile(probability, 0.5),
         p90: attempts_quantile(probability, 0.9),
     };
-    let cost_of = |attempts: f64| start_cost + attempt_cost * (attempts - 1.0);
+    let cost_of = |attempts: f64| first_extra + attempt_cost * attempts;
 
     Some(Estimate {
         method,
         probability,
         attempts,
-        start_cost,
         attempt_cost,
         cost: Spread {
             mean: cost_of(attempts.mean),

@@ -1,8 +1,9 @@
-//! Монте-Карло: перекрафт по отдельным модам (не по корзинам), чтобы проверять точный расчёт.
+//! Монте-Карло по отдельным модам (не по корзинам), чтобы проверять точный расчёт.
 
 use crate::data::Affix;
-use crate::exact::Rarity;
+use crate::exact::{Limits, Rarity, State};
 use crate::pool::Pool;
+use crate::strategy::{AltPolicy, Decider};
 
 /// Детерминированный генератор (SplitMix64): одинаковое зерно — одинаковый результат.
 #[derive(Debug, Clone)]
@@ -36,51 +37,118 @@ pub fn simulate_reroll(pool: &Pool, rarity: Rarity, runs: u32, seed: u64) -> f64
     }
 
     let mut rng = Rng::new(seed);
+    let mut item = Item::new(pool);
     let hits = (0..runs)
-        .filter(|_| roll_hits(pool, rarity, &mut rng))
+        .filter(|_| {
+            item.reroll(rarity, &mut rng);
+            pool.hit(item.state.taken)
+        })
         .count();
 
     hits as f64 / f64::from(runs)
 }
 
-fn roll_hits(pool: &Pool, rarity: Rarity, rng: &mut Rng) -> bool {
-    let limits = rarity.limits();
-    let count = pick_count(rarity, rng);
-    let mut groups = 0u128;
-    let mut dynamic = 0u64;
-    let mut prefixes = 0;
-    let mut suffixes = 0;
-    let mut found = vec![false; pool.target_buckets.len()];
-    let mut weights = vec![0.0; pool.mods.len()];
+/// Доля попыток метода на сферах перемен из `attempts`, закончивших цель.
+pub fn simulate_alt_policy(pool: &Pool, policy: AltPolicy, attempts: u32, seed: u64) -> f64 {
+    if attempts == 0 {
+        return 0.0;
+    }
 
-    for _ in 0..count {
+    let mut rng = Rng::new(seed);
+    let mut item = Item::new(pool);
+    let mut decider = Decider::new(pool);
+    let mut hits = 0u32;
+    let magic = Rarity::Magic.limits();
+    let rare = Rarity::RareJewel.limits();
+
+    for _ in 0..attempts {
+        item.reroll(Rarity::Magic, &mut rng);
+
+        if decider.should_augment(policy, item.state) {
+            item.add_one(magic, &mut rng);
+        }
+
+        if decider.should_regal(policy, item.state) {
+            item.add_one(rare, &mut rng);
+
+            if decider.should_exalt(policy, item.state) {
+                item.add_one(rare, &mut rng);
+            }
+        }
+
+        if pool.hit(item.state.taken) {
+            hits += 1;
+        }
+    }
+
+    f64::from(hits) / f64::from(attempts)
+}
+
+/// Предмет в Монте-Карло: выпавшие моды по группам, сторонам и корзинам.
+struct Item<'a> {
+    pool: &'a Pool,
+    state: State,
+    groups: u128,
+    prefixes: u32,
+    suffixes: u32,
+    weights: Vec<f64>,
+}
+
+impl<'a> Item<'a> {
+    fn new(pool: &'a Pool) -> Self {
+        Self {
+            pool,
+            state: State::EMPTY,
+            groups: 0,
+            prefixes: 0,
+            suffixes: 0,
+            weights: vec![0.0; pool.mods.len()],
+        }
+    }
+
+    fn reroll(&mut self, rarity: Rarity, rng: &mut Rng) {
+        self.state = State::EMPTY;
+        self.groups = 0;
+        self.prefixes = 0;
+        self.suffixes = 0;
+
+        for _ in 0..pick_count(rarity, rng) {
+            if !self.add_one(rarity.limits(), rng) {
+                break;
+            }
+        }
+    }
+
+    /// Добавляет один мод; false — добавить нечего.
+    fn add_one(&mut self, limits: Limits, rng: &mut Rng) -> bool {
         let mut total = 0.0;
 
-        for (index, pool_mod) in pool.mods.iter().enumerate() {
+        for (index, pool_mod) in self.pool.mods.iter().enumerate() {
             let room = match pool_mod.affix {
-                Affix::Prefix => prefixes < limits.prefixes,
-                Affix::Suffix => suffixes < limits.suffixes,
+                Affix::Prefix => self.prefixes < limits.prefixes,
+                Affix::Suffix => self.suffixes < limits.suffixes,
             };
 
-            weights[index] = if room && groups & pool_mod.groups == 0 {
-                pool_mod.weight(dynamic)
+            self.weights[index] = if room && self.groups & pool_mod.groups == 0 {
+                pool_mod.weight(self.state.dynamic)
             } else {
                 0.0
             };
-            total += weights[index];
+            total += self.weights[index];
         }
 
         if total <= 0.0 {
-            break;
+            return false;
         }
 
         let mut point = rng.next_f64() * total;
-        let mut chosen = weights
+        let mut chosen = self
+            .weights
             .iter()
             .rposition(|weight| *weight > 0.0)
             .unwrap_or(0);
 
-        for (index, weight) in weights.iter().enumerate() {
+        for (index, weight) in self.weights.iter().enumerate() {
             if *weight > 0.0 && point < *weight {
                 chosen = index;
                 break;
@@ -89,22 +157,19 @@ fn roll_hits(pool: &Pool, rarity: Rarity, rng: &mut Rng) -> bool {
             point -= weight;
         }
 
-        let pool_mod = &pool.mods[chosen];
+        let pool_mod = &self.pool.mods[chosen];
 
-        groups |= pool_mod.groups;
-        dynamic |= pool_mod.adds;
+        self.groups |= pool_mod.groups;
+        self.state.dynamic |= pool_mod.adds;
+        self.state.taken |= 1 << pool_mod.bucket;
 
         match pool_mod.affix {
-            Affix::Prefix => prefixes += 1,
-            Affix::Suffix => suffixes += 1,
+            Affix::Prefix => self.prefixes += 1,
+            Affix::Suffix => self.suffixes += 1,
         }
 
-        if let Some(target) = pool_mod.target {
-            found[target] = true;
-        }
+        true
     }
-
-    found.iter().all(|hit| *hit)
 }
 
 fn pick_count(rarity: Rarity, rng: &mut Rng) -> u32 {

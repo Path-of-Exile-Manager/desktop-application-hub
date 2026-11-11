@@ -1,5 +1,5 @@
-//! Проверка движка на настоящем `crafting.json`: точная вероятность против Монте-Карло по
-//! отдельным модам и оценки методов на условных ценах. Для сверки с Craft of Exile.
+//! Проверка движка на настоящем `crafting.json`: точные вероятности против Монте-Карло по
+//! отдельным модам, планы целей на условных ценах. Для сверки с Craft of Exile.
 //!
 //! `cargo run --release -p craft-engine --example evaluate -- <путь к crafting.json> [прогонов]`
 
@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use craft_engine::{
-    Base, Engine, Method, Prices, Rarity, evaluate_one_step, reroll_hit_probability,
-    simulate_reroll,
+    AltPolicy, Base, BaseOffer, Engine, Method, Prices, Rarity, alt_policy_probability,
+    plan_target, reroll_hit_probability, simulate_alt_policy, simulate_reroll,
 };
 
 /// Цели вида «размер, notable…» — самые играемые на Allflame (11.11.2026).
@@ -27,6 +27,41 @@ const CASES: &[(&str, &[&str])] = &[
 
 const ITEM_LEVEL: u32 = 84;
 
+const POLICIES: [(&str, AltPolicy); 4] = [
+    (
+        "перемены",
+        AltPolicy {
+            augment: false,
+            regal: false,
+            exalt: false,
+        },
+    ),
+    (
+        "+ усиление",
+        AltPolicy {
+            augment: true,
+            regal: false,
+            exalt: false,
+        },
+    ),
+    (
+        "+ царь",
+        AltPolicy {
+            augment: true,
+            regal: true,
+            exalt: false,
+        },
+    ),
+    (
+        "+ возвышение",
+        AltPolicy {
+            augment: true,
+            regal: true,
+            exalt: true,
+        },
+    ),
+];
+
 fn main() {
     let mut args = std::env::args().skip(1);
     let path = args.next().expect("путь к crafting.json");
@@ -37,18 +72,21 @@ fn main() {
         .expect("разбор crafting.json");
     let prices = example_prices(&engine);
     let mut worst_z: f64 = 0.0;
+    let all_started = Instant::now();
 
     for (size, notables) in CASES {
         let target: Vec<String> = notables.iter().map(|name| (*name).to_owned()).collect();
-        let started = Instant::now();
         let enchants = engine
             .fitting_enchants(size, ITEM_LEVEL, &target)
             .expect("энчанты");
-        let Some(enchant) = enchants.iter().copied().max_by(|left, right| {
-            rare_chance(&engine, size, left, &target)
-                .total_cmp(&rare_chance(&engine, size, right, &target))
-        }) else {
-            println!("{size} {notables:?}: ни на одном энчанте");
+
+        println!(
+            "{size} {} — энчантов {}",
+            notables.join(" + "),
+            enchants.len()
+        );
+
+        let Some(enchant) = enchants.first() else {
             continue;
         };
         let base = Base {
@@ -58,72 +96,65 @@ fn main() {
         };
         let pool = engine.pool(base, &[], &target).expect("пул");
 
-        println!(
-            "{size} {} — энчант {enchant} (подходит {} шт.)",
-            notables.join(" + "),
-            enchants.len()
-        );
+        if runs > 1 {
+            println!("  проверка на энчанте {enchant}:");
 
-        for (label, rarity) in [("перемены", Rarity::Magic), ("хаос", Rarity::RareJewel)]
-        {
-            let exact = reroll_hit_probability(&pool, rarity);
-            let simulated = simulate_reroll(&pool, rarity, runs, 7);
+            for (label, policy) in POLICIES {
+                let exact = alt_policy_probability(&pool, policy);
+                let simulated = simulate_alt_policy(&pool, policy, runs, 3);
 
-            worst_z = worst_z.max(report(label, exact, simulated, runs));
-        }
-
-        let estimates = evaluate_one_step(&engine, base, &target, &prices).expect("оценка");
-
-        for estimate in &estimates {
-            if let Method::Fossil { fossils, .. } = &estimate.method {
-                let chosen: Vec<_> = fossils.iter().filter_map(|id| engine.fossil(id)).collect();
-                let names: Vec<&str> = chosen.iter().map(|fossil| fossil.name.as_str()).collect();
-                let pool = engine
-                    .pool(base, &chosen, &target)
-                    .expect("пул с ископаемыми");
-                let simulated = simulate_reroll(&pool, Rarity::RareJewel, runs, 11);
-
-                worst_z = worst_z.max(report(
-                    &format!("ископаемые {}", names.join(" + ")),
-                    estimate.probability,
-                    simulated,
-                    runs,
-                ));
+                worst_z = worst_z.max(report(label, exact, simulated, runs));
             }
+
+            let exact = reroll_hit_probability(&pool, Rarity::RareJewel);
+
+            worst_z = worst_z.max(report(
+                "хаос",
+                exact,
+                simulate_reroll(&pool, Rarity::RareJewel, runs, 5),
+                runs,
+            ));
         }
 
-        for estimate in &estimates {
+        // Базы: все подходящие энчанты, уровень 84, условная цена 2c (дороже на «популярных»).
+        let offers: Vec<BaseOffer> = enchants
+            .iter()
+            .enumerate()
+            .map(|(index, enchant)| BaseOffer {
+                enchant: (*enchant).to_owned(),
+                item_level: ITEM_LEVEL,
+                price: 2.0 + index as f64,
+            })
+            .collect();
+        let started = Instant::now();
+        let plans =
+            plan_target(&engine, size, &target, &offers, &prices, Some(60.0), 3).expect("план");
+
+        for plan in &plans {
             println!(
-                "    {:<12} попыток {:>9.1} (p50 {:>6}, p90 {:>7})  стоимость {:>9.1} c (p90 {:>9.1} c)",
-                method_label(&estimate.method),
-                estimate.attempts.mean,
-                estimate.attempts.p50,
-                estimate.attempts.p90,
-                estimate.cost.mean,
-                estimate.cost.p90
+                "    {:<22} {:<38} шанс {:>8.4} %  попыток {:>8.1} (p90 {:>6})  вложения {:>8.1} c (p90 {:>8.1})  прибыль {:>7.1}",
+                method_label(&engine, &plan.estimate.method),
+                plan.base.enchant,
+                plan.estimate.probability * 100.0,
+                plan.estimate.attempts.mean,
+                plan.estimate.attempts.p90,
+                plan.total_cost,
+                plan.total_cost_p90,
+                plan.profit.unwrap_or(0.0)
             );
         }
 
-        println!("    {:.0} мс", started.elapsed().as_secs_f64() * 1000.0);
+        println!(
+            "    план — {:.0} мс",
+            started.elapsed().as_secs_f64() * 1000.0
+        );
     }
 
-    println!("наибольшее расхождение с Монте-Карло: {worst_z:.2} σ");
-}
+    println!("всего {:.1} с", all_started.elapsed().as_secs_f64());
 
-fn rare_chance(engine: &Engine, size: &str, enchant: &str, target: &[String]) -> f64 {
-    let pool = engine
-        .pool(
-            Base {
-                size,
-                enchant,
-                item_level: ITEM_LEVEL,
-            },
-            &[],
-            target,
-        )
-        .expect("пул");
-
-    reroll_hit_probability(&pool, Rarity::RareJewel)
+    if runs > 1 {
+        println!("наибольшее расхождение с Монте-Карло: {worst_z:.2} σ");
+    }
 }
 
 /// Печатает точную и смоделированную вероятность; возвращает расхождение в стандартных отклонениях.
@@ -138,7 +169,7 @@ fn report(label: &str, exact: f64, simulated: f64, runs: u32) -> f64 {
     };
 
     println!(
-        "    {label:<40} точно {:>8.4} %  Монте-Карло {:>8.4} %  ({z:.2} σ)",
+        "    {label:<14} точно {:>8.4} %  Монте-Карло {:>8.4} %  ({z:.2} σ)",
         exact * 100.0,
         simulated * 100.0
     );
@@ -146,13 +177,19 @@ fn report(label: &str, exact: f64, simulated: f64, runs: u32) -> f64 {
     z
 }
 
-fn method_label(method: &Method) -> String {
+fn method_label(engine: &Engine, method: &Method) -> String {
     match method {
         Method::Alteration => "перемены".to_owned(),
+        Method::AltAug => "перемены+усил.".to_owned(),
+        Method::AltAugRegal => "перем.+усил.+царь".to_owned(),
+        Method::AltAugRegalExalt => "перем.+усил.+царь+возв.".to_owned(),
         Method::Chaos => "хаос".to_owned(),
-        Method::Fossil {
-            resonator_sockets, ..
-        } => format!("ископ. ×{resonator_sockets}"),
+        Method::Fossil { fossils, .. } => fossils
+            .iter()
+            .filter_map(|id| engine.fossil(id))
+            .map(|fossil| fossil.name.trim_end_matches(" Fossil").to_owned())
+            .collect::<Vec<_>>()
+            .join("+"),
     }
 }
 

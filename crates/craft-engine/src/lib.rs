@@ -3,23 +3,42 @@
 //! - [`data`] — `crafting.json` из набора данных: базы, энчанты, моды, ископаемые, валюта;
 //! - [`Pool`] — моды конкретной базы (размер, энчант, уровень, ископаемые) и цель;
 //! - [`reroll_hit_probability`] — точная вероятность попадания за перекрафт;
-//! - [`simulate_reroll`] — Монте-Карло для проверки точного расчёта;
-//! - [`evaluate_one_step`] — методы в один шаг (перемены, хаос, ископаемые): шанс, попытки, стоимость.
+//! - [`simulate_reroll`], [`simulate_alt_policy`] — Монте-Карло для проверки точного расчёта;
+//! - [`evaluate_base`] — методы на одной базе (перемены с усилением, царём и возвышением, хаос,
+//!   ископаемые): шанс попытки, попытки, стоимость;
+//! - [`plan_target`] — лучшая база и метод цели по вложениям и прибыли.
 //!
 //! Сети, справочника и Tauri здесь нет: цены приходят от приложения. План — `shared/docs/cluster-crafting.md`.
 
 pub mod data;
 mod exact;
 mod methods;
+mod plan;
 mod pool;
 mod simulate;
+mod strategy;
 
 use std::fmt;
 
 pub use exact::{Limits, Rarity, reroll_hit_probability};
-pub use methods::{Estimate, Method, Prices, Spread, attempts_quantile, evaluate_one_step};
+pub use methods::{Estimate, Method, Prices, Spread, attempts_quantile, evaluate_base};
+pub use plan::{BaseOffer, Plan, plan_target};
 pub use pool::{Base, Pool};
-pub use simulate::{Rng, simulate_reroll};
+pub use simulate::{Rng, simulate_alt_policy, simulate_reroll};
+pub use strategy::AltPolicy;
+
+/// Точный шанс попытки метода на сферах перемен (для проверки Монте-Карло).
+pub fn alt_policy_probability(pool: &Pool, policy: AltPolicy) -> f64 {
+    let costs = strategy::AltCosts {
+        alteration: 0.0,
+        augmentation: 0.0,
+        regal: 0.0,
+        exalted: 0.0,
+        reset: 0.0,
+    };
+
+    strategy::Decider::new(pool).attempt(policy, costs).success
+}
 
 use data::{CraftingData, Fossil};
 
@@ -85,14 +104,14 @@ impl Engine {
         Pool::new(&self.data, base, fossils, target)
     }
 
-    /// Энчанты размера, на которых цель может выпасть.
+    /// Энчанты размера, на которых цель может выпасть, лучшие для хаоса сначала.
     pub fn fitting_enchants(
         &self,
         size: &str,
         item_level: u32,
         target: &[String],
     ) -> Result<Vec<&str>, EngineError> {
-        let mut fitting = Vec::new();
+        let mut fitting: Vec<(&str, f64)> = Vec::new();
 
         for enchant in self
             .data
@@ -107,11 +126,15 @@ impl Engine {
                 item_level,
             };
 
-            if reroll_hit_probability(&self.pool(base, &[], target)?, Rarity::RareJewel) > 0.0 {
-                fitting.push(enchant.id.as_str());
+            let chance = reroll_hit_probability(&self.pool(base, &[], target)?, Rarity::RareJewel);
+
+            if chance > 0.0 {
+                fitting.push((enchant.id.as_str(), chance));
             }
         }
 
-        Ok(fitting)
+        fitting.sort_by(|left, right| right.1.total_cmp(&left.1));
+
+        Ok(fitting.into_iter().map(|(id, _)| id).collect())
     }
 }
