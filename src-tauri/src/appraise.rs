@@ -50,9 +50,15 @@ pub fn appraise(app: &AppHandle, text: &str) -> Result<Appraisal, String> {
     let item = item_parser::parse(text).map_err(|e| e.to_string())?;
     let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
     let prices = app.state::<PricesService>();
+    Ok(appraise_item(&catalog, &|id: &str| prices.variants(id), item))
+}
+
+/// Оценка уже разобранного предмета: текст из игры или предмет сборки PoB (`pob_stage`).
+/// `prices` — цены предмета текущей лиги по id справочника (`PricesService::variants`).
+pub fn appraise_item(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, item: ParsedItem) -> Appraisal {
     let mut notes = Vec::new();
 
-    let (lookup_name, found) = find(&catalog, &item, &mut notes);
+    let (lookup_name, found) = find(catalog, &item, &mut notes);
     let mut found: Vec<&CatalogItem> = found;
     // Одинаковые названия: класс из текста, затем — запись, у которой есть цена, затем выпускаемая.
     if found.len() > 1
@@ -63,10 +69,10 @@ pub fn appraise(app: &AppHandle, text: &str) -> Result<Appraisal, String> {
             }
         }
     let candidates = found.len() as u32;
-    found.sort_by_key(|c| (prices.variants(&c.id).is_empty(), c.release_state != ReleaseState::Released));
+    found.sort_by_key(|c| (prices(&c.id).is_empty(), c.release_state != ReleaseState::Released));
     let Some(matched) = found.first().copied().cloned() else {
         notes.push(format!("в справочнике нет «{lookup_name}»"));
-        return Ok(Appraisal { item, catalog_item: None, candidates: 0, variant_key: None, price: None, price_match: None, notes });
+        return Appraisal { item, catalog_item: None, candidates: 0, variant_key: None, price: None, price_match: None, notes };
     };
     if candidates > 1 {
         notes.push(format!("одно название у {candidates} записей справочника — взята та, у которой есть цена"));
@@ -79,7 +85,7 @@ pub fn appraise(app: &AppHandle, text: &str) -> Result<Appraisal, String> {
         notes.push("энчант кластера в русском клиенте не распознаётся — цена по числу пассивов и уровню".into());
     }
 
-    let variants = prices.variants(&matched.id);
+    let variants = prices(&matched.id);
     let (price, price_match) = match pick(&wanted, &key, &variants) {
         Some((p, exact)) => (Some(p), Some(if exact { PriceMatch::Exact } else { PriceMatch::Nearest })),
         None => {
@@ -95,7 +101,7 @@ pub fn appraise(app: &AppHandle, text: &str) -> Result<Appraisal, String> {
         ));
     }
 
-    Ok(Appraisal { item, catalog_item: Some(matched), candidates, variant_key: Some(key), price, price_match, notes })
+    Appraisal { item, catalog_item: Some(matched), candidates, variant_key: Some(key), price, price_match, notes }
 }
 
 /// Записи справочника по тексту предмета; первое — название, по которому искали.

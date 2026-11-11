@@ -22,6 +22,7 @@ mod leagues;
 mod overlay;
 mod paths;
 mod pob;
+mod pob_stage;
 mod prices;
 mod server;
 mod sync;
@@ -159,6 +160,7 @@ pub fn run() {
             pob::pob_open_page,
             pob::pob_share,
             pob::pob_open_in_pob,
+            pob_stage::pob_stage,
             discord::discord_status,
             discord::discord_configure,
             discord::discord_reconnect,
