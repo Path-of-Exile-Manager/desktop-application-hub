@@ -180,13 +180,6 @@ function StageRow({
         </span>
         <span className="truncate text-label text-text-secondary">{(detail ?? []).filter(Boolean).join(" · ")}</span>
       </button>
-      {row.notes.length > 0 && (
-        <Tooltip content={row.notes.join("\n")}>
-          <span className="text-icon-default">
-            <Info aria-label="Пояснения к цене" size={16} />
-          </span>
-        </Tooltip>
-      )}
       <div className="flex w-60 shrink-0 items-center justify-end gap-2">
         {manual !== null ? (
           <>
