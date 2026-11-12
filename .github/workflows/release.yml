@@ -1,0 +1,70 @@
+# Релиз десктопа: тег vX.Y.Z → сборка NSIS, подпись для автообновления, ЧЕРНОВИК релиза на GitHub.
+# Дальше вручную: открыть черновик, написать «Что нового» (это увидят пользователи) и нажать Publish.
+# Бэкенд (worker, задача app-releases-sync) замечает опубликованный релиз за ≤10 мин, и приложения обновляются.
+# Порядок выпуска — docs/architecture.md, раздел «Релиз и автообновление»; план — shared/docs/app-updates.md.
+#
+# Нужны в Settings → Secrets and variables → Actions:
+#   secrets.TAURI_SIGNING_PRIVATE_KEY           закрытый ключ updater (pnpm tauri signer generate)
+#   secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD  его пароль
+#   vars.API_URL                                боевой адрес api-hub (вшивается при сборке, server.rs)
+#   vars.DISCORD_CLIENT_ID                      id Discord-приложения (вшивается при сборке)
+
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write # создать релиз и загрузить файлы
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check version matches tag
+        run: node scripts/release-version.mjs --check ${{ github.ref_name }}
+
+      - name: Check updater public key
+        shell: pwsh
+        run: |
+          $key = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).plugins.updater.pubkey
+          if (-not $key) { throw "plugins.updater.pubkey в tauri.conf.json пустой: собранное приложение не сможет обновляться" }
+
+      - name: Build and create draft release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          API_URL: ${{ vars.API_URL }}
+          DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: poe-manager ${{ github.ref_name }}
+          releaseBody: "Что нового — допишите перед публикацией."
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
