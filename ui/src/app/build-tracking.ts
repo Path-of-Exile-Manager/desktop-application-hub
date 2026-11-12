@@ -12,6 +12,7 @@ import { useAccount } from "./account";
 import { useMarket } from "./market";
 import { useRecords } from "./user-data";
 import { inTauri } from "./window";
+import { slotLabel } from "@/modules/pob-builds/StageRows";
 
 // Отслеживание цены билдов (shared/docs/build-price-tracking.md, T7–T8): сводка отслеживаемых билдов
 // (бейджи библиотеки), команды экрана сборки и опрос событий цены → тосты.
@@ -60,7 +61,10 @@ function shortPrice(chaos: number, divine: number | null | undefined): string {
 }
 
 function eventText(event: BuildPriceEvent, names: Record<string, string>): { title: string; description: string } {
-  const p = event.payload as { before?: number; after?: number; title?: string | null; row?: string; divine?: number | null };
+  const p = event.payload as { before?: number; after?: number; title?: string | null; row?: string; slot?: string | null; divine?: number | null };
+  // Редкий из крафтера PoB называется «New Item» — тогда только слот.
+  const place = p.slot ? slotLabel(p.slot) : null;
+  const row = !p.row ? "вещь" : !place ? p.row : p.row === "New Item" ? place : `${p.row} (${place})`;
   const build = names[event.recordId] ?? "Билд";
   const stage = p.title ? ` · ${p.title}` : "";
   switch (event.kind) {
@@ -72,9 +76,9 @@ function eventText(event: BuildPriceEvent, names: Record<string, string>): { tit
       };
     }
     case "ITEM_PRICE_CHANGED":
-      return { title: `${build}${stage}: ${p.row ?? "вещь"}`, description: `${shortPrice(p.before ?? 0, p.divine)} → ${shortPrice(p.after ?? 0, p.divine)} за сутки` };
+      return { title: `${build}${stage}: ${row}`, description: `${shortPrice(p.before ?? 0, p.divine)} → ${shortPrice(p.after ?? 0, p.divine)} за сутки` };
     default:
-      return { title: `${build}${stage}: ${p.row ?? "вещь"}`, description: "Нет предложений на сайте торговли" };
+      return { title: `${build}${stage}: ${row}`, description: "Нет предложений на сайте торговли" };
   }
 }
 
