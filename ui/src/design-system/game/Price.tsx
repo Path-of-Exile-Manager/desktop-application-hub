@@ -1,18 +1,74 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { cx } from "../lib/cx";
 import { StatusBadge } from "../components/Badge";
 import type { CurrencyId, PriceAmount } from "./types";
 
-export const CURRENCY: Record<CurrencyId, { name: string; short: string; letter: string }> = {
-  chaos: { name: "Chaos Orb", short: "chaos", letter: "c" },
-  divine: { name: "Divine Orb", short: "divine", letter: "d" },
-  exalted: { name: "Exalted Orb", short: "exalted", letter: "e" },
-  mirror: { name: "Mirror of Kalandra", short: "mirror", letter: "m" },
+export const CURRENCY: Record<CurrencyId, { name: string; short: string; abbr: string; letter: string }> = {
+  chaos: { name: "Chaos Orb", short: "chaos", abbr: "c", letter: "c" },
+  divine: { name: "Divine Orb", short: "divine", abbr: "div", letter: "d" },
+  exalted: { name: "Exalted Orb", short: "exalted", abbr: "ex", letter: "e" },
+  mirror: { name: "Mirror of Kalandra", short: "mirror", abbr: "mirror", letter: "m" },
 };
 
-/** Число без лишних нулей: 120, 0.6, 1 250. */
+/** Число без лишних нулей: 120, 1.25, 0.6, 0.014, 1 250. Меньше 1 — две значащие цифры. */
 export function formatAmount(amount: number): string {
-  return amount.toLocaleString("ru-RU", { maximumFractionDigits: amount < 10 ? 2 : 0 }).replace(",", ".");
+  const abs = Math.abs(amount);
+  const options: Intl.NumberFormatOptions = abs > 0 && abs < 1 ? { maximumSignificantDigits: 2 } : { maximumFractionDigits: abs < 10 ? 2 : 0 };
+  return amount.toLocaleString("ru-RU", options).replace(",", ".");
+}
+
+// Валюта отображения (shared/docs/price-currency.md). Цены хранятся и считаются в chaos,
+// валюта выбирается только при показе — по режиму и курсу divine текущей лиги.
+
+/** `auto` — до 1 divine в chaos, дороже в divine; `both` — основная по правилу `auto` и пересчёт в другую. */
+export type PriceMode = "auto" | "chaos" | "divine" | "both";
+
+export const PRICE_MODES: Record<PriceMode, { label: string; hint: string }> = {
+  auto: { label: "Авто", hint: "до 1 divine — chaos" },
+  chaos: { label: "Chaos", hint: "всё в chaos" },
+  divine: { label: "Divine", hint: "всё в divine" },
+  both: { label: "Обе", hint: "цена и пересчёт" },
+};
+
+export type DisplayedPrice = { primary: PriceAmount; secondary: PriceAmount | null };
+
+/** Во что показать цену в chaos. Без курса — всегда chaos без пересчёта. */
+export function displayPrice(chaos: number, divineChaos: number | null | undefined, mode: PriceMode): DisplayedPrice {
+  const inChaos: PriceAmount = { amount: chaos, currency: "chaos" };
+  if (!divineChaos || divineChaos <= 0 || mode === "chaos") return { primary: inChaos, secondary: null };
+  const inDivine: PriceAmount = { amount: chaos / divineChaos, currency: "divine" };
+  if (mode === "divine") return { primary: inDivine, secondary: null };
+  const divineFirst = Math.abs(chaos) >= divineChaos;
+  const primary = divineFirst ? inDivine : inChaos;
+  return { primary, secondary: mode === "both" ? (divineFirst ? inChaos : inDivine) : null };
+}
+
+/** Цена строкой: `120 c`, `1.25 div`, в режиме «обе» — `1.25 div (262 c)`. */
+export function priceText(chaos: number, divineChaos: number | null | undefined, mode: PriceMode): string {
+  const { primary, secondary } = displayPrice(chaos, divineChaos, mode);
+  const text = (p: PriceAmount) => `${formatAmount(p.amount)} ${CURRENCY[p.currency].abbr}`;
+  return secondary ? `${text(primary)} (${text(secondary)})` : text(primary);
+}
+
+type PriceDisplay = { mode: PriceMode; divineChaos: number | null };
+
+/** Без провайдера — всё в chaos (витрина, тесты). */
+const PriceDisplayContext = createContext<PriceDisplay>({ mode: "chaos", divineChaos: null });
+
+/** Режим показа и курс divine для всего дерева; приложение берёт их из настройки и статуса цен. */
+export function PriceDisplayProvider({ mode, divineChaos, children }: { mode: PriceMode; divineChaos: number | null | undefined; children: ReactNode }) {
+  const value = useMemo(() => ({ mode, divineChaos: divineChaos ?? null }), [mode, divineChaos]);
+  return <PriceDisplayContext.Provider value={value}>{children}</PriceDisplayContext.Provider>;
+}
+
+export function usePriceDisplay(): PriceDisplay {
+  return useContext(PriceDisplayContext);
+}
+
+/** Форматер цены в chaos по текущему режиму — для подсказок, `title`, пунктов списков. */
+export function usePriceText(): (chaos: number) => string {
+  const { mode, divineChaos } = usePriceDisplay();
+  return useCallback((chaos: number) => priceText(chaos, divineChaos, mode), [mode, divineChaos]);
 }
 
 /** Картинки валют для всего дерева: приложение берёт их из справочника, без провайдера — круги с буквой. */
@@ -80,6 +136,29 @@ export function PriceConversion({ price, className }: { price: PriceAmount; clas
   return (
     <span className={cx("font-mono text-text-secondary", className)}>
       ≈ {formatAmount(price.amount)} {CURRENCY[price.currency].short}
+    </span>
+  );
+}
+
+export type MarketPriceProps = Omit<PriceProps, "price"> & {
+  /** Цена в chaos; валюту показа выбирают режим и курс из `PriceDisplayProvider`. */
+  chaos: number;
+  /** `inline` — пересчёт в строку справа, `stack` — под основной ценой. */
+  layout?: "inline" | "stack";
+  /** Класс строки пересчёта (размер текста). */
+  conversionClassName?: string;
+};
+
+/** Цена из chaos в валюте, выбранной пользователем: основная + пересчёт в режиме «обе». */
+export function MarketPrice({ chaos, approx, size = "lg", layout = "inline", className, conversionClassName }: MarketPriceProps) {
+  const { mode, divineChaos } = usePriceDisplay();
+  const { primary, secondary } = displayPrice(chaos, divineChaos, mode);
+  const main = <Price price={primary} approx={approx} size={size} />;
+  if (!secondary) return className ? <span className={className}>{main}</span> : main;
+  return (
+    <span className={cx(layout === "stack" ? "inline-flex flex-col items-start gap-1" : "inline-flex flex-wrap items-center gap-x-3 gap-y-1", className)}>
+      {main}
+      <PriceConversion price={secondary} className={conversionClassName} />
     </span>
   );
 }

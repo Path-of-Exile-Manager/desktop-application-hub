@@ -36,7 +36,25 @@ export * from "./game/types";
 export { RarityBadge, RARITY_LABEL, RARITY_TEXT, RARITY_BORDER } from "./game/Rarity";
 export { AffixBadge, TierBadge, ModTypeTag, ItemStateBadge } from "./game/ModBadges";
 export { ModLine, ModList, ModText, formatRange, modToText } from "./game/ModLine";
-export { Price, PriceConversion, CurrencyIcon, CurrencyIconsProvider, FreshnessTag, CURRENCY, formatAmount } from "./game/Price";
+export {
+  Price,
+  PriceConversion,
+  MarketPrice,
+  CurrencyIcon,
+  CurrencyIconsProvider,
+  PriceDisplayProvider,
+  usePriceDisplay,
+  usePriceText,
+  displayPrice,
+  priceText,
+  FreshnessTag,
+  CURRENCY,
+  PRICE_MODES,
+  formatAmount,
+  type PriceMode,
+  type DisplayedPrice,
+  type MarketPriceProps,
+} from "./game/Price";
 export { PriceChart, type PriceChartSeries } from "./game/PriceChart";
 export { Sockets, socketsToText, maxLinks } from "./game/Sockets";
 export { ItemIcon } from "./game/ItemIcon";
@@ -46,6 +64,7 @@ export { Verdict, CheckMark, GoalCondition, PlanStep, PlanTotal, type ConditionS
 // Оболочка окна
 export { AppShell, Page, type PageProps } from "./shell/AppShell";
 export { TitleBar, WindowControls, LeagueSelect, type League } from "./shell/TitleBar";
+export { PriceModeSelect } from "./shell/PriceModeSelect";
 export { Sidebar, type NavGroup, type NavItem } from "./shell/Sidebar";
 export { StatusBar, type StatusItem } from "./shell/StatusBar";
 export { CurrentItemPanel, type SendTarget } from "./shell/CurrentItemPanel";

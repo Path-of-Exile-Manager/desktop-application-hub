@@ -35,8 +35,12 @@ import {
   PlanStep,
   PlanTotal,
   Popover,
+  MarketPrice,
   Price,
   PriceConversion,
+  PriceDisplayProvider,
+  PriceModeSelect,
+  PRICE_MODES,
   ProgressBar,
   RadioGroup,
   RarityBadge,
@@ -53,10 +57,12 @@ import {
   Tooltip,
   Verdict,
   toast,
+  usePriceText,
   type ItemMod,
+  type PriceMode,
   type Rarity,
 } from "./showcase-imports";
-import { DOOM_SHELL, DOOM_SHELL_DIVINE, DOOM_SHELL_PRICE, LEAGUES, SIMILAR_COUNT } from "./demo-data";
+import { DIVINE_IN_CHAOS, DOOM_SHELL, DOOM_SHELL_DIVINE, DOOM_SHELL_PRICE, LEAGUES, SIMILAR_COUNT } from "./demo-data";
 import { OverlayPriceCheck } from "@/modules/price-check/OverlayPriceCheck";
 import { PriceCheckExample } from "./screens/PriceCheckExample";
 import { CraftExample } from "./screens/CraftExample";
@@ -158,6 +164,7 @@ function Row({ label, children }: { label?: string; children: ReactNode }) {
 
 function ShellStates() {
   const [league, setLeague] = useState(LEAGUES[0].id);
+  const [priceMode, setPriceMode] = useState<PriceMode>("auto");
   return (
     <Section title="Оболочка" note="симуляция «игра не найдена» и повтор экрана запуска — на странице «Режим разработки»">
       <Row label="Знак">
@@ -168,7 +175,33 @@ function ShellStates() {
       <Row label="Лига">
         <LeagueSelect leagues={LEAGUES} value={league} onValueChange={setLeague} />
       </Row>
+      <Row label="Валюта цен">
+        <PriceModeSelect value={priceMode} onValueChange={setPriceMode} divineChaos={DIVINE_IN_CHAOS} />
+        <PriceModeSelect value="auto" onValueChange={() => {}} divineChaos={null} />
+        <span className="text-label text-text-secondary">вторая — без курса</span>
+      </Row>
+      <PriceDisplayProvider mode={priceMode} divineChaos={DIVINE_IN_CHAOS}>
+        <Row label={`Цены · ${PRICE_MODES[priceMode].label}`}>
+          {[3, 120, 450, -260].map((chaos) => (
+            <Card key={chaos} className="px-3 py-2">
+              <MarketPrice chaos={chaos} approx size="md" />
+            </Card>
+          ))}
+          <MarketPrice chaos={450} approx size="xl" layout="stack" conversionClassName="text-body" />
+          <PriceTextDemo />
+        </Row>
+      </PriceDisplayProvider>
     </Section>
+  );
+}
+
+/** Строкой — для подсказок и `title`: режим и курс берутся из провайдера. */
+function PriceTextDemo() {
+  const text = usePriceText();
+  return (
+    <span className="font-mono text-label text-text-secondary">
+      {text(3)} · {text(450)}
+    </span>
   );
 }
 
