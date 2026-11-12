@@ -35,6 +35,7 @@ import { pricesStatusItem, usePrices, usePricesSync, useCurrencyIcons } from "@/
 import { useStartup } from "@/app/startup";
 import { splashVersion } from "@/app/SplashReplay";
 import { DevBadge } from "@/app/DevBadge";
+import { MandatoryUpdateScreen, UpdateTitleAction, useUpdaterStatusSync, WhatsNewDialog } from "@/app/updater";
 
 /** При ширине окна меньше 1360 правая панель скрывается автоматически (app-shell.md). */
 const NARROW_QUERY = "(max-width: 1359px)";
@@ -62,6 +63,7 @@ export default function App() {
   useAccountStatusSync();
   useSyncStatusSync();
   useWatchlistSync();
+  useUpdaterStatusSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
   const priceMode = usePriceMode((p) => p.mode);
@@ -132,6 +134,7 @@ export default function App() {
             onSearchClick={() => s.setPaletteOpen(true)}
             actions={
               <>
+                <UpdateTitleAction />
                 {s.developerMode && (
                   <IconButton
                     icon={Wrench}
@@ -176,6 +179,8 @@ export default function App() {
       >
         {needConnection && dataset ? <NeedConnection status={dataset} /> : <ActivePage key={active.id} />}
       </AppShell>
+      <MandatoryUpdateScreen />
+      <WhatsNewDialog enabled={startup.phase === "done"} />
       <CommandPalette open={s.paletteOpen} onOpenChange={s.setPaletteOpen} items={paletteItems} groups={["Модули", "Команды"]} />
       {startup.phase !== "done" && <SplashScreen steps={startup.steps} version={splashVersion(s.developerMode)} leaving={startup.phase === "leaving"} />}
       </PriceDisplay>

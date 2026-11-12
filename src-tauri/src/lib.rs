@@ -28,6 +28,7 @@ mod prices;
 mod server;
 mod sync;
 mod trade;
+mod updater;
 
 /// Что ядро сообщает интерфейсу о себе. `Serialize` позволяет отдать структуру в JS как JSON.
 #[derive(Serialize, TS)]
@@ -77,6 +78,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(capture::plugin())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .register_asynchronous_uri_scheme_protocol(icons::SCHEME, icons::handle)
         .setup(|app| {
             let paths = paths::AppPaths::resolve(app.handle())?;
@@ -93,6 +95,7 @@ pub fn run() {
             clusters::start(app.handle(), &app_root);
             account::start(app.handle(), &app.state::<paths::AppPaths>());
             sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
+            updater::start(app.handle(), &app_root);
             app.manage(appraise::LastAppraisal::default());
             capture::start(app.handle(), &game::current(app.handle()));
             extension::start(app.handle());
@@ -169,6 +172,10 @@ pub fn run() {
             discord::discord_configure,
             discord::discord_reconnect,
             discord::discord_clear_log,
+            updater::updater_status,
+            updater::updater_check,
+            updater::updater_restart,
+            updater::updater_dismiss_whats_new,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

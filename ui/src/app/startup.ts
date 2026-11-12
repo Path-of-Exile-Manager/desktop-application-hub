@@ -4,12 +4,13 @@ import pkg from "../../../package.json";
 import { firstDatasetResult } from "./dataset";
 import { useGame } from "./game";
 import { useServer, type ServerStatus } from "./server";
+import { firstUpdaterResult, startupVersionDetail } from "./updater";
 
 /** Версия приложения из package.json (совпадает с tauri.conf.json). */
 export const APP_VERSION: string = pkg.version;
 
 /**
- * Шаги запуска. «Подключение к API», «Проверка набора данных» и «Поиск окна игры» — настоящие, остальные ПОКА ЗАГЛУШКИ:
+ * Шаги запуска. «Проверка версии приложения», «Подключение к API», «Проверка набора данных» и «Поиск окна игры» — настоящие, остальные ПОКА ЗАГЛУШКИ:
  * просто ждут и возвращают текст для экрана запуска.
  * Реальная логика (bootstrap BFF, манифест набора данных — см. docs/architecture.md) подставляется в `run`
  * без изменений экрана: шаг — это асинхронная функция, которая возвращает подпись или бросает ошибку.
@@ -42,9 +43,11 @@ const TASKS: StartupTask[] = [
   {
     id: "version",
     label: "Проверка версии приложения",
+    // Настоящий шаг: первая проверка обновлений в ядре (updater.rs). Скачанное в прошлый раз ставится здесь же —
+    // тогда подпись «устанавливаем X…», и приложение закрывается. Ошибка проверки шаг не краснит.
     run: async () => {
-      await wait(420); // TODO: GET /v1/bootstrap → minAppVersion / latest
-      return APP_VERSION;
+      const [status] = await Promise.all([firstUpdaterResult(6000), wait(300)]);
+      return startupVersionDetail(status, APP_VERSION);
     },
   },
   {

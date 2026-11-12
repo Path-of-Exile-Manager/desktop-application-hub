@@ -230,6 +230,9 @@ fn watch(app: AppHandle, wake: Receiver<()>) {
                     if let Some(sync) = app.try_state::<crate::sync::SyncService>() {
                         sync.wake_now();
                     }
+                    if let Some(updater) = app.try_state::<crate::updater::UpdaterService>() {
+                        updater.wake();
+                    }
                 }
                 publish(&app, status);
                 interval
