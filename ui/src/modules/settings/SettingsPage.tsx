@@ -2,6 +2,7 @@ import { Card, CardHeader, CardSection, Checkbox, Field, HotkeyInput, Page, PRIC
 import { usePriceMode } from "@/app/price-mode";
 import { useShell } from "@/app/store";
 import { AccountCard } from "./AccountCard";
+import { MarketCard } from "./MarketCard";
 import { UpdatesCard } from "./UpdatesCard";
 
 /**
@@ -37,6 +38,7 @@ export function SettingsPage() {
 
         <div className="flex min-w-0 flex-col gap-4">
           <AccountCard />
+          <MarketCard />
 
           <Card>
             <CardHeader title="Интерфейс" />

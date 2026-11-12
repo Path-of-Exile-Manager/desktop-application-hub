@@ -34,6 +34,8 @@ const DEFAULT_RETRY_AFTER: Duration = Duration::from_secs(60);
 pub enum Method {
     Get,
     Post,
+    Put,
+    Patch,
     Delete,
 }
 
@@ -42,6 +44,8 @@ impl Method {
         match self {
             Self::Get => "GET",
             Self::Post => "POST",
+            Self::Put => "PUT",
+            Self::Patch => "PATCH",
             Self::Delete => "DELETE",
         }
     }
@@ -70,6 +74,14 @@ impl Call {
 
     pub fn post(path: impl Into<String>, body: serde_json::Value) -> Self {
         Self { body: Some(body), ..Self::new(Method::Post, path) }
+    }
+
+    pub fn put(path: impl Into<String>, body: serde_json::Value) -> Self {
+        Self { body: Some(body), ..Self::new(Method::Put, path) }
+    }
+
+    pub fn patch(path: impl Into<String>, body: serde_json::Value) -> Self {
+        Self { body: Some(body), ..Self::new(Method::Patch, path) }
     }
 
     pub fn delete(path: impl Into<String>) -> Self {
@@ -177,6 +189,12 @@ impl Api {
         if status == 304 {
             return Ok(Reply::NotModified { meta });
         }
+        if status == 204 || ((200..300).contains(&status) && body.is_empty()) {
+            // Без тела (204): esult нет — годится только T, который принимает null.
+            let value = serde_json::from_value(serde_json::Value::Null)
+                .map_err(|_| with_status(ApiError::new(ApiErrorKind::InvalidResponse, "ответ без тела"), status))?;
+            return Ok(Reply::Fresh { value, meta });
+        }
         if (200..300).contains(&status) {
             let envelope: Envelope<T> = serde_json::from_slice(&body)
                 .map_err(|e| with_status(ApiError::new(ApiErrorKind::InvalidResponse, format!("ответ не разобран: {e}")), status))?;
@@ -263,6 +281,14 @@ impl Api {
             Method::Post => {
                 let body = call.body.clone().unwrap_or_else(|| serde_json::json!({}));
                 self.decorate(self.agent.post(url), call).send_json(body)
+            }
+            Method::Put => {
+                let body = call.body.clone().unwrap_or_else(|| serde_json::json!({}));
+                self.decorate(self.agent.put(url), call).send_json(body)
+            }
+            Method::Patch => {
+                let body = call.body.clone().unwrap_or_else(|| serde_json::json!({}));
+                self.decorate(self.agent.patch(url), call).send_json(body)
             }
         }
     }

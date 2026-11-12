@@ -20,6 +20,7 @@ mod game;
 mod icons;
 mod item_mods;
 mod leagues;
+mod market;
 mod overlay;
 mod paths;
 mod pob;
@@ -95,6 +96,7 @@ pub fn run() {
             clusters::start(app.handle(), &app_root);
             account::start(app.handle(), &app.state::<paths::AppPaths>());
             sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
+            market::start(app.handle());
             updater::start(app.handle(), &app_root);
             app.manage(appraise::LastAppraisal::default());
             capture::start(app.handle(), &game::current(app.handle()));
@@ -168,6 +170,15 @@ pub fn run() {
             pob::pob_share,
             pob::pob_open_in_pob,
             pob_stage::pob_stage,
+            market::market_status,
+            market::market_configure,
+            market::tracking::build_tracking_enable,
+            market::tracking::build_tracking_update,
+            market::tracking::build_tracking_disable,
+            market::tracking::build_tracking_refresh,
+            market::tracking::build_price,
+            market::tracking::build_prices,
+            market::tracking::build_price_events,
             discord::discord_status,
             discord::discord_configure,
             discord::discord_reconnect,

@@ -32,6 +32,13 @@ type ShellState = {
   apiUrlOverride: string | null;
   /** Показывать статус в Discord (Rich Presence). По умолчанию включено (shared/docs/discord-rich-presence.md). */
   discordPresence: boolean;
+  /**
+   * Помогать оценивать билды: фоновые поиски на сайте торговли для пула заданий сервера
+   * (shared/docs/build-price-tracking.md). Включено по умолчанию; работает только при праве builds.track.
+   */
+  marketHelp: boolean;
+  /** Поисков в час для пула: 0–60, по умолчанию 30. */
+  marketBudget: number;
   hotkeys: { check: string[]; palette: string[] };
 
   openModule: (id: string) => void;
@@ -39,6 +46,8 @@ type ShellState = {
   setDeveloperMode: (v: boolean) => void;
   setApiUrlOverride: (url: string | null) => void;
   setDiscordPresence: (v: boolean) => void;
+  setMarketHelp: (v: boolean) => void;
+  setMarketBudget: (v: number) => void;
   setSidebarCollapsed: (v: boolean) => void;
   setPanelHidden: (v: boolean) => void;
   setPaletteOpen: (v: boolean) => void;
@@ -62,6 +71,8 @@ export const useShell = create<ShellState>()(
       developerMode: false,
       apiUrlOverride: null,
       discordPresence: true,
+      marketHelp: true,
+      marketBudget: 30,
       hotkeys: { check: ["Ctrl", "D"], palette: ["Ctrl", "K"] },
 
       openModule: (activeModule) => set({ activeModule }),
@@ -71,6 +82,8 @@ export const useShell = create<ShellState>()(
         set(developerMode ? { developerMode } : { developerMode, sim: { game: "real", server: "real", extension: "real" } }),
       setApiUrlOverride: (apiUrlOverride) => set({ apiUrlOverride }),
       setDiscordPresence: (discordPresence) => set({ discordPresence }),
+      setMarketHelp: (marketHelp) => set({ marketHelp }),
+      setMarketBudget: (marketBudget) => set({ marketBudget: Math.max(0, Math.min(60, Math.round(marketBudget))) }),
       setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       setPanelHidden: (panelHidden) => set({ panelHidden }),
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
@@ -92,6 +105,8 @@ export const useShell = create<ShellState>()(
         developerMode: s.developerMode,
         apiUrlOverride: s.apiUrlOverride,
         discordPresence: s.discordPresence,
+        marketHelp: s.marketHelp,
+        marketBudget: s.marketBudget,
       }),
     },
   ),
