@@ -14,7 +14,7 @@ export const CURRENCY: Record<CurrencyId, { name: string; short: string; abbr: s
 export function formatAmount(amount: number): string {
   const abs = Math.abs(amount);
   const options: Intl.NumberFormatOptions = abs > 0 && abs < 1 ? { maximumSignificantDigits: 2 } : { maximumFractionDigits: abs < 10 ? 2 : 0 };
-  return amount.toLocaleString("ru-RU", options).replace(",", ".");
+  return amount.toLocaleString("ru-RU", options).replace(",", ".").replace(/^-/, "−");
 }
 
 // Валюта отображения (shared/docs/price-currency.md). Цены хранятся и считаются в chaos,
@@ -65,10 +65,13 @@ export function usePriceDisplay(): PriceDisplay {
   return useContext(PriceDisplayContext);
 }
 
-/** Форматер цены в chaos по текущему режиму — для подсказок, `title`, пунктов списков. */
-export function usePriceText(): (chaos: number) => string {
+/**
+ * Форматер цены в chaos по текущему режиму — для подсказок, `title`, пунктов списков.
+ * `compact` — без пересчёта в режиме «обе», для узких колонок.
+ */
+export function usePriceText(): (chaos: number, compact?: boolean) => string {
   const { mode, divineChaos } = usePriceDisplay();
-  return useCallback((chaos: number) => priceText(chaos, divineChaos, mode), [mode, divineChaos]);
+  return useCallback((chaos: number, compact?: boolean) => priceText(chaos, divineChaos, compact && mode === "both" ? "auto" : mode), [mode, divineChaos]);
 }
 
 /** Картинки валют для всего дерева: приложение берёт их из справочника, без провайдера — круги с буквой. */
@@ -147,12 +150,14 @@ export type MarketPriceProps = Omit<PriceProps, "price"> & {
   layout?: "inline" | "stack";
   /** Класс строки пересчёта (размер текста). */
   conversionClassName?: string;
+  /** Без пересчёта в режиме «обе» — для плотных таблиц. */
+  compact?: boolean;
 };
 
 /** Цена из chaos в валюте, выбранной пользователем: основная + пересчёт в режиме «обе». */
-export function MarketPrice({ chaos, approx, size = "lg", layout = "inline", className, conversionClassName }: MarketPriceProps) {
+export function MarketPrice({ chaos, approx, size = "lg", layout = "inline", className, conversionClassName, compact }: MarketPriceProps) {
   const { mode, divineChaos } = usePriceDisplay();
-  const { primary, secondary } = displayPrice(chaos, divineChaos, mode);
+  const { primary, secondary } = displayPrice(chaos, divineChaos, compact && mode === "both" ? "auto" : mode);
   const main = <Price price={primary} approx={approx} size={size} />;
   if (!secondary) return className ? <span className={className}>{main}</span> : main;
   return (

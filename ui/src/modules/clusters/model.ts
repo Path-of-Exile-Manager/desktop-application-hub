@@ -113,9 +113,9 @@ export function methodName(plan: CraftPlan): string {
   return METHOD_LABEL[plan.method];
 }
 
-/** Шаги метода словами: что купить и что делать до попадания. */
-export function methodSteps(plan: CraftPlan, notables: string): string[] {
-  const base = `Купить белую базу: ${plan.enchant.ru ?? plan.enchant.en}, уровень не ниже ${plan.itemLevel} (≈ ${plan.basePrice.toFixed(1)} c).`;
+/** Шаги метода словами: что купить и что делать до попадания. `price` — цена в chaos строкой (валюта показа). */
+export function methodSteps(plan: CraftPlan, notables: string, price: (chaos: number) => string): string[] {
+  const base = `Купить белую базу: ${plan.enchant.ru ?? plan.enchant.en}, уровень не ниже ${plan.itemLevel} (≈ ${price(plan.basePrice)}).`;
   const target = `Цель — ${notables}.`;
   switch (plan.method) {
     case "alteration":

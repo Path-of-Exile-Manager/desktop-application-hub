@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
-import { CurrencyIconsProvider, DesignSystemProvider } from "@/design-system";
+import { CurrencyIconsProvider, DesignSystemProvider, displayPrice } from "@/design-system";
 import type { Appraisal } from "@/app/appraise";
 import { useDatasetStatusSync } from "@/app/dataset";
 import { appraisalToItem } from "@/app/item-view";
-import { formatAge, isFresh, toDivine, useCurrencyIcons, usePrices, type PricesStatus } from "@/app/prices";
-import { PriceDisplay, usePriceModeSync } from "@/app/price-mode";
+import { formatAge, isFresh, useCurrencyIcons, usePrices, type PricesStatus } from "@/app/prices";
+import { PriceDisplay, usePriceMode, usePriceModeSync } from "@/app/price-mode";
 import { OverlayPriceCheck } from "@/modules/price-check/OverlayPriceCheck";
 
 /**
@@ -26,6 +26,7 @@ export function OverlayApp() {
   usePriceModeSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
+  const priceMode = usePriceMode((p) => p.mode);
 
   useEffect(() => {
     document.documentElement.style.background = "transparent";
@@ -64,7 +65,7 @@ export function OverlayApp() {
 
   if (!appraisal) return null;
   const price = appraisal.price;
-  const divine = price ? toDivine(price.chaosValue, prices?.divineChaos) : null;
+  const shown = price ? displayPrice(price.chaosValue, prices?.divineChaos, priceMode) : null;
   const note = !price
     ? appraisal.catalogItem
       ? "в этой лиге цены нет"
@@ -84,8 +85,8 @@ export function OverlayApp() {
         <div ref={root} className="inline-block">
           <OverlayPriceCheck
             item={appraisalToItem(appraisal)}
-            price={price ? { amount: price.chaosValue, currency: "chaos" } : null}
-            conversion={divine !== null && divine >= 0.1 ? { amount: divine, currency: "divine" } : null}
+            price={shown?.primary ?? null}
+            conversion={shown?.secondary ?? null}
             priceNote={note}
             pinned={pinned}
             onPinnedChange={setPinned}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Copy, ExternalLink } from "lucide-react";
-import { Button, cx, Dialog, Price, toast } from "@/design-system";
+import { Button, cx, Dialog, MarketPrice, toast, usePriceText } from "@/design-system";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
 import { formatRoi, formatShare, methodName, methodSteps, SIZE_LABEL } from "./model";
@@ -13,11 +13,13 @@ function open(league: string | null | undefined, query: unknown) {
   openTrade(tradeUrl(league, query)).catch(fail("Сайт торговли не открылся"));
 }
 
-const chaos = (amount: number) => `${amount < 10 ? amount.toFixed(1) : Math.round(amount).toLocaleString("ru-RU")} c`;
-
+/** Знак у прибыли: `+12 c`, `−3 c`. */
+const signed = (amount: number, text: string) => `${amount >= 0 ? "+" : ""}${text}`;
 
 /** Числа плана: шанс, попытки, стоимость с разбросом. */
 function Figures({ plan }: { plan: CraftPlan }) {
+  const text = usePriceText();
+  const chaos = (amount: number) => text(amount, true);
   const cell = (label: string, value: string, hint?: string) => (
     <div className="flex flex-col gap-0.5 rounded-md border border-border-subtle px-3 py-2">
       <span className="text-caption text-text-secondary">{label}</span>
@@ -29,8 +31,8 @@ function Figures({ plan }: { plan: CraftPlan }) {
     <div className="grid grid-cols-4 gap-2">
       {cell("Шанс попытки", `${(plan.probability * 100).toFixed(plan.probability < 0.01 ? 2 : 1)} %`, `попытка ≈ ${chaos(plan.attemptCost)}`)}
       {cell("Попыток", plan.attempts.mean.toFixed(1), `p50 ${plan.attempts.p50} · p90 ${plan.attempts.p90}`)}
-      {cell("Крафт", chaos(plan.craftCost.mean), `p50 ${chaos(plan.craftCost.p50)} · p90 ${chaos(plan.craftCost.p90)}`)}
-      {cell("Вложения с базой", chaos(plan.totalCost), `p90 ${chaos(plan.totalCostP90)}`)}
+      {cell("Крафт", text(plan.craftCost.mean), `p50 ${chaos(plan.craftCost.p50)} · p90 ${chaos(plan.craftCost.p90)}`)}
+      {cell("Вложения с базой", text(plan.totalCost), `p90 ${chaos(plan.totalCostP90)}`)}
     </div>
   );
 }
@@ -38,6 +40,7 @@ function Figures({ plan }: { plan: CraftPlan }) {
 /** Карточка цели: лучший план по шагам, разброс, сравнение методов, ссылки на сайт торговли. */
 export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: () => void }) {
   const league = useClustersData((d) => d.status?.league);
+  const text = usePriceText();
   const [detail, setDetail] = useState<ClusterDetail | null>(null);
 
   useEffect(() => {
@@ -85,9 +88,9 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
           </span>
           {market?.status === "OK" && market.priceChaos !== null ? (
             <span className="inline-flex items-center gap-2">
-              На рынке: <Price price={{ amount: market.priceChaos, currency: "chaos" }} approx size="md" />
+              На рынке: <MarketPrice chaos={market.priceChaos} approx size="md" />
               <span>
-                ({market.listings?.toLocaleString("ru-RU")} лотов, проверено {formatAge(market.fetchedAt)} назад; дешевле всех — {chaos(market.minChaos ?? market.priceChaos)})
+                ({market.listings?.toLocaleString("ru-RU")} лотов, проверено {formatAge(market.fetchedAt)} назад; дешевле всех — {text(market.minChaos ?? market.priceChaos, true)})
               </span>
             </span>
           ) : (
@@ -101,13 +104,12 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
               <h3 className="text-body font-semibold text-text-primary">Лучший способ: {methodName(best)}</h3>
               {best.profit !== null && (
                 <span className={cx("font-mono text-body font-semibold", best.profit >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>
-                  {best.profit >= 0 ? "+" : ""}
-                  {chaos(best.profit)} · ROI {formatRoi(best.roi ?? 0)}
+                  {signed(best.profit, text(best.profit))} · ROI {formatRoi(best.roi ?? 0)}
                 </span>
               )}
             </div>
             <ol className="flex list-decimal flex-col gap-1 pl-5 text-label text-text-primary">
-              {methodSteps(best, names).map((step) => (
+              {methodSteps(best, names, (c) => text(c, true)).map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
@@ -148,6 +150,8 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
 
 function PlanRow({ plan, best, onBuy }: { plan: CraftPlan; best: boolean; onBuy: () => void }) {
   const cls = cx("truncate border-b border-border-subtle py-1.5", best && "font-semibold");
+  const text = usePriceText();
+  const chaos = (amount: number) => text(amount, true);
   return (
     <>
       <span className={cls} title={methodName(plan)}>{methodName(plan)}</span>
@@ -160,7 +164,7 @@ function PlanRow({ plan, best, onBuy }: { plan: CraftPlan; best: boolean; onBuy:
         {chaos(plan.totalCost)}
       </span>
       <span className={cx(cls, "font-mono", plan.profit === null ? "text-text-secondary" : plan.profit >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>
-        {plan.profit === null ? "—" : `${plan.profit >= 0 ? "+" : ""}${chaos(plan.profit)}`}
+        {plan.profit === null ? "—" : signed(plan.profit, chaos(plan.profit))}
       </span>
       <span className="border-b border-border-subtle py-1">
         <Button variant="ghost" icon={ExternalLink} disabled={!plan.tradeBase} onClick={onBuy} className="h-7 text-label">

@@ -6,16 +6,20 @@ import {
   Chip,
   CurrencyIcon,
   cx,
+  displayPrice,
   EmptyState,
+  formatAmount,
+  MarketPrice,
   Page,
   Pagination,
-  Price,
   SearchInput,
   SegmentedControl,
   Select,
   Switch,
   Tooltip,
   usePageSize,
+  usePriceDisplay,
+  usePriceText,
 } from "@/design-system";
 import { formatAge } from "@/app/prices";
 import { inTauri } from "@/app/window";
@@ -53,15 +57,16 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "cost", label: "по вложениям" },
 ];
 
-/** Сумма в хаосах в строке: число и значок; цвет — по знаку, если нужно. */
-function Chaos({ amount, signed, className }: { amount: number; signed?: boolean; className?: string }) {
-  const tone = signed ? (amount > 0 ? "text-status-success-fg" : amount < 0 ? "text-status-danger-fg" : "text-text-primary") : "text-text-primary";
-  const text = Math.abs(amount) < 10 ? amount.toFixed(1) : Math.round(amount).toLocaleString("ru-RU");
+/** Сумма в строке в валюте показа (без пересчёта): число и значок; цвет — по знаку, если нужно. */
+function Amount({ chaos, signed, className }: { chaos: number; signed?: boolean; className?: string }) {
+  const { mode, divineChaos } = usePriceDisplay();
+  const { primary } = displayPrice(chaos, divineChaos, mode === "both" ? "auto" : mode);
+  const tone = signed ? (chaos > 0 ? "text-status-success-fg" : chaos < 0 ? "text-status-danger-fg" : "text-text-primary") : "text-text-primary";
   return (
     <span className={cx("inline-flex items-center gap-1 font-mono font-semibold", tone, className)}>
-      {signed && amount > 0 ? "+" : ""}
-      {text}
-      <CurrencyIcon currency="chaos" size={14} />
+      {signed && chaos > 0 ? "+" : ""}
+      {formatAmount(primary.amount)}
+      <CurrencyIcon currency={primary.currency} size={14} />
     </span>
   );
 }
@@ -86,6 +91,7 @@ function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
   const market = row.market;
   const names = row.notables.map((n) => n.en).join(" + ");
   const namesRu = row.notables.map((n) => n.ru ?? n.en).join(" + ");
+  const text = usePriceText();
 
   return (
     <li
@@ -113,7 +119,7 @@ function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
       <div className="min-w-0">
         {market?.priceChaos !== null && market?.priceChaos !== undefined && market.status === "OK" ? (
           <>
-            <Price price={{ amount: market.priceChaos, currency: "chaos" }} approx size="md" />
+            <MarketPrice chaos={market.priceChaos} approx size="md" compact />
             <p className="truncate text-caption text-text-secondary">
               {market.listings?.toLocaleString("ru-RU")} лотов · {formatAge(market.fetchedAt)}
             </p>
@@ -126,11 +132,11 @@ function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
       <div className="min-w-0">
         {best ? (
           <Tooltip
-            content={`База ${best.basePrice.toFixed(1)} c + крафт ${best.craftCost.mean.toFixed(1)} c в среднем; в 9 случаях из 10 — не дороже ${best.totalCostP90.toFixed(1)} c`}
+            content={`База ${text(best.basePrice)} + крафт ${text(best.craftCost.mean)} в среднем; в 9 случаях из 10 — не дороже ${text(best.totalCostP90)}`}
           >
             <div className="min-w-0">
-              <Chaos amount={best.totalCost} />
-              <p className="truncate text-caption text-text-secondary">p90 ≤ {best.totalCostP90.toFixed(1)}</p>
+              <Amount chaos={best.totalCost} />
+              <p className="truncate text-caption text-text-secondary">p90 ≤ {text(best.totalCostP90, true)}</p>
             </div>
           </Tooltip>
         ) : (
@@ -141,7 +147,7 @@ function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
       <div className="min-w-0">
         {best?.profit !== null && best?.profit !== undefined ? (
           <>
-            <Chaos amount={best.profit} signed />
+            <Amount chaos={best.profit} signed />
             <p className={cx("font-mono text-caption", (best.roi ?? 0) >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>ROI {formatRoi(best.roi ?? 0)}</p>
           </>
         ) : (

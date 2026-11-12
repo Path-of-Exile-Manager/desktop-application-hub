@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   Button,
+  CURRENCY,
   ItemStateBadge,
   ModList,
   OverlayFrame,
@@ -97,7 +98,11 @@ export function OverlayPriceCheck({ item, price, conversion, similar, priceNote,
           {price && <Price price={price} approx size="lg" />}
           {(conversion || similar !== undefined) && (
             <span className="text-label text-text-secondary">
-              {conversion && <span className="font-mono">≈ {formatAmount(conversion.amount)} div</span>}
+              {conversion && (
+                <span className="font-mono">
+                  ≈ {formatAmount(conversion.amount)} {CURRENCY[conversion.currency].abbr}
+                </span>
+              )}
               {conversion && similar !== undefined && " · "}
               {similar !== undefined && `${similar} похожих`}
             </span>

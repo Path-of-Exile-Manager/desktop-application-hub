@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Eye, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
-import { Button, Card, CardHeader, CardSection, cx, EmptyState, Input, ItemIcon, Page, Price, Select, toast } from "@/design-system";
+import { Button, Card, CardHeader, CardSection, cx, EmptyState, Input, ItemIcon, MarketPrice, Page, Select, toast, usePriceText } from "@/design-system";
 import { iconUrl, itemName, searchCatalog, type CatalogItem } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
-import { formatAge, isFresh, priceHistory, priceVariants, toDivine, usePrices, type Price as LeaguePrice } from "@/app/prices";
+import { formatAge, isFresh, priceHistory, priceVariants, usePrices, type Price as LeaguePrice } from "@/app/prices";
 import { useAccount } from "@/app/account";
 import { addToWatchlist, findWatch, NOTE_MAX, removeFromWatchlist, setWatchNote, useWatchlist, variantLabel, type WatchEntry } from "@/app/watchlist";
 import { inTauri } from "@/app/window";
@@ -27,6 +27,7 @@ function weekChange(series: { points: { chaosValue: number }[] }[]): number | nu
 function AddFromCatalog() {
   const entries = useWatchlist((w) => w.entries);
   const prices = usePrices((p) => p.status?.newestUpdate);
+  const text = usePriceText();
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<CatalogItem[]>([]);
   const [item, setItem] = useState<CatalogItem | null>(null);
@@ -56,7 +57,7 @@ function AddFromCatalog() {
   const already = item ? !!findWatch(entries, item.id, key) : false;
   const options = [
     ...(variants.some((v) => v.variantKey === "") || variants.length === 0 ? [{ value: PLAIN, label: "обычный" }] : []),
-    ...variants.filter((v) => v.variantKey !== "").map((v) => ({ value: v.variantKey, label: variantLabel(v.variantKey), hint: `${Math.round(v.chaosValue)} c` })),
+    ...variants.filter((v) => v.variantKey !== "").map((v) => ({ value: v.variantKey, label: variantLabel(v.variantKey), hint: text(v.chaosValue, true) })),
   ];
 
   return (
@@ -137,7 +138,6 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
     };
   }, [price?.priceKeyId, league?.id]);
 
-  const divine = price ? toDivine(price.chaosValue, prices?.divineChaos) : null;
   const name = item ? itemName(item) : item === null ? entry.itemId : "…";
 
   return (
@@ -157,9 +157,8 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
       <div className="flex min-w-0 flex-col items-start gap-0.5">
         {price ? (
           <>
-            <Price price={{ amount: price.chaosValue, currency: "chaos" }} approx size="md" />
+            <MarketPrice chaos={price.chaosValue} approx size="md" layout="stack" conversionClassName="text-caption" />
             <span className="text-caption text-text-secondary">
-              {divine !== null && divine >= 0.1 && `≈ ${divine.toFixed(2)} div · `}
               <span className={cx(!isFresh(price.updatedAt) && "text-status-warning-fg")}>{formatAge(price.updatedAt)}</span>
               {!price.reliable && " · мало данных"}
             </span>

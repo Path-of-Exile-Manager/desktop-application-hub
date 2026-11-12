@@ -14,7 +14,7 @@ import {
   Page,
   Pagination,
   Popover,
-  Price,
+  MarketPrice,
   RARITY_TEXT,
   Select,
   Skeleton,
@@ -24,7 +24,7 @@ import {
   type Rarity,
 } from "@/design-system";
 import { iconUrl, useDataset } from "@/app/dataset";
-import { formatAge, toDivine, usePrices } from "@/app/prices";
+import { formatAge, usePrices } from "@/app/prices";
 import { openTrade, saveRecord } from "@/app/user-data";
 import type { PobBuild } from "@/generated/PobBuild";
 import type { PobSection } from "@/generated/PobSection";
@@ -177,7 +177,6 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
   const counted = stage?.rows.filter((r) => r.counted) ?? [];
   const total = counted.reduce((sum, r) => sum + (rowPrice(r, manual) ?? 0), 0);
   const unpriced = counted.filter((r) => rowPrice(r, manual) === null).length;
-  const divine = toDivine(total, prices?.divineChaos);
 
   const pickItemSet = (value: string) => build && choice && setChoice(matchStage(build, Number(value), choice));
   const mismatch =
@@ -248,8 +247,7 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
               Строк <span className="font-mono">{counted.length}</span>
             </span>
             <span className="flex items-center gap-2">
-              Стоимость этапа <Price price={{ amount: total, currency: "chaos" }} size="md" />
-              {divine !== null && <span className="text-label text-text-secondary">≈ {divine.toFixed(1)} div</span>}
+              Стоимость этапа <MarketPrice chaos={total} size="md" conversionClassName="text-label" />
             </span>
             <span className={cx(unpriced > 0 && "text-status-warning-fg")}>
               Без цены: <span className="font-mono">{unpriced}</span>
@@ -380,12 +378,12 @@ function StageRow({
         {manual !== null ? (
           <>
             <Badge tone="muted">своя</Badge>
-            <Price price={{ amount: manual, currency: "chaos" }} size="md" />
+            <MarketPrice chaos={manual} size="md" layout="stack" conversionClassName="text-caption" className="items-end" />
           </>
         ) : row.price ? (
           <>
             <Badge tone="muted">{row.priceMatch === "nearest" ? "ближайшая" : "точная"}</Badge>
-            <Price price={{ amount: row.price.chaosValue, currency: "chaos" }} approx={row.priceMatch === "nearest"} size="md" />
+            <MarketPrice chaos={row.price.chaosValue} approx={row.priceMatch === "nearest"} size="md" layout="stack" conversionClassName="text-caption" className="items-end" />
           </>
         ) : (
           <span className="text-label text-text-muted">нет цены</span>

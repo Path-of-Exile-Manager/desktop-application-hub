@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Button, Card, CardHeader, CardSection, FreshnessTag, Price, PriceChart, SegmentedControl, StatusBadge, toast } from "@/design-system";
+import { Button, Card, CardHeader, CardSection, FreshnessTag, MarketPrice, PriceChart, SegmentedControl, StatusBadge, toast, usePriceText } from "@/design-system";
 import { addToWatchlist, findWatch, removeFromWatchlist, useWatchlist, variantLabel } from "@/app/watchlist";
 import { inTauri } from "@/app/window";
 import type { Appraisal } from "@/app/appraise";
 import { useCurrentLeague } from "@/app/leagues";
-import { formatAge, isFresh, priceHistory, toDivine, usePrices, type HistoryRange, type PriceHistory } from "@/app/prices";
+import { formatAge, isFresh, priceHistory, type HistoryRange, type PriceHistory } from "@/app/prices";
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
 
@@ -37,10 +37,9 @@ function WatchButton({ itemId, variantKey }: { itemId: string; variantKey: strin
 
 /** Цена оценённого предмета: медиана, divine, надёжность, свежесть, источники и история. */
 export function PriceCard({ appraisal, className }: { appraisal: Appraisal; className?: string }) {
-  const prices = usePrices((p) => p.status);
   const league = useCurrentLeague();
+  const text = usePriceText();
   const price = appraisal.price;
-  const divine = price ? toDivine(price.chaosValue, prices?.divineChaos) : null;
 
   const [range, setRange] = useState<HistoryRange>("week");
   const [history, setHistory] = useState<PriceHistory | null>(null);
@@ -78,10 +77,7 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
       ) : (
         <>
           <CardSection className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-end gap-x-4 gap-y-1">
-              <Price price={{ amount: price.chaosValue, currency: "chaos" }} approx size="xl" />
-              {divine !== null && divine >= 0.1 && <Price price={{ amount: divine, currency: "divine" }} approx size="md" />}
-            </div>
+            <MarketPrice chaos={price.chaosValue} approx size="xl" conversionClassName="text-body" />
             <div className="flex flex-wrap items-center gap-2">
               <FreshnessTag fresh={isFresh(price.updatedAt)}>{isFresh(price.updatedAt) ? `данные свежие · ${formatAge(price.updatedAt)}` : `обновлено ${formatAge(price.updatedAt)} назад`}</FreshnessTag>
               {!price.reliable && <StatusBadge status="warning">мало данных — цена приблизительная</StatusBadge>}
@@ -94,7 +90,7 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
                 <div key={s.source} className="contents">
                   <dt className="text-text-secondary">{SOURCE_NAME[s.source] ?? s.source}</dt>
                   <dd className="font-mono text-text-primary">
-                    {s.chaosValue.toFixed(1)} chaos
+                    {text(s.chaosValue)}
                     {s.listingCount !== null && <span className="text-text-secondary"> · {s.listingCount} лотов</span>}
                     {s.lowConfidence && <span className="text-status-warning-fg"> · ненадёжно</span>}
                   </dd>
