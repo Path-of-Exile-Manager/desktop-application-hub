@@ -4,6 +4,7 @@ import { cx, EmptyState, MarketPrice, RARITY_TEXT, SegmentedControl, SocketedGem
 import { iconUrl } from "@/app/dataset";
 import type { PobBuild } from "@/generated/PobBuild";
 import type { PobStageRow } from "@/generated/PobStageRow";
+import type { RowPrice } from "@/generated/RowPrice";
 import type { SpecOverride } from "@/components/trade/spec";
 import {
   DOLL_COLUMNS,
@@ -39,9 +40,10 @@ type Props = {
   onManual: (key: string, value: number | null) => Promise<void>;
   overrides: Record<string, SpecOverride>;
   onOpen: (row: PobStageRow) => void;
+  market?: Record<string, RowPrice>;
 };
 
-export function GemsTab({ build, rows, skillSet, league, manual, onManual, overrides, onOpen }: Props) {
+export function GemsTab({ build, rows, skillSet, league, manual, onManual, overrides, onOpen, market }: Props) {
   const doll = useMemo(() => layoutGems(build, rows, skillSet), [build, rows, skillSet]);
   const [swap, setSwap] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -123,7 +125,7 @@ export function GemsTab({ build, rows, skillSet, league, manual, onManual, overr
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         {current ? (
-          <SlotPanel key={current.id} slot={current} league={league} manual={manual} onManual={onManual} overrides={overrides} onOpen={onOpen} highlight={highlight} />
+          <SlotPanel key={current.id} slot={current} league={league} manual={manual} onManual={onManual} overrides={overrides} onOpen={onOpen} highlight={highlight} market={market} />
         ) : (
           <EmptyState icon={Gem} title="Выберите слот" className="flex-1">
             Нажмите на предмет или камень на кукле.
@@ -266,6 +268,7 @@ function SlotPanel({
   overrides,
   onOpen,
   highlight,
+  market,
 }: {
   slot: DollSlot;
   league: string | null;
@@ -274,6 +277,7 @@ function SlotPanel({
   overrides: Record<string, SpecOverride>;
   onOpen: (row: PobStageRow) => void;
   highlight: string | null;
+  market?: Record<string, RowPrice>;
 }) {
   const rows = useMemo(() => slot.groups.flatMap((g) => g.rows), [slot]);
   const groupOf = useMemo(() => {
@@ -282,7 +286,7 @@ function SlotPanel({
     return map;
   }, [slot]);
   const counted = rows.filter((r) => r.counted);
-  const total = counted.reduce((sum, r) => sum + (rowPrice(r, manual) ?? 0), 0);
+  const total = counted.reduce((sum, r) => sum + (rowPrice(r, manual, market?.[r.key]) ?? 0), 0);
   const item = slot.item;
   const sockets = item?.item?.sockets ? (item.item.sockets.text.split(/\s+/).filter(Boolean).map((g) => g.split("-")) as SocketColor[][]) : null;
   return (
@@ -321,6 +325,7 @@ function SlotPanel({
           onOpen={onOpen}
           highlight={highlight}
           context={(r) => groupOf.get(r.key) ?? null}
+          market={market}
         />
       ) : (
         <EmptyState icon={Gem} title="Камней в этом слоте нет" className="flex-1" />

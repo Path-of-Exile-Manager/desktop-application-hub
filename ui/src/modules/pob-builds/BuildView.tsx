@@ -9,12 +9,15 @@ import type { PobBuild } from "@/generated/PobBuild";
 import type { PobSection } from "@/generated/PobSection";
 import type { PobStage } from "@/generated/PobStage";
 import type { PobStageRow } from "@/generated/PobStageRow";
+import type { BuildPrice } from "@/generated/BuildPrice";
+import type { RowPrice } from "@/generated/RowPrice";
 import { copyCode, fail } from "./dialogs";
 import { buildSubtitle, decodeBuild, type PobBuildRecord } from "./model";
 import { Portrait } from "./parts";
 import { pageLabel, type ShareAction } from "./share";
 import { ItemCard } from "./ItemCard";
 import { GemsTab } from "./GemsTab";
+import { TrackingBar } from "./TrackingBar";
 import { rowPrice, RowList } from "./StageRows";
 import type { SpecOverride } from "@/components/trade/spec";
 
@@ -100,9 +103,16 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
     return saveRecord("pobBuilds", { ...record, manualPrices: next }).then(() => undefined, fail("Цена не сохранена"));
   };
 
+  // Цены отслеживаемого билда (сервер): редкие вещи — с сайта торговли, по ключу строки этапа.
+  const [tracked, setTracked] = useState<BuildPrice | null>(null);
+  const market = useMemo(() => {
+    const rows = tracked?.stages.find((s) => s.index === choice?.item)?.rows ?? [];
+    return Object.fromEntries(rows.map((r) => [r.rowKey, r])) as Record<string, RowPrice>;
+  }, [tracked, choice?.item]);
+
   const counted = stage?.rows.filter((r) => r.counted) ?? [];
-  const total = counted.reduce((sum, r) => sum + (rowPrice(r, manual) ?? 0), 0);
-  const unpriced = counted.filter((r) => rowPrice(r, manual) === null).length;
+  const total = counted.reduce((sum, r) => sum + (rowPrice(r, manual, market[r.key]) ?? 0), 0);
+  const unpriced = counted.filter((r) => rowPrice(r, manual, market[r.key]) === null).length;
 
   const pickItemSet = (value: string) => build && choice && setChoice(matchStage(build, Number(value), choice));
   const mismatch =
@@ -163,6 +173,7 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
               <StageSelect label="Дерево" value={choice.tree} options={build.treeSpecs.map((s, i) => title(s.title, i))} onChange={(v) => setChoice({ ...choice, tree: Number(v) })} />
             </div>
           </Card>
+          <TrackingBar record={record} build={build} stage={choice.item} onPrice={setTracked} />
           {mismatch.length > 0 && (
             <Banner status="warning" title={`${mismatch.join(" и ").replace(/^./, (c) => c.toUpperCase())} — не по названию этапа`} className="shrink-0">
               Названия наборов в PoB не совпали с этапом — проверьте выбор.
@@ -201,9 +212,10 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
                 onManual={setManual}
                 overrides={overrides}
                 onOpen={setCard}
+                market={market}
               />
             ) : (
-              <RowList key={section} rows={rowsBySection.get(section) ?? []} league={computed.stage.league} manual={manual} onManual={setManual} overrides={overrides} onOpen={setCard} />
+              <RowList key={section} rows={rowsBySection.get(section) ?? []} league={computed.stage.league} manual={manual} onManual={setManual} overrides={overrides} onOpen={setCard} market={market} />
             )}
           </Card>
         </>

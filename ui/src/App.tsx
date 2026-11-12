@@ -26,6 +26,7 @@ import { serverStatusItem, useServerStatus, useServerStatusSync } from "@/app/se
 import { extensionStatusItem, useExtensionStatus, useExtensionStatusSync } from "@/app/extension";
 import { useDiscordStatusSync } from "@/app/discord";
 import { useMarketSync } from "@/app/market";
+import { useBuildPriceEventsSync } from "@/app/build-tracking";
 import { datasetStatusItem, NeedConnection, useDataset, useDatasetStatusSync } from "@/app/dataset";
 import { LeaguePicker, useLeaguesStatusSync } from "@/app/leagues";
 import { useCaptureSync } from "@/app/appraise";
@@ -57,6 +58,7 @@ export default function App() {
   useExtensionStatusSync();
   useDiscordStatusSync();
   useMarketSync();
+  useBuildPriceEventsSync();
   useDatasetStatusSync();
   useLeaguesStatusSync();
   usePricesSync();

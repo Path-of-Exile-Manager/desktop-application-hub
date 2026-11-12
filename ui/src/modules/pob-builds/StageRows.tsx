@@ -4,6 +4,7 @@ import { Badge, Button, cx, EmptyState, IconButton, Input, ItemIcon, MarketPrice
 import { iconUrl } from "@/app/dataset";
 import { openTrade } from "@/app/user-data";
 import type { PobStageRow } from "@/generated/PobStageRow";
+import type { RowPrice } from "@/generated/RowPrice";
 import { applyOverride, modCounts, specError, tradeQuery, type SpecOverride } from "@/components/trade/spec";
 import { fail } from "./dialogs";
 import { isSupport } from "./gemLayout";
@@ -32,8 +33,9 @@ const SLOT_LABEL: Record<string, string> = {
 
 export const slotLabel = (slot: string) => SLOT_LABEL[slot] ?? slot.replace(/^Flask (\d)$/, "Фласка $1").replace(" Abyssal Socket ", " · абисс. гнездо ");
 
-/** Цена строки для суммы: ручная, иначе автоматическая. */
-export const rowPrice = (row: PobStageRow, manual: Record<string, number>) => manual[row.key] ?? row.price?.chaosValue ?? null;
+/** Цена строки для суммы: ручная, иначе автоматическая, иначе с сайта торговли (отслеживание билда). */
+export const rowPrice = (row: PobStageRow, manual: Record<string, number>, market?: RowPrice) =>
+  manual[row.key] ?? row.price?.chaosValue ?? market?.priceChaos ?? null;
 
 /** «5 модов в поиске · 1 недоступен». */
 function modsLabel(searched: number, unavailable: number): string {
@@ -82,6 +84,7 @@ export function RowList({
   onOpen,
   highlight,
   context,
+  market,
 }: {
   rows: PobStageRow[];
   league: string | null;
@@ -93,6 +96,8 @@ export function RowList({
   highlight?: string | null;
   /** Подпись строки камня вместо места связки: связка в панели слота. */
   context?: (row: PobStageRow) => string | null;
+  /** Цены строк отслеживаемого билда (сервер) по ключу строки. */
+  market?: Record<string, RowPrice>;
 }) {
   const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
   const [page, setPage] = useState(1);
@@ -120,6 +125,7 @@ export function RowList({
               onOpen={() => onOpen(row)}
               highlighted={row.key === highlight}
               context={context?.(row) ?? undefined}
+              market={market?.[row.key]}
             />
           ))}
         </ul>
@@ -138,6 +144,7 @@ function StageRow({
   onOpen,
   highlighted,
   context,
+  market,
 }: {
   row: PobStageRow;
   league: string | null;
@@ -147,6 +154,7 @@ function StageRow({
   onOpen: () => void;
   highlighted?: boolean;
   context?: string;
+  market?: RowPrice;
 }) {
   const spec = row.spec ? applyOverride(row.spec, override) : null;
   const counts = spec ? modCounts(spec) : { searched: 0, unavailable: 0 };
@@ -191,6 +199,15 @@ function StageRow({
             <Badge tone="muted">{row.priceMatch === "nearest" ? "ближайшая" : "точная"}</Badge>
             <MarketPrice chaos={row.price.chaosValue} approx={row.priceMatch === "nearest"} size="md" layout="stack" conversionClassName="text-caption" className="items-end" />
           </>
+        ) : market?.priceChaos != null ? (
+          <Tooltip content={tradeHint(market)}>
+            <span className="flex items-center gap-2">
+              <Badge tone="muted">трейд</Badge>
+              <MarketPrice chaos={market.priceChaos} approx size="md" layout="stack" conversionClassName="text-caption" className="items-end" />
+            </span>
+          </Tooltip>
+        ) : market?.trade?.status === "NO_MARKET" ? (
+          <span className="text-label text-text-muted">нет рынка</span>
         ) : (
           <span className="text-label text-text-muted">нет цены</span>
         )}
@@ -215,6 +232,19 @@ function StageRow({
       </Tooltip>
     </li>
   );
+}
+
+/** «12 предложений · 2 ч назад · по 4 модам из 6». */
+function tradeHint(market: RowPrice): string {
+  const trade = market.trade;
+  if (!trade) return "Сводная цена сервера";
+  const parts = ["Цена с сайта торговли: нижняя четверть дешёвых предложений"];
+  if (trade.total != null) parts.push(`предложений: ${trade.total}`);
+  if (trade.quotedAt) parts.push(`обновлена ${new Date(trade.quotedAt).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`);
+  if (trade.level > 0) parts.push(trade.level === 1 ? "поиск ослаблен: суммы и 4 главных мода" : "поиск ослаблен: суммы и 2 главных мода");
+  if (trade.stale) parts.push("давно не обновлялась");
+  if (trade.pendingChaos != null) parts.push(`скачок до ${Math.round(trade.pendingChaos)} c ждёт перепроверки`);
+  return parts.join("\n");
 }
 
 function ManualPrice({ value, auto, onSave }: { value: number | null; auto: number | null; onSave: (v: number | null) => Promise<void> }) {

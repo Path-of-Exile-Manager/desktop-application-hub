@@ -19,6 +19,7 @@ import {
 } from "./model";
 import { BuildView } from "./BuildView";
 import { Portrait } from "./parts";
+import { TrackedPrice } from "./TrackedPrice";
 import { usePortraitsSync } from "./portraits";
 import { pageLabel, runShare, type ShareAction } from "./share";
 
@@ -459,6 +460,7 @@ function BuildList({
                   <span className="truncate text-body font-medium text-text-primary">{b.name}</span>
                   <span className="truncate text-label text-text-secondary">{buildSubtitle(b)}</span>
                 </button>
+                <TrackedPrice recordId={b.id} />
                 <span className="hidden w-40 shrink-0 truncate text-label text-text-secondary lg:block">{group ?? "Без группы"}</span>
                 <span className="w-22 shrink-0 text-right font-mono text-label text-text-muted">{formatDate(b.createdAt)}</span>
                 <div className="flex shrink-0 items-center gap-0.5">
