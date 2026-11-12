@@ -118,6 +118,8 @@ pub struct PricesStatus {
     pub newest_update: Option<String>,
     /// Цена Divine Orb в chaos (по справочнику, `tradeId = divine`).
     pub divine_chaos: Option<f64>,
+    /// Ключ цены Divine Orb в лиге — для курса divine в истории цен (`price_history`).
+    pub divine_price_key_id: Option<i64>,
     pub source: Option<PricesSource>,
     /// Конец последнего запроса, мс с 1970-01-01.
     pub checked_at: Option<u64>,
@@ -215,6 +217,7 @@ pub fn start(app: &AppHandle, app_root: &std::path::Path) {
         count: 0,
         newest_update: None,
         divine_chaos: None,
+        divine_price_key_id: None,
         source: None,
         checked_at: None,
         error: None,
@@ -322,15 +325,26 @@ fn set_board(service: &PricesService, league: &str, board: Board, source: Prices
 /// Статус с курсом divine: справочник может прийти позже цен, поэтому курс считается при отправке.
 fn publish(app: &AppHandle, service: &PricesService) {
     let mut status = service.status();
-    status.divine_chaos = divine_chaos(app, service);
-    service.inner.lock().unwrap().status.divine_chaos = status.divine_chaos;
+    set_divine(&mut status, app, service);
+    {
+        let mut inner = service.inner.lock().unwrap();
+        inner.status.divine_chaos = status.divine_chaos;
+        inner.status.divine_price_key_id = status.divine_price_key_id;
+    }
     let _ = app.emit(EVENT, status);
 }
 
-fn divine_chaos(app: &AppHandle, service: &PricesService) -> Option<f64> {
+/// Курс и ключ истории Divine Orb в текущей лиге (по справочнику, `tradeId = divine`).
+fn set_divine(status: &mut PricesStatus, app: &AppHandle, service: &PricesService) {
+    let divine = divine_price(app, service);
+    status.divine_chaos = divine.map(|(chaos, _)| chaos);
+    status.divine_price_key_id = divine.map(|(_, key)| key);
+}
+
+fn divine_price(app: &AppHandle, service: &PricesService) -> Option<(f64, i64)> {
     let catalog = app.state::<DatasetService>().catalog()?;
     let divine = catalog.by_trade_id("divine")?;
-    service.board()?.get(&divine.id, "").map(|p| p.chaos_value)
+    service.board()?.get(&divine.id, "").map(|p| (p.chaos_value, p.price_key_id))
 }
 
 /// Сегмент пути: всё, кроме `[A-Za-z0-9-._~]`, — в `%XX` (`Hardcore Allflame` → `Hardcore%20Allflame`).
@@ -354,7 +368,7 @@ fn now_ms() -> u64 {
 #[tauri::command]
 pub fn prices_status(app: AppHandle, service: State<PricesService>) -> PricesStatus {
     let mut status = service.status();
-    status.divine_chaos = divine_chaos(&app, &service);
+    set_divine(&mut status, &app, &service);
     status
 }
 
@@ -373,6 +387,7 @@ pub fn prices_set_league(app: AppHandle, service: State<PricesService>, league: 
             count: 0,
             newest_update: None,
             divine_chaos: None,
+            divine_price_key_id: None,
             source: None,
             checked_at: None,
             error: None,

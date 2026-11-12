@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Eye, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
-import { Button, Card, CardHeader, CardSection, cx, EmptyState, Input, ItemIcon, MarketPrice, Page, Select, toast, usePriceText } from "@/design-system";
+import { Button, Card, CardHeader, CardSection, CURRENCY, cx, EmptyState, Input, ItemIcon, MarketPrice, Page, Select, toast, usePriceText } from "@/design-system";
 import { iconUrl, itemName, searchCatalog, type CatalogItem } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
-import { formatAge, isFresh, priceHistory, priceVariants, usePrices, type Price as LeaguePrice } from "@/app/prices";
+import { formatAge, isFresh, priceVariants, usePrices, type Price as LeaguePrice } from "@/app/prices";
+import { usePriceHistoryIn } from "@/app/price-history";
 import { useAccount } from "@/app/account";
 import { addToWatchlist, findWatch, NOTE_MAX, removeFromWatchlist, setWatchNote, useWatchlist, variantLabel, type WatchEntry } from "@/app/watchlist";
 import { inTauri } from "@/app/window";
@@ -15,11 +16,11 @@ const PLAIN = "__plain";
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
 
 /** Изменение цены за неделю по истории: ряд источника с самым большим числом точек, первая и последняя. */
-function weekChange(series: { points: { chaosValue: number }[] }[]): number | null {
+function weekChange(series: { points: { v: number }[] }[]): number | null {
   const best = [...series].sort((a, b) => b.points.length - a.points.length)[0];
   if (!best || best.points.length < 2) return null;
-  const first = best.points[0].chaosValue;
-  const last = best.points[best.points.length - 1].chaosValue;
+  const first = best.points[0].v;
+  const last = best.points[best.points.length - 1].v;
   return first > 0 ? (last - first) / first : null;
 }
 
@@ -108,7 +109,6 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
   const prices = usePrices((p) => p.status);
   const [item, setItem] = useState<CatalogItem | null | undefined>(undefined);
   const [price, setPrice] = useState<LeaguePrice | null | undefined>(undefined);
-  const [change, setChange] = useState<number | null>(null);
   const [note, setNote] = useState(entry.note ?? "");
 
   useEffect(() => setNote(entry.note ?? ""), [entry.note]);
@@ -125,18 +125,9 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
     priceVariants(entry.itemId).then((list) => setPrice(list.find((p) => p.variantKey === entry.variantKey) ?? null));
   }, [entry.itemId, entry.variantKey, otherLeague, prices?.league, prices?.newestUpdate]);
 
-  useEffect(() => {
-    setChange(null);
-    if (!price || !league) return;
-    let cancelled = false;
-    priceHistory(league.id, price.priceKeyId, "week").then(
-      (h) => !cancelled && setChange(weekChange(h.series)),
-      () => {},
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [price?.priceKeyId, league?.id]);
+  // Изменение — в валюте показа: в divine курс divine за неделю тоже учитывается.
+  const { history: week } = usePriceHistoryIn(league?.id, price, "week");
+  const change = week ? weekChange(week.series) : null;
 
   const name = item ? itemName(item) : item === null ? entry.itemId : "…";
 
@@ -170,7 +161,7 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
           <span className={cx("inline-flex items-center gap-1 font-mono text-label", change >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>
             {change >= 0 ? <TrendingUp aria-hidden className="size-3.5" /> : <TrendingDown aria-hidden className="size-3.5" />}
             {change >= 0 ? "+" : ""}
-            {(change * 100).toFixed(1)}% за неделю
+            {(change * 100).toFixed(1)}% за неделю{week && week.unit !== "chaos" ? ` в ${CURRENCY[week.unit].short}` : ""}
           </span>
         )}
       </div>

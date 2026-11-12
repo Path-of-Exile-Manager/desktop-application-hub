@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Button, Card, CardHeader, CardSection, FreshnessTag, MarketPrice, PriceChart, SegmentedControl, StatusBadge, toast, usePriceText } from "@/design-system";
+import { Button, Card, CardHeader, CardSection, CURRENCY, FreshnessTag, MarketPrice, PriceChart, SegmentedControl, StatusBadge, toast, usePriceText } from "@/design-system";
 import { addToWatchlist, findWatch, removeFromWatchlist, useWatchlist, variantLabel } from "@/app/watchlist";
 import { inTauri } from "@/app/window";
 import type { Appraisal } from "@/app/appraise";
 import { useCurrentLeague } from "@/app/leagues";
-import { formatAge, isFresh, priceHistory, type HistoryRange, type PriceHistory } from "@/app/prices";
+import { formatAge, isFresh, type HistoryRange } from "@/app/prices";
+import { usePriceHistoryIn } from "@/app/price-history";
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
 
@@ -42,21 +43,7 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
   const price = appraisal.price;
 
   const [range, setRange] = useState<HistoryRange>("week");
-  const [history, setHistory] = useState<PriceHistory | null>(null);
-  const [historyError, setHistoryError] = useState<string | null>(null);
-  useEffect(() => {
-    setHistory(null);
-    setHistoryError(null);
-    if (!price || !league) return;
-    let cancelled = false;
-    priceHistory(league.id, price.priceKeyId, range).then(
-      (h) => !cancelled && setHistory(h),
-      (e) => !cancelled && setHistoryError(String(e)),
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [price?.priceKeyId, range, league?.id]);
+  const { history, error: historyError } = usePriceHistoryIn(league?.id, price, range);
 
   return (
     <Card className={className}>
@@ -119,7 +106,8 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
             ) : (
               <PriceChart
                 timeFormat={range === "week" ? "hour" : "day"}
-                series={history.series.map((s) => ({ id: s.source, label: SOURCE_NAME[s.source] ?? s.source, points: s.points.map((p) => ({ t: Date.parse(p.at), v: p.chaosValue })) }))}
+                unit={CURRENCY[history.unit].short}
+                series={history.series.map((s) => ({ id: s.source, label: SOURCE_NAME[s.source] ?? s.source, points: s.points }))}
               />
             )}
           </CardSection>

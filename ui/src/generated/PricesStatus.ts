@@ -14,7 +14,11 @@ newestUpdate: string | null,
 /**
  * Цена Divine Orb в chaos (по справочнику, `tradeId = divine`).
  */
-divineChaos: number | null, source: PricesSource | null, 
+divineChaos: number | null, 
+/**
+ * Ключ цены Divine Orb в лиге — для курса divine в истории цен (`price_history`).
+ */
+divinePriceKeyId: number | null, source: PricesSource | null, 
 /**
  * Конец последнего запроса, мс с 1970-01-01.
  */
