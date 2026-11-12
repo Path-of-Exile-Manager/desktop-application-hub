@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Bookmark, Copy, ExternalLink, Inbox, Pencil, Search, Trash2 } from "lucide-react";
+import { Bookmark, Copy, ExternalLink, Gem, Inbox, Pencil, Search, Trash2 } from "lucide-react";
 import {
   AffixBadge,
   AppLogo,
@@ -50,6 +50,7 @@ import {
   Skeleton,
   Slider,
   Sockets,
+  SocketedGems,
   StatusBadge,
   Switch,
   Tabs,
@@ -450,6 +451,11 @@ const MOD_EXAMPLES: ItemMod[] = [
   { kind: "enchant", segments: [{ value: "40%", range: [40, 40] }, " increased Fireball Damage"] },
 ];
 
+/** Камень-заглушка для витрины гнёзд. */
+function DemoGem({ tone }: { tone: string }) {
+  return <Gem aria-hidden size={20} className={tone} />;
+}
+
 function GameSection() {
   return (
     <Section title="Игровые компоненты" note="игровые цвета — только по смыслу и всегда с текстом или формой">
@@ -516,6 +522,23 @@ function GameSection() {
         <Sockets groups={[["B", "B", "B", "B", "B", "G"]]} />
         <Sockets groups={[["R", "R"], ["G", "B", "W"]]} />
         <Sockets groups={[["B", "B", "B", "B", "B", "G"]]} variant="text" />
+      </Row>
+      <Row label="Гнёзда с камнями">
+        <SocketedGems
+          columns={2}
+          cell={44}
+          sockets={[
+            { color: "B", linked: true, label: "Arc", content: <DemoGem tone="text-game-socket-blue" /> },
+            { color: "B", linked: true, label: "Spell Echo", content: <DemoGem tone="text-game-socket-blue" /> },
+            { color: "G", linked: true, label: "Added Lightning", content: <DemoGem tone="text-game-socket-blue" />, mismatch: true },
+            { color: "B", linked: true, label: "Inspiration", content: <DemoGem tone="text-game-socket-blue" />, dimmed: true },
+            { color: "R", linked: true, label: "пусто" },
+            { color: "W", linked: false, label: "Controlled Destruction", content: <DemoGem tone="text-game-socket-blue" />, selected: true },
+          ]}
+        />
+        <SocketedGems columns={2} cell={44} sockets={[{ color: "R", linked: true, label: "пусто" }, { color: "R", linked: false, label: "пусто" }, { color: "G", linked: false, label: "пусто" }, { color: "A", linked: false, label: "абиссальное" }]} />
+        <SocketedGems columns={1} cell={44} sockets={[{ color: "G", linked: true, label: "пусто" }, { color: "G", linked: true, label: "пусто" }, { color: "B", linked: false, label: "пусто" }]} />
+        <SocketedGems columns={2} cell={44} sockets={[{ color: "W", linked: false, label: "пусто" }]} />
       </Row>
       <Row label="Иконки предметов">
         {([[1, 1], [1, 3], [2, 2], [2, 3], [2, 4]] as [number, number][]).map((size) => (

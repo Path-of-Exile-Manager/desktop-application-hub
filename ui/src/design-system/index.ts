@@ -57,6 +57,7 @@ export {
 } from "./game/Price";
 export { PriceChart, type PriceChartSeries } from "./game/PriceChart";
 export { Sockets, socketsToText, maxLinks } from "./game/Sockets";
+export { SocketedGems, type SocketCell } from "./game/SocketedGems";
 export { ItemIcon } from "./game/ItemIcon";
 export { ItemHeader, ItemBaseLine, ItemProperties } from "./game/ItemHeader";
 export { Verdict, CheckMark, GoalCondition, PlanStep, PlanTotal, type ConditionStatus, type PlanStepState } from "./game/Craft";
