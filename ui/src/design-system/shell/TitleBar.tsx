@@ -17,6 +17,8 @@ export type TitleBarProps = {
   badge?: ReactNode;
   /** Выбор лиги (LeagueSelect). */
   league?: ReactNode;
+  /** Выбор валюты цен (PriceModeSelect), справа от лиги. */
+  currency?: ReactNode;
   /** Клик по полю поиска — открыть палитру Ctrl+K. */
   onSearchClick?: () => void;
   /** Подпись поля поиска. */
@@ -28,7 +30,7 @@ export type TitleBarProps = {
 };
 
 /** Заголовок окна (components.md, п. 16): высота 40, вся шапка — зона перетаскивания. */
-export function TitleBar({ badge, league, onSearchClick, searchLabel = "Поиск модулей и команд", actions, windowControls }: TitleBarProps) {
+export function TitleBar({ badge, league, currency, onSearchClick, searchLabel = "Поиск модулей и команд", actions, windowControls }: TitleBarProps) {
   return (
     <header
       {...drag}
@@ -42,6 +44,7 @@ export function TitleBar({ badge, league, onSearchClick, searchLabel = "Поис
         {badge}
       </div>
       {league}
+      {currency}
       <div {...drag} className="flex min-w-0 flex-1 justify-center">
         {onSearchClick && (
           <button

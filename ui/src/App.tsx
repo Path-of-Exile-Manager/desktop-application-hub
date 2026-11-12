@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { PanelRightClose, PanelRightOpen, Wrench } from "lucide-react";
+import { Coins, PanelRightClose, PanelRightOpen, Wrench } from "lucide-react";
 import {
   AppShell,
   CommandPalette,
@@ -7,6 +7,7 @@ import {
   CurrentItemPanel,
   DesignSystemProvider,
   IconButton,
+  PRICE_MODES,
   Sidebar,
   SplashScreen,
   StatusBar,
@@ -14,7 +15,9 @@ import {
   WindowControls,
   useHotkey,
   type PaletteItem,
+  type PriceMode,
 } from "@/design-system";
+import { PriceDisplay, PriceModePicker, usePriceMode, usePriceModeSync } from "@/app/price-mode";
 import { useShell } from "@/app/store";
 import { DEVELOPER_MODULE_ID, useModules } from "@/app/modules";
 import { useWindowControls } from "@/app/window";
@@ -54,12 +57,15 @@ export default function App() {
   useDatasetStatusSync();
   useLeaguesStatusSync();
   usePricesSync();
+  usePriceModeSync();
   useCaptureSync();
   useAccountStatusSync();
   useSyncStatusSync();
   useWatchlistSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
+  const priceMode = usePriceMode((p) => p.mode);
+  const setPriceMode = usePriceMode((p) => p.setMode);
   const game = useGameStatus();
   const server = useServerStatus();
   const extension = useExtensionStatus();
@@ -101,16 +107,28 @@ export default function App() {
           },
         ]
       : []),
+    ...(Object.keys(PRICE_MODES) as PriceMode[])
+      .filter((mode) => mode !== priceMode)
+      .map((mode) => ({
+        id: `cmd-price-mode-${mode}`,
+        group: "Команды",
+        label: `Валюта цен: ${PRICE_MODES[mode].label}`,
+        icon: Coins,
+        keywords: `валюта цены chaos divine ${PRICE_MODES[mode].hint}`,
+        onSelect: () => setPriceMode(mode),
+      })),
   ];
 
   return (
     <DesignSystemProvider>
       <CurrencyIconsProvider icons={currencyIcons}>
+      <PriceDisplay>
       <AppShell
         titlebar={
           <TitleBar
             badge={s.developerMode && <DevBadge />}
             league={<LeaguePicker />}
+            currency={<PriceModePicker />}
             onSearchClick={() => s.setPaletteOpen(true)}
             actions={
               <>
@@ -160,6 +178,7 @@ export default function App() {
       </AppShell>
       <CommandPalette open={s.paletteOpen} onOpenChange={s.setPaletteOpen} items={paletteItems} groups={["Модули", "Команды"]} />
       {startup.phase !== "done" && <SplashScreen steps={startup.steps} version={splashVersion(s.developerMode)} leaving={startup.phase === "leaving"} />}
+      </PriceDisplay>
       </CurrencyIconsProvider>
     </DesignSystemProvider>
   );

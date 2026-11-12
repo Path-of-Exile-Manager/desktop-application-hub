@@ -1,4 +1,5 @@
-import { Card, CardHeader, CardSection, Checkbox, Field, HotkeyInput, Page, Switch } from "@/design-system";
+import { Card, CardHeader, CardSection, Checkbox, Field, HotkeyInput, Page, PRICE_MODES, Select, Switch, type PriceMode } from "@/design-system";
+import { usePriceMode } from "@/app/price-mode";
 import { useShell } from "@/app/store";
 import { AccountCard } from "./AccountCard";
 
@@ -7,6 +8,8 @@ import { AccountCard } from "./AccountCard";
  */
 export function SettingsPage() {
   const s = useShell();
+  const priceMode = usePriceMode((p) => p.mode);
+  const setPriceMode = usePriceMode((p) => p.setMode);
 
   return (
     <Page title="Настройки" subtitle="Сохраняются автоматически">
@@ -32,7 +35,18 @@ export function SettingsPage() {
 
           <Card>
             <CardHeader title="Интерфейс" />
-            <CardSection>
+            <CardSection className="flex flex-col gap-4">
+              <Field label="Валюта цен" hint="То же, что выбор рядом с лигой в шапке; действует и в оверлее">
+                {({ id }) => (
+                  <Select
+                    id={id}
+                    value={priceMode}
+                    onValueChange={(v) => setPriceMode(v as PriceMode)}
+                    options={(Object.keys(PRICE_MODES) as PriceMode[]).map((m) => ({ value: m, label: PRICE_MODES[m].label, hint: PRICE_MODES[m].hint }))}
+                    className="w-60"
+                  />
+                )}
+              </Field>
               <Checkbox checked={s.sidebarCollapsed} onCheckedChange={s.setSidebarCollapsed} label="Узкая боковая панель" />
             </CardSection>
           </Card>

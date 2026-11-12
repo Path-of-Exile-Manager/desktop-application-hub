@@ -7,6 +7,7 @@ import type { Appraisal } from "@/app/appraise";
 import { useDatasetStatusSync } from "@/app/dataset";
 import { appraisalToItem } from "@/app/item-view";
 import { formatAge, isFresh, toDivine, useCurrencyIcons, usePrices, type PricesStatus } from "@/app/prices";
+import { PriceDisplay, usePriceModeSync } from "@/app/price-mode";
 import { OverlayPriceCheck } from "@/modules/price-check/OverlayPriceCheck";
 
 /**
@@ -22,6 +23,7 @@ export function OverlayApp() {
   const root = useRef<HTMLDivElement>(null);
 
   useDatasetStatusSync();
+  usePriceModeSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
 
@@ -78,6 +80,7 @@ export function OverlayApp() {
   return (
     <DesignSystemProvider toasts={false}>
       <CurrencyIconsProvider icons={currencyIcons}>
+        <PriceDisplay>
         <div ref={root} className="inline-block">
           <OverlayPriceCheck
             item={appraisalToItem(appraisal)}
@@ -90,6 +93,7 @@ export function OverlayApp() {
             onOpenInWindow={() => void invoke("overlay_open_main")}
           />
         </div>
+        </PriceDisplay>
       </CurrencyIconsProvider>
     </DesignSystemProvider>
   );
