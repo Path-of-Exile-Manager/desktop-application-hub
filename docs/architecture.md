@@ -295,7 +295,7 @@ desktop-application/
 3. `.github/workflows/release.yml` проверит версию и ключ, соберёт NSIS с `.sig` и `latest.json` и создаст **черновик** релиза.
 4. В черновике написать «Что нового» (его покажет приложение) и нажать **Publish**. Бэкенд заметит релиз не позже чем через 10 минут.
 
-Что CI берёт из настроек репозитория: Secrets `TAURI_SIGNING_PRIVATE_KEY` (содержимое файла ключа) и `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+Что CI берёт из настроек репозитория: секреты окружения `app` (Settings → Environments → app, в `release.yml` — `environment: app`) `TAURI_SIGNING_PRIVATE_KEY` (содержимое файла ключа) и `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 Необязательные Variables `API_URL` (по умолчанию `https://poe-manager.perezvonish.com`) и `DISCORD_CLIENT_ID` вшиваются при сборке через `option_env!`.
 
 ## Что учесть

@@ -3,7 +3,7 @@
 # Бэкенд (worker, задача app-releases-sync) замечает опубликованный релиз за ≤10 мин, и приложения обновляются.
 # Порядок выпуска — docs/architecture.md, раздел «Релиз и автообновление»; план — shared/docs/app-updates.md.
 #
-# Нужны в Settings → Secrets and variables → Actions:
+# Нужны в Settings → Environments → app (секреты окружения):
 #   secrets.TAURI_SIGNING_PRIVATE_KEY           закрытый ключ updater (pnpm tauri signer generate)
 #   secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD  его пароль
 # Необязательно (Variables), иначе — значения по умолчанию ниже:
@@ -26,6 +26,8 @@ concurrency:
 jobs:
   build:
     runs-on: windows-latest
+    # Секреты подписи лежат в окружении «app» (Settings → Environments), а не в секретах репозитория.
+    environment: app
     steps:
       - uses: actions/checkout@v4
 
