@@ -75,4 +75,4 @@ try {
 }
 
 console.log(`Версия ${version} записана в package.json, tauri.conf.json и Cargo.toml.`);
-console.log(`Дальше: коммит, git tag v${version}, git push --follow-tags — CI соберёт черновик релиза.`);
+console.log(`Дальше: коммит, git push, затем git tag -a v${version} -m "v${version}" и git push origin v${version} — CI соберёт черновик релиза.`);

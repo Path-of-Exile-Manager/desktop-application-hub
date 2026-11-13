@@ -291,7 +291,7 @@ desktop-application/
 
 **Выпуск релиза:**
 1. `pnpm release:version 0.2.0` — версия в `package.json`, `tauri.conf.json` и `Cargo.toml` (плюс `Cargo.lock`).
-2. Закоммитить, `git tag v0.2.0`, `git push --follow-tags`.
+2. Закоммитить и запушить, затем `git tag -a v0.2.0 -m "v0.2.0"` и `git push origin v0.2.0`. Именно так: `git push --follow-tags` отправляет только аннотированные теги, а `git tag v0.2.0` без `-a` создаёт лёгкий — он молча остаётся локальным.
 3. `.github/workflows/release.yml` проверит версию и ключ, соберёт NSIS с `.sig` и `latest.json` и создаст **черновик** релиза.
 4. В черновике написать «Что нового» (его покажет приложение) и нажать **Publish**. Бэкенд заметит релиз не позже чем через 10 минут.
 
