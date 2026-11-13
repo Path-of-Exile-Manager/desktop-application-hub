@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { CurrencyIconsProvider, DesignSystemProvider, displayPrice } from "@/design-system";
 import type { Appraisal } from "@/app/appraise";
 import { useDatasetStatusSync } from "@/app/dataset";
@@ -55,12 +55,15 @@ export function OverlayApp() {
   }, []);
 
   // Окно — по размеру рамки: прозрачные поля окна всё равно перехватывали бы клики по игре.
+  // Размер ставит ядро (`overlay_fit`) и заново укладывает окно в экран от точки показа; в ответ —
+  // наибольшая высота: выше неё рамка не растёт, моды прокручиваются.
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
   useEffect(() => {
     const el = root.current;
     if (!el) return;
     const observer = new ResizeObserver(() => {
       const { width, height } = el.getBoundingClientRect();
-      if (width > 0 && height > 0) void getCurrentWindow().setSize(new LogicalSize(Math.ceil(width), Math.ceil(height)));
+      if (width > 0 && height > 0) void invoke<number | null>("overlay_fit", { width: Math.ceil(width), height: Math.ceil(height) }).then(setMaxHeight);
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -87,7 +90,7 @@ export function OverlayApp() {
     <DesignSystemProvider toasts={false}>
       <CurrencyIconsProvider icons={currencyIcons}>
         <PriceDisplay>
-        <div ref={root} className="inline-block">
+        <div ref={root} className="inline-block" style={maxHeight ? ({ "--overlay-max-height": `${maxHeight}px` } as CSSProperties) : undefined}>
           <OverlayPriceCheck
             item={appraisalToItem(appraisal)}
             price={shown?.primary ?? null}

@@ -28,6 +28,8 @@ export function OverlayFrame({ title, pinned, onPinnedChange, onClose, footer, c
       data-density="compact"
       className={cx(
         "flex w-overlay-width max-w-overlay-max-width min-w-overlay-min-width flex-col overflow-hidden",
+        // Наибольшую высоту задаёт окно оверлея (не выше экрана); без переменной — без ограничения.
+        "max-h-(--overlay-max-height)",
         "rounded-xl border border-border-default bg-bg-overlay text-text-primary shadow-overlay backdrop-blur-overlay",
         className,
       )}
@@ -42,7 +44,7 @@ export function OverlayFrame({ title, pinned, onPinnedChange, onClose, footer, c
         <IconButton icon={Pin} label={pinned ? "Открепить" : "Закрепить"} active={pinned} onClick={() => onPinnedChange(!pinned)} tooltip={false} />
         <IconButton icon={X} label="Закрыть" onClick={onClose} tooltip={false} />
       </header>
-      <div className="flex min-h-0 flex-col">{children}</div>
+      <div className="flex min-h-0 flex-col overflow-y-auto">{children}</div>
       {footer && <footer className="flex gap-2 border-t border-border-default bg-bg-overlay-header px-3 py-2.5">{footer}</footer>}
     </div>
   );

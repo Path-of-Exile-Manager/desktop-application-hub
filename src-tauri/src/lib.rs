@@ -163,6 +163,7 @@ pub fn run() {
             overlay::overlay_show,
             overlay::overlay_hide,
             overlay::overlay_open_main,
+            overlay::overlay_fit,
             extension::extension_status,
             extension::extension_open_trade,
             pob::pob_decode,
