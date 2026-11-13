@@ -88,5 +88,8 @@ export function specError(spec: TradeSearchSpec): string | null {
   return bad ? `у «${bad.line}» MIN больше MAX` : null;
 }
 
+/** Спецификация по записи справочника и ключу варианта цены (Watchlist). */
+export const variantSpec = (itemId: string, variantKey: string) => invoke<TradeSearchSpec>("trade_variant_spec", { itemId, variantKey });
+
 /** Запрос по спецификации: тело и ссылка для лиги. */
 export const tradeQuery = (spec: TradeSearchSpec, league: string | null) => invoke<TradeQuery>("trade_query", { spec, league });

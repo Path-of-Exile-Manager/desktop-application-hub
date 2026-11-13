@@ -7,6 +7,7 @@ import type { Appraisal } from "@/app/appraise";
 import { useCurrentLeague } from "@/app/leagues";
 import { formatAge, isFresh, type HistoryRange } from "@/app/prices";
 import { usePriceHistoryIn } from "@/app/price-history";
+import { TradeButton } from "@/components/trade/TradeButton";
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
 
@@ -23,16 +24,13 @@ function WatchButton({ itemId, variantKey }: { itemId: string; variantKey: strin
   const watched = findWatch(entries, itemId, variantKey);
   const fail = (e: unknown) => toast({ status: "warning", title: "Watchlist не изменён", description: String(e) });
   return (
-    <CardSection className="flex items-center gap-3">
-      <Button
-        icon={watched ? EyeOff : Eye}
-        disabled={!inTauri}
-        onClick={() => (watched ? removeFromWatchlist(watched.id) : addToWatchlist(itemId, variantKey)).catch(fail)}
-      >
-        {watched ? "Убрать из watchlist" : "В watchlist"}
-      </Button>
-      <span className="text-label text-text-secondary">{variantLabel(variantKey)}</span>
-    </CardSection>
+    <Button
+      icon={watched ? EyeOff : Eye}
+      disabled={!inTauri}
+      onClick={() => (watched ? removeFromWatchlist(watched.id) : addToWatchlist(itemId, variantKey)).catch(fail)}
+    >
+      {watched ? "Убрать из watchlist" : "В watchlist"}
+    </Button>
   );
 }
 
@@ -41,6 +39,7 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
   const league = useCurrentLeague();
   const text = usePriceText();
   const price = appraisal.price;
+  const watchKey = price?.variantKey ?? appraisal.variantKey ?? "";
 
   const [range, setRange] = useState<HistoryRange>("week");
   const { history, error: historyError } = usePriceHistoryIn(league?.id, price, range);
@@ -113,7 +112,13 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
           </CardSection>
         </>
       )}
-      {appraisal.catalogItem && <WatchButton itemId={appraisal.catalogItem.id} variantKey={price?.variantKey ?? appraisal.variantKey ?? ""} />}
+      <CardSection className="flex flex-wrap items-center gap-3">
+        <TradeButton variant="primary" spec={appraisal.tradeSpec} league={league?.id}>
+          Искать на трейде
+        </TradeButton>
+        {appraisal.catalogItem && <WatchButton itemId={appraisal.catalogItem.id} variantKey={watchKey} />}
+        {appraisal.catalogItem && <span className="text-label text-text-secondary">{variantLabel(watchKey)}</span>}
+      </CardSection>
       {appraisal.notes.length > 0 && (
         <CardSection>
           <ul className="flex flex-col gap-1 text-label text-text-secondary">

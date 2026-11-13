@@ -76,10 +76,16 @@ pub struct TradeSearchSpec {
     pub influences: Vec<String>,
     pub gem_level: Option<u32>,
     pub quality: Option<u32>,
+    /// Тир карты — ровно этот (`map_filters.map_tier`).
+    #[serde(default)]
+    pub map_tier: Option<u32>,
+    /// Заражённая карта: фильтр `map_blighted` или `map_uberblighted`.
+    #[serde(default)]
+    pub map_blight: Option<String>,
 }
 
 impl TradeSearchSpec {
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         Self {
             name: None,
             type_line: None,
@@ -94,6 +100,8 @@ impl TradeSearchSpec {
             influences: Vec::new(),
             gem_level: None,
             quality: None,
+            map_tier: None,
+            map_blight: None,
         }
     }
 
@@ -325,6 +333,16 @@ pub fn build_query(spec: &TradeSearchSpec) -> Result<Value, String> {
     }
     if !sockets.is_empty() {
         filters.insert("socket_filters".into(), json!({ "filters": sockets }));
+    }
+    let mut map = Map::new();
+    if let Some(tier) = spec.map_tier {
+        map.insert("map_tier".into(), json!({ "min": tier, "max": tier }));
+    }
+    if let Some(blight) = &spec.map_blight {
+        map.insert(blight.clone(), json!({ "option": "true" }));
+    }
+    if !map.is_empty() {
+        filters.insert("map_filters".into(), json!({ "filters": map }));
     }
     if let Some(rarity) = &spec.rarity {
         filters.insert("type_filters".into(), json!({ "filters": { "rarity": { "option": rarity } } }));

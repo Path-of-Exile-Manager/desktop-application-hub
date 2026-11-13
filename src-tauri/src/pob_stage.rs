@@ -17,6 +17,7 @@ use crate::appraise::{PriceMatch, appraise_item};
 use crate::dataset::model::{CatalogItem, ItemKind};
 use crate::dataset::{Catalog, DatasetService};
 use crate::prices::{Price, PricesService};
+use crate::trade::item_search::gem_spec;
 use crate::trade::matcher::match_item;
 use crate::trade::query::{build_query, TradeSearchSpec, DEFAULT_TOLERANCE};
 use crate::trade::stats::StatIndex;
@@ -245,14 +246,7 @@ fn gem_row(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, gem: &PobGem,
         parsed.name = entry.name.en.clone();
     }
     let appraisal = appraise_item(catalog, prices, parsed);
-    // `base:<путь камня>:alt_x` — трансфигурированный: на сайте это базовый камень с дискриминатором.
-    let spec = appraisal.catalog_item.as_ref().map(|entry| match entry.id.rsplit_once(':') {
-        Some((base_id, disc)) if disc.starts_with("alt_") => {
-            let base = catalog.get(base_id).map_or_else(|| entry.name.en.clone(), |b| b.name.en.clone());
-            TradeSearchSpec::gem(base, Some(disc.to_string()), gem.level, gem.quality, gem.corrupted)
-        }
-        _ => TradeSearchSpec::gem(entry.name.en.clone(), None, gem.level, gem.quality, gem.corrupted),
-    });
+    let spec = appraisal.catalog_item.as_ref().map(|entry| gem_spec(catalog, entry, gem.level, gem.quality, gem.corrupted));
     let trade = spec.as_ref().and_then(|s| build_query(s).ok());
     PobStageRow {
         key,

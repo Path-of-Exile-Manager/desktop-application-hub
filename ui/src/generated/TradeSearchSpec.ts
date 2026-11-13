@@ -29,4 +29,12 @@ usePseudo: boolean, sockets: number | null, links: number | null, corrupted: Cor
 /**
  * Фильтры влияний: `shaper_item`, `elder_item`…
  */
-influences: Array<string>, gemLevel: number | null, quality: number | null, };
+influences: Array<string>, gemLevel: number | null, quality: number | null, 
+/**
+ * Тир карты — ровно этот (`map_filters.map_tier`).
+ */
+mapTier: number | null, 
+/**
+ * Заражённая карта: фильтр `map_blighted` или `map_uberblighted`.
+ */
+mapBlight: string | null, };

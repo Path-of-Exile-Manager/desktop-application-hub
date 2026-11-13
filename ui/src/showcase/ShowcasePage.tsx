@@ -658,6 +658,7 @@ function OverlaySection() {
           onPinnedChange={setPinned}
           onClose={() => toast({ status: "info", title: "Оверлей закрыт" })}
           onOpenInWindow={() => {}}
+          onOpenTrade={() => {}}
           onOpenCraft={() => {}}
         />
       </div>

@@ -3,6 +3,7 @@ import type { CatalogItem } from "./CatalogItem";
 import type { ParsedItem } from "./ParsedItem";
 import type { Price } from "./Price";
 import type { PriceMatch } from "./PriceMatch";
+import type { TradeSearchSpec } from "./TradeSearchSpec";
 
 export type Appraisal = { item: ParsedItem, 
 /**
@@ -20,4 +21,9 @@ variantKey: string | null, price: Price | null, priceMatch: PriceMatch | null,
 /**
  * Пояснения для человека: что угадано, чего нет.
  */
-notes: Array<string>, };
+notes: Array<string>, 
+/**
+ * Что искать на сайте торговли (кнопка «Трейд»); только у предмета из игры, `null` — предмета
+ * нет в справочнике.
+ */
+tradeSpec: TradeSearchSpec | null, };

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ExternalLink } from "lucide-react";
 import {
   Button,
   CURRENCY,
@@ -29,6 +30,8 @@ export type OverlayPriceCheckProps = {
   onPinnedChange: (pinned: boolean) => void;
   onClose: () => void;
   onOpenInWindow: () => void;
+  /** Без обработчика кнопки «Искать на трейде» нет (предмета нет в справочнике, лига не выбрана). */
+  onOpenTrade?: () => void;
   /** Без обработчика кнопки «В ассистент крафта» нет. */
   onOpenCraft?: () => void;
 };
@@ -37,7 +40,7 @@ export type OverlayPriceCheckProps = {
  * Виджет оверлея Price check (экран A4, OvA.dc.html). Порядок сверху вниз (guide.md, п. 4):
  * редкость и имя → базовые свойства → моды → состояние → цена → действия.
  */
-export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenCraft }: OverlayPriceCheckProps) {
+export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenTrade, onOpenCraft }: OverlayPriceCheckProps) {
   return (
     <OverlayFrame
       title="Price check"
@@ -46,6 +49,11 @@ export function OverlayPriceCheck({ item, price, conversion, similar, priceNote,
       onClose={onClose}
       footer={
         <>
+          {onOpenTrade && (
+            <Button variant="primary" icon={ExternalLink} block onClick={onOpenTrade}>
+              Искать на трейде
+            </Button>
+          )}
           <Button variant="secondary" block onClick={onOpenInWindow}>
             Подробнее в окне
           </Button>

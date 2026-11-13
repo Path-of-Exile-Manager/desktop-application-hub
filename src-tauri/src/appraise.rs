@@ -12,6 +12,8 @@ use item_parser::{ModKind, ParsedItem, Rarity};
 use crate::dataset::model::{CatalogItem, ItemKind, ItemRarity, ReleaseState};
 use crate::dataset::{Catalog, DatasetService};
 use crate::prices::{Price, PricesService};
+use crate::trade::item_search::appraisal_spec;
+use crate::trade::query::TradeSearchSpec;
 
 pub const EVENT: &str = "item-appraised";
 
@@ -40,6 +42,9 @@ pub struct Appraisal {
     pub price_match: Option<PriceMatch>,
     /// Пояснения для человека: что угадано, чего нет.
     pub notes: Vec<String>,
+    /// Что искать на сайте торговли (кнопка «Трейд»); только у предмета из игры, `null` — предмета
+    /// нет в справочнике.
+    pub trade_spec: Option<TradeSearchSpec>,
 }
 
 /// Последняя оценка — для окна, открытого позже события.
@@ -50,7 +55,10 @@ pub fn appraise(app: &AppHandle, text: &str) -> Result<Appraisal, String> {
     let item = item_parser::parse(text).map_err(|e| e.to_string())?;
     let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
     let prices = app.state::<PricesService>();
-    Ok(appraise_item(&catalog, &|id: &str| prices.variants(id), item))
+    let mut appraisal = appraise_item(&catalog, &|id: &str| prices.variants(id), item);
+    let stats = catalog.trade_stats.as_ref().and_then(|s| s.as_ref().ok()).map(|s| s.as_ref());
+    appraisal.trade_spec = appraisal_spec(&catalog, stats, &appraisal);
+    Ok(appraisal)
 }
 
 /// Оценка уже разобранного предмета: текст из игры или предмет сборки PoB (`pob_stage`).
@@ -72,7 +80,7 @@ pub fn appraise_item(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, mut
     found.sort_by_key(|c| (prices(&c.id).is_empty(), c.release_state != ReleaseState::Released));
     let Some(matched) = found.first().copied().cloned() else {
         notes.push(format!("в справочнике нет «{lookup_name}»"));
-        return Appraisal { item, catalog_item: None, candidates: 0, variant_key: None, price: None, price_match: None, notes };
+        return Appraisal { item, catalog_item: None, candidates: 0, variant_key: None, price: None, price_match: None, notes, trade_spec: None };
     };
     if candidates > 1 {
         notes.push(format!("одно название у {candidates} записей справочника — взята та, у которой есть цена"));
@@ -102,7 +110,7 @@ pub fn appraise_item(catalog: &Catalog, prices: &dyn Fn(&str) -> Vec<Price>, mut
         ));
     }
 
-    Appraisal { item, catalog_item: Some(matched), candidates, variant_key: Some(key), price, price_match, notes }
+    Appraisal { item, catalog_item: Some(matched), candidates, variant_key: Some(key), price, price_match, notes, trade_spec: None }
 }
 
 /// Записи справочника по тексту предмета; первое — название, по которому искали.

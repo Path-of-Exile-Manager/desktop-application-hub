@@ -9,6 +9,8 @@ import { usePriceHistoryIn } from "@/app/price-history";
 import { useAccount } from "@/app/account";
 import { addToWatchlist, findWatch, NOTE_MAX, removeFromWatchlist, setWatchNote, useWatchlist, variantLabel, type WatchEntry } from "@/app/watchlist";
 import { inTauri } from "@/app/window";
+import { variantSpec } from "@/components/trade/spec";
+import { TradeButton } from "@/components/trade/TradeButton";
 
 /** Значение «обычного» варианта в выпадающем списке: Radix Select не принимает пустую строку. */
 const PLAIN = "__plain";
@@ -176,9 +178,17 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
         onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
       />
 
-      <Button variant="ghost" icon={Trash2} aria-label={`Убрать ${name}`} onClick={() => removeFromWatchlist(entry.id).catch(fail("Не удалено"))}>
-        Убрать
-      </Button>
+      <div className="flex items-center gap-1">
+        <TradeButton
+          variant="ghost"
+          aria-label={`Искать на трейде: ${name}`}
+          spec={item ? () => variantSpec(entry.itemId, entry.variantKey) : null}
+          league={entry.leagueId ?? league?.id}
+        />
+        <Button variant="ghost" icon={Trash2} aria-label={`Убрать ${name}`} onClick={() => removeFromWatchlist(entry.id).catch(fail("Не удалено"))}>
+          Убрать
+        </Button>
+      </div>
     </li>
   );
 }

@@ -141,6 +141,7 @@ pub fn run() {
             dataset::catalog_ascendancies,
             trade::stats::trade_stats_lookup,
             trade::query::trade_query,
+            trade::item_search::trade_variant_spec,
             leagues::leagues_status,
             leagues::leagues_refresh,
             prices::prices_status,

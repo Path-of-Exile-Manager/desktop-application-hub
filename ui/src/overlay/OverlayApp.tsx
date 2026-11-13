@@ -9,6 +9,7 @@ import { appraisalToItem } from "@/app/item-view";
 import { formatAge, isFresh, useCurrencyIcons, usePrices, type PricesStatus } from "@/app/prices";
 import { PriceDisplay, usePriceMode, usePriceModeSync } from "@/app/price-mode";
 import { OverlayPriceCheck } from "@/modules/price-check/OverlayPriceCheck";
+import { openSpecOnTrade } from "@/components/trade/TradeButton";
 
 /**
  * Окно оверлея поверх игры (src-tauri/src/overlay.rs): последняя оценка предмета.
@@ -65,6 +66,8 @@ export function OverlayApp() {
 
   if (!appraisal) return null;
   const price = appraisal.price;
+  const tradeSpec = appraisal.tradeSpec;
+  const league = prices?.league;
   const shown = price ? displayPrice(price.chaosValue, prices?.divineChaos, priceMode) : null;
   const note = !price
     ? appraisal.catalogItem
@@ -92,6 +95,8 @@ export function OverlayApp() {
             onPinnedChange={setPinned}
             onClose={() => void invoke("overlay_hide", { restoreGame: true })}
             onOpenInWindow={() => void invoke("overlay_open_main")}
+            // Лига цен ядра — та же, что выбрана в шапке главного окна.
+            onOpenTrade={tradeSpec && league ? () => void openSpecOnTrade(tradeSpec, league).catch(() => undefined) : undefined}
           />
         </div>
         </PriceDisplay>
