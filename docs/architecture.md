@@ -283,9 +283,9 @@ desktop-application/
 Режим моста для расширения (`main.rs`) до `run()` не доходит, поэтому обновлений не проверяет. Чтобы мост, перезапущенный Chrome,
 не держал exe во время копирования, хук `NSIS_HOOK_PREINSTALL` в `src-tauri/windows/hooks.nsh` завершает все экземпляры exe перед установкой.
 
-**Подпись.** Открытый ключ — `plugins.updater.pubkey` в `tauri.conf.json`. Пока он пустой, обновления выключены (`Disabled`),
+**Подпись.** Открытый ключ — `plugins.updater.pubkey` в `tauri.conf.json` (задан 13.11.2026, id ключа `B59D3D63BBF9FE2D`). Если поле пустое, обновления выключены (`Disabled`),
 и CI откажется собирать релиз. Включён `requireSignedVersion`: версия должна быть внутри подписи, тогда старую сборку не выдать за новую.
-Закрытый ключ хранится в Secrets репозитория и в личном бэкапе. **Если его потерять, установленные копии больше не обновятся.**
+Закрытый ключ лежит в `%USERPROFILE%\.tauri\poe-manager.key`, в Secrets репозитория и в личном бэкапе. **Если его потерять, установленные копии больше не обновятся.**
 Для локального `pnpm tauri build` нужны переменные `TAURI_SIGNING_PRIVATE_KEY` и `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
 (`bundle.createUpdaterArtifacts`), иначе сборка упадёт на подписи. Для разработки хватает `pnpm tauri dev`.
 
@@ -295,8 +295,8 @@ desktop-application/
 3. `.github/workflows/release.yml` проверит версию и ключ, соберёт NSIS с `.sig` и `latest.json` и создаст **черновик** релиза.
 4. В черновике написать «Что нового» (его покажет приложение) и нажать **Publish**. Бэкенд заметит релиз не позже чем через 10 минут.
 
-Что CI берёт из настроек репозитория: Secrets `TAURI_SIGNING_PRIVATE_KEY` и `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, Variables `API_URL` и `DISCORD_CLIENT_ID`.
-Обе переменные вшиваются при сборке через `option_env!`.
+Что CI берёт из настроек репозитория: Secrets `TAURI_SIGNING_PRIVATE_KEY` (содержимое файла ключа) и `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+Необязательные Variables `API_URL` (по умолчанию `https://poe-manager.perezvonish.com`) и `DISCORD_CLIENT_ID` вшиваются при сборке через `option_env!`.
 
 ## Что учесть
 

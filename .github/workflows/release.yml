@@ -6,8 +6,9 @@
 # Нужны в Settings → Secrets and variables → Actions:
 #   secrets.TAURI_SIGNING_PRIVATE_KEY           закрытый ключ updater (pnpm tauri signer generate)
 #   secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD  его пароль
-#   vars.API_URL                                боевой адрес api-hub (вшивается при сборке, server.rs)
-#   vars.DISCORD_CLIENT_ID                      id Discord-приложения (вшивается при сборке)
+# Необязательно (Variables), иначе — значения по умолчанию ниже:
+#   vars.API_URL                                боевой адрес api-hub, по умолчанию https://poe-manager.perezvonish.com (вшивается при сборке, server.rs)
+#   vars.DISCORD_CLIENT_ID                      id Discord-приложения, публичный (вшивается при сборке)
 
 name: release
 
@@ -59,8 +60,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          API_URL: ${{ vars.API_URL }}
-          DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+          API_URL: ${{ vars.API_URL || 'https://poe-manager.perezvonish.com' }}
+          DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID || '1568653504531140819' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: poe-manager ${{ github.ref_name }}

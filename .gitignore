@@ -32,3 +32,8 @@ coverage
 
 # Rust build output (Cargo workspace)
 target
+
+# Ключ подписи обновлений: хранится вне репозитория (~/.tauri), сюда попадать не должен.
+# «~» — папка, которую создаёт tauri signer generate -w ~/..., если оболочка не раскрыла тильду.
+*.key
+/~/
