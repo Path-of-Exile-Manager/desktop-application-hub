@@ -10,6 +10,7 @@ import { formatAge, isFresh, useCurrencyIcons, usePrices, type PricesStatus } fr
 import { PriceDisplay, usePriceMode, usePriceModeSync } from "@/app/price-mode";
 import { OverlayPriceCheck } from "@/modules/price-check/OverlayPriceCheck";
 import { openSpecOnTrade } from "@/components/trade/TradeButton";
+import { IdentifiedControl, useIdentifiedChoice } from "@/components/trade/identified";
 
 /**
  * Окно оверлея поверх игры (src-tauri/src/overlay.rs): последняя оценка предмета.
@@ -28,6 +29,7 @@ export function OverlayApp() {
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
   const priceMode = usePriceMode((p) => p.mode);
+  const identified = useIdentifiedChoice(appraisal?.tradeSpec);
 
   useEffect(() => {
     document.documentElement.style.background = "transparent";
@@ -66,7 +68,7 @@ export function OverlayApp() {
 
   if (!appraisal) return null;
   const price = appraisal.price;
-  const tradeSpec = appraisal.tradeSpec;
+  const tradeSpec = identified.spec;
   const league = prices?.league;
   const shown = price ? displayPrice(price.chaosValue, prices?.divineChaos, priceMode) : null;
   const note = !price
@@ -97,6 +99,7 @@ export function OverlayApp() {
             onOpenInWindow={() => void invoke("overlay_open_main")}
             // Лига цен ядра — та же, что выбрана в шапке главного окна.
             onOpenTrade={tradeSpec && league ? () => void openSpecOnTrade(tradeSpec, league).catch(() => undefined) : undefined}
+            tradeOptions={identified.applicable && <IdentifiedControl value={identified.choice} onChange={identified.setChoice} />}
           />
         </div>
         </PriceDisplay>

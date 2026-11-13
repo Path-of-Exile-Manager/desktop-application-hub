@@ -82,6 +82,9 @@ pub struct TradeSearchSpec {
     /// Заражённая карта: фильтр `map_blighted` или `map_uberblighted`.
     #[serde(default)]
     pub map_blight: Option<String>,
+    /// Опознан ли предмет (`misc_filters.identified`); `null` — любой.
+    #[serde(default)]
+    pub identified: Option<bool>,
 }
 
 impl TradeSearchSpec {
@@ -102,6 +105,7 @@ impl TradeSearchSpec {
             quality: None,
             map_tier: None,
             map_blight: None,
+            identified: None,
         }
     }
 
@@ -311,6 +315,9 @@ pub fn build_query(spec: &TradeSearchSpec) -> Result<Value, String> {
     }
     if let Some(quality) = spec.quality {
         misc.insert("quality".into(), json!({ "min": quality }));
+    }
+    if let Some(identified) = spec.identified {
+        misc.insert("identified".into(), json!({ "option": identified.to_string() }));
     }
     match spec.corrupted {
         Corrupted::Any => {}

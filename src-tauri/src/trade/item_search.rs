@@ -30,7 +30,8 @@ pub fn gem_spec(catalog: &Catalog, entry: &CatalogItem, level: u32, quality: u32
 /// Спецификация оценённого предмета; `None` — предмета нет в справочнике (сайт ждёт английские
 /// названия, а их даёт только справочник). Умолчания: у уникального — имя и база, моды выключены;
 /// у волшебного и редкого — все найденные моды с MIN = значение − 10 %; связи от 5; осквернение
-/// «да» у осквернённого; влияния; уровень предмета — у белых и волшебных баз и у самоцветов.
+/// «да» у осквернённого; влияния; уровень предмета — у белых и волшебных баз и у самоцветов;
+/// опознан — как предмет.
 pub fn appraisal_spec(catalog: &Catalog, stats: Option<&StatIndex>, appraisal: &Appraisal) -> Option<TradeSearchSpec> {
     let entry = appraisal.catalog_item.as_ref()?;
     let item = &appraisal.item;
@@ -60,6 +61,11 @@ pub fn appraisal_spec(catalog: &Catalog, stats: Option<&StatIndex>, appraisal: &
     if entry.kind == ItemKind::Map {
         spec.map_tier = item.map_tier;
         spec.map_blight = item.blight.map(|b| blight_filter(b).to_string());
+    }
+    // Опознан ли: как пойманный предмет; Price check даёт выбрать «любой». У валюты, камней и
+    // карт гадания `null` — по нему интерфейс не показывает выбор.
+    if gear || entry.kind == ItemKind::Map {
+        spec.identified = Some(!item.unidentified);
     }
     if let Some(stats) = stats {
         let wanted = |kind: ModKind| match item.rarity {

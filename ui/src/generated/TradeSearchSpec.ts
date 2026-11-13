@@ -37,4 +37,8 @@ mapTier: number | null,
 /**
  * Заражённая карта: фильтр `map_blighted` или `map_uberblighted`.
  */
-mapBlight: string | null, };
+mapBlight: string | null, 
+/**
+ * Опознан ли предмет (`misc_filters.identified`); `null` — любой.
+ */
+identified: boolean | null, };

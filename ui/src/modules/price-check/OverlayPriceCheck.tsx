@@ -32,6 +32,8 @@ export type OverlayPriceCheckProps = {
   onOpenInWindow: () => void;
   /** Без обработчика кнопки «Искать на трейде» нет (предмета нет в справочнике, лига не выбрана). */
   onOpenTrade?: () => void;
+  /** Настройки поиска на трейде (опознан ли) — строкой над кнопками. */
+  tradeOptions?: ReactNode;
   /** Без обработчика кнопки «В ассистент крафта» нет. */
   onOpenCraft?: () => void;
 };
@@ -40,7 +42,7 @@ export type OverlayPriceCheckProps = {
  * Виджет оверлея Price check (экран A4, OvA.dc.html). Порядок сверху вниз (guide.md, п. 4):
  * редкость и имя → базовые свойства → моды → состояние → цена → действия.
  */
-export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenTrade, onOpenCraft }: OverlayPriceCheckProps) {
+export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenTrade, tradeOptions, onOpenCraft }: OverlayPriceCheckProps) {
   return (
     <OverlayFrame
       title="Price check"
@@ -118,6 +120,12 @@ export function OverlayPriceCheck({ item, price, conversion, similar, priceNote,
           {priceNote && <span className="text-label text-text-secondary">{priceNote}</span>}
         </div>
       </OverlaySection>
+      {onOpenTrade && tradeOptions && (
+        <OverlaySection className="flex items-center justify-between gap-3">
+          <span className="text-label text-text-secondary">Поиск на трейде</span>
+          {tradeOptions}
+        </OverlaySection>
+      )}
     </OverlayFrame>
   );
 }
