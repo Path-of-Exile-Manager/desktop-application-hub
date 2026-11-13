@@ -18,6 +18,7 @@ import {
   type PriceMode,
 } from "@/design-system";
 import { PriceDisplay, PriceModePicker, usePriceMode, usePriceModeSync } from "@/app/price-mode";
+import { useEquippedWeaponSync } from "@/app/weapon";
 import { useShell } from "@/app/store";
 import { DEVELOPER_MODULE_ID, useModules } from "@/app/modules";
 import { useWindowControls } from "@/app/window";
@@ -63,6 +64,7 @@ export default function App() {
   useLeaguesStatusSync();
   usePricesSync();
   usePriceModeSync();
+  useEquippedWeaponSync();
   useCaptureSync();
   useAccountStatusSync();
   useSyncStatusSync();

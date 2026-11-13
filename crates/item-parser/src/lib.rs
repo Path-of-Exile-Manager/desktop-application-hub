@@ -13,7 +13,7 @@ pub mod variant;
 use serde::Serialize;
 use ts_rs::TS;
 
-pub use item::{Affix, Blight, Influence, ModKind, ParsedItem, ParsedMod, Sockets};
+pub use item::{Affix, Blight, DamageRange, Influence, ModKind, ParsedItem, ParsedMod, Sockets, WeaponProps};
 pub use parse::parse;
 pub use strings::Language;
 

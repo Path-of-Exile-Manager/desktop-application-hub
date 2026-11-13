@@ -64,6 +64,12 @@ pub(crate) struct Strings {
     pub corrupted_implicit: &'static str,
     /// Строка энчанта кластерного самоцвета: `Added Small Passive Skills grant: 12% increased Fire Damage`.
     pub cluster_grant: Option<&'static str>,
+    /// Свойства оружия (словари Awakened PoE Trade; урон хаосом — по аналогии, у APT его нет).
+    pub physical_damage: &'static str,
+    pub elemental_damage: &'static str,
+    pub chaos_damage: &'static str,
+    pub crit_chance: &'static str,
+    pub attacks_per_second: &'static str,
 }
 
 pub(crate) const EN: Strings = Strings {
@@ -114,6 +120,11 @@ pub(crate) const EN: Strings = Strings {
     implicit_modifier: "Implicit Modifier",
     corrupted_implicit: "Corruption Implicit Modifier",
     cluster_grant: Some("Added Small Passive Skills grant: "),
+    physical_damage: "Physical Damage: ",
+    elemental_damage: "Elemental Damage: ",
+    chaos_damage: "Chaos Damage: ",
+    crit_chance: "Critical Strike Chance: ",
+    attacks_per_second: "Attacks per Second: ",
 };
 
 pub(crate) const RU: Strings = Strings {
@@ -165,6 +176,12 @@ pub(crate) const RU: Strings = Strings {
     corrupted_implicit: "Осквернённое собственное свойство",
     // Русской строки энчанта кластера в словарях нет: энчант кластера в ru не разбирается.
     cluster_grant: None,
+    physical_damage: "Физический урон: ",
+    elemental_damage: "Урон от стихий: ",
+    // На живом клиенте не проверено.
+    chaos_damage: "Урон хаосом: ",
+    crit_chance: "Шанс критического удара: ",
+    attacks_per_second: "Атак в секунду: ",
 };
 
 pub(crate) fn strings(language: Language) -> &'static Strings {

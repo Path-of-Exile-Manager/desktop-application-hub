@@ -109,8 +109,31 @@ pub struct ParsedMod {
     pub lines: Vec<String>,
 }
 
+/// Урон «от–до» из свойства оружия.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct DamageRange {
+    pub min: f64,
+    pub max: f64,
+}
+
+/// Свойства оружия, как их показывает игра: с качеством и местными свойствами уже учтёнными.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct WeaponProps {
+    pub physical: Option<DamageRange>,
+    /// Урон от стихий — по диапазону на стихию.
+    pub elemental: Vec<DamageRange>,
+    pub chaos: Option<DamageRange>,
+    /// Шанс критического удара, %.
+    pub crit_chance: Option<f64>,
+    pub attacks_per_second: Option<f64>,
+}
+
 /// Предмет, как его описывает текст из игры.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ParsedItem {
@@ -141,6 +164,8 @@ pub struct ParsedItem {
     /// Особый уникальный (Foil, relic).
     pub foil: bool,
     pub mods: Vec<ParsedMod>,
+    /// Только у оружия (есть «Атак в секунду»).
+    pub weapon: Option<WeaponProps>,
 }
 
 impl ParsedItem {

@@ -317,6 +317,7 @@ fn gem_item(gem: &PobGem) -> ParsedItem {
         foulborn: false,
         foil: false,
         mods: Vec::new(),
+        weapon: None,
     }
 }
 
@@ -378,6 +379,7 @@ pub fn parsed_item(item: &PobItem) -> ParsedItem {
                 lines: vec![m.line.clone()],
             })
             .collect(),
+        weapon: None,
     }
 }
 

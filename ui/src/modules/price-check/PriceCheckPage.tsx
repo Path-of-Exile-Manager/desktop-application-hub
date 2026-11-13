@@ -7,6 +7,7 @@ import { appraisalToItem } from "@/app/item-view";
 import { inTauri } from "@/app/window";
 import { ItemCard } from "./ItemCard";
 import { PriceCard } from "./PriceCard";
+import { WeaponDamageCard } from "./WeaponDamage";
 
 /**
  * Модуль Price check (app-shell.md, экран A1): последний оценённый предмет — карточка и цена.
@@ -50,7 +51,10 @@ export function PriceCheckPage() {
 
       {appraisal ? (
         <div className="flex min-h-0 flex-wrap items-start gap-4">
-          <ItemCard item={appraisalToItem(appraisal)} className="min-w-0 grow basis-90" />
+          <div className="flex min-w-0 grow basis-90 flex-col gap-4">
+            <ItemCard item={appraisalToItem(appraisal)} />
+            <WeaponDamageCard appraisal={appraisal} />
+          </div>
           <PriceCard appraisal={appraisal} className="min-w-0 grow basis-110" />
         </div>
       ) : (

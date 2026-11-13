@@ -11,6 +11,8 @@ import { PriceDisplay, usePriceMode, usePriceModeSync } from "@/app/price-mode";
 import { OverlayPriceCheck } from "@/modules/price-check/OverlayPriceCheck";
 import { openSpecOnTrade } from "@/components/trade/TradeButton";
 import { IdentifiedControl, useIdentifiedChoice } from "@/components/trade/identified";
+import { WeaponDamageCompact } from "@/modules/price-check/WeaponDamage";
+import { useEquippedWeaponSync } from "@/app/weapon";
 
 /**
  * Окно оверлея поверх игры (src-tauri/src/overlay.rs): последняя оценка предмета.
@@ -26,6 +28,7 @@ export function OverlayApp() {
 
   useDatasetStatusSync();
   usePriceModeSync();
+  useEquippedWeaponSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
   const priceMode = usePriceMode((p) => p.mode);
@@ -103,6 +106,7 @@ export function OverlayApp() {
             // Лига цен ядра — та же, что выбрана в шапке главного окна.
             onOpenTrade={tradeSpec && league ? () => void openSpecOnTrade(tradeSpec, league).catch(() => undefined) : undefined}
             tradeOptions={identified.applicable && <IdentifiedControl value={identified.choice} onChange={identified.setChoice} />}
+            damage={appraisal.item.weapon && <WeaponDamageCompact appraisal={appraisal} />}
           />
         </div>
         </PriceDisplay>

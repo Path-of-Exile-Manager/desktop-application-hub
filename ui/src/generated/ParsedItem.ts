@@ -5,6 +5,7 @@ import type { Language } from "./Language";
 import type { ParsedMod } from "./ParsedMod";
 import type { Rarity } from "./Rarity";
 import type { Sockets } from "./Sockets";
+import type { WeaponProps } from "./WeaponProps";
 
 /**
  * Предмет, как его описывает текст из игры.
@@ -30,4 +31,8 @@ foulborn: boolean,
 /**
  * Особый уникальный (Foil, relic).
  */
-foil: boolean, mods: Array<ParsedMod>, };
+foil: boolean, mods: Array<ParsedMod>, 
+/**
+ * Только у оружия (есть «Атак в секунду»).
+ */
+weapon: WeaponProps | null, };

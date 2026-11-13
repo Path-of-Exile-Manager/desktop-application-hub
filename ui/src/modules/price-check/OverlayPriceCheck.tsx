@@ -34,6 +34,8 @@ export type OverlayPriceCheckProps = {
   onOpenTrade?: () => void;
   /** Настройки поиска на трейде (опознан ли) — строкой над кнопками. */
   tradeOptions?: ReactNode;
+  /** Урон оружия и прирост к надетому — секцией после свойств. */
+  damage?: ReactNode;
   /** Без обработчика кнопки «В ассистент крафта» нет. */
   onOpenCraft?: () => void;
 };
@@ -42,7 +44,7 @@ export type OverlayPriceCheckProps = {
  * Виджет оверлея Price check (экран A4, OvA.dc.html). Порядок сверху вниз (guide.md, п. 4):
  * редкость и имя → базовые свойства → моды → состояние → цена → действия.
  */
-export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenTrade, tradeOptions, onOpenCraft }: OverlayPriceCheckProps) {
+export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenTrade, tradeOptions, damage, onOpenCraft }: OverlayPriceCheckProps) {
   return (
     <OverlayFrame
       title="Price check"
@@ -93,6 +95,7 @@ export function OverlayPriceCheck({ item, price, conversion, similar, priceNote,
           {item.sockets && <Sockets groups={item.sockets} variant="text" />}
         </p>
       </OverlaySection>
+      {damage && <OverlaySection>{damage}</OverlaySection>}
       {item.mods.length > 0 && (
         <OverlaySection>
           <ModList mods={item.mods} />

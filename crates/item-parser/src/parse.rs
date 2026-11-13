@@ -2,7 +2,7 @@
 //! Порядок и правила секций повторяют Awakened PoE Trade (`renderer/src/parser/Parser.ts`):
 //! каждая секция разбирается одним правилом, первое подходящее выигрывает.
 
-use crate::item::{Affix, Influence, ModKind, ParsedItem, ParsedMod, Sockets};
+use crate::item::{Affix, DamageRange, Influence, ModKind, ParsedItem, ParsedMod, Sockets, WeaponProps};
 use crate::strings::{self, Language, Strings, CRAFTED_MARK, ENCHANT_MARK, FRACTURED_MARK, IMPLICIT_MARK, SCOURGE_MARK, SECTION_SEPARATOR};
 use crate::{ParseError, Rarity};
 
@@ -56,6 +56,7 @@ pub fn parse(text: &str) -> Result<ParsedItem, ParseError> {
         foulborn: false,
         foil: false,
         mods: Vec::new(),
+        weapon: None,
     };
 
     for section in &sections {
@@ -154,8 +155,40 @@ fn parse_section(s: &Strings, section: &[&str], item: &mut ParsedItem) {
             item.sockets = Some(parse_sockets(rest.trim()));
         } else if let Some(rest) = line.strip_prefix(s.map_tier_property) {
             item.map_tier = item.map_tier.or(leading_number(rest));
+        } else if let Some(rest) = line.strip_prefix(s.physical_damage) {
+            weapon(item).physical = damage_ranges(rest).into_iter().next();
+        } else if let Some(rest) = line.strip_prefix(s.elemental_damage) {
+            weapon(item).elemental = damage_ranges(rest);
+        } else if let Some(rest) = line.strip_prefix(s.chaos_damage) {
+            weapon(item).chaos = damage_ranges(rest).into_iter().next();
+        } else if let Some(rest) = line.strip_prefix(s.crit_chance) {
+            weapon(item).crit_chance = leading_decimal(rest);
+        } else if let Some(rest) = line.strip_prefix(s.attacks_per_second) {
+            weapon(item).attacks_per_second = leading_decimal(rest);
         }
     }
+}
+
+/// Свойства урона бывают только у оружия; секция свойств одна, и до неё заполненного нет.
+fn weapon(item: &mut ParsedItem) -> &mut WeaponProps {
+    item.weapon.get_or_insert_with(WeaponProps::default)
+}
+
+/// Диапазоны урона: `50-120 (augmented)`, у стихий — через запятую: `10-20 (augmented), 5-8`.
+fn damage_ranges(text: &str) -> Vec<DamageRange> {
+    text.split(',')
+        .filter_map(|part| {
+            let token = part.split_whitespace().next()?;
+            let (min, max) = token.split_once('-')?;
+            Some(DamageRange { min: min.parse().ok()?, max: max.parse().ok()? })
+        })
+        .collect()
+}
+
+/// Первое дробное число: `1.45 (augmented)` → 1.45, `6.50%` → 6.5; запятая в дроби — тоже.
+fn leading_decimal(text: &str) -> Option<f64> {
+    let number: String = text.trim().chars().take_while(|c| c.is_ascii_digit() || *c == '.' || *c == ',').collect();
+    number.replace(',', ".").parse().ok()
 }
 
 /// Первое число строки: `+20% (augmented)` → 20, `20 (Max)` → 20.
