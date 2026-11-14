@@ -31,6 +31,7 @@ import { useBuildPriceEventsSync } from "@/app/build-tracking";
 import { datasetStatusItem, NeedConnection, useDataset, useDatasetStatusSync } from "@/app/dataset";
 import { LeaguePicker, useLeaguesStatusSync } from "@/app/leagues";
 import { useCaptureSync } from "@/app/appraise";
+import { useGameHotkeysSync } from "@/app/hotkeys";
 import { useAccountStatusSync } from "@/app/account";
 import { useSyncStatusSync } from "@/app/sync";
 import { useWatchlistSync } from "@/app/watchlist";
@@ -66,6 +67,7 @@ export default function App() {
   usePriceModeSync();
   useEquippedWeaponSync();
   useCaptureSync();
+  useGameHotkeysSync();
   useAccountStatusSync();
   useSyncStatusSync();
   useWatchlistSync();

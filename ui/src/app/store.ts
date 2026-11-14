@@ -11,6 +11,19 @@ export type Sim = "real" | "on" | "off";
 
 export type SimTarget = "game" | "server" | "extension";
 
+/** Команда чата на горячей клавише (как в Awakened PoE Trade). Пустая клавиша — не назначена. */
+export type ChatCommandSetting = { id: string; text: string; hotkey: string[]; send: boolean };
+
+/** Команды по умолчанию — те же, что в Awakened PoE Trade. `@last` — последний, кто писал в личку. */
+export const DEFAULT_CHAT_COMMANDS: ChatCommandSetting[] = [
+  { id: "hideout", text: "/hideout", hotkey: ["F5"], send: true },
+  { id: "exit", text: "/exit", hotkey: ["F9"], send: true },
+  { id: "thanks", text: "@last ty", hotkey: [], send: true },
+  { id: "invite", text: "/invite @last", hotkey: [], send: true },
+  { id: "tradewith", text: "/tradewith @last", hotkey: [], send: true },
+  { id: "hideout-last", text: "/hideout @last", hotkey: [], send: true },
+];
+
 type ShellState = {
   /** Открытый модуль. */
   activeModule: string;
@@ -40,6 +53,8 @@ type ShellState = {
   /** Поисков в час для пула: 0–60, по умолчанию 30. */
   marketBudget: number;
   hotkeys: { check: string[]; palette: string[] };
+  /** Команды чата по горячим клавишам; работают, когда игра в фокусе. */
+  chatCommands: ChatCommandSetting[];
 
   openModule: (id: string) => void;
   setSim: (target: SimTarget, value: Sim) => void;
@@ -52,6 +67,7 @@ type ShellState = {
   setPanelHidden: (v: boolean) => void;
   setPaletteOpen: (v: boolean) => void;
   setHotkey: (name: "check" | "palette", keys: string[]) => void;
+  setChatCommands: (commands: ChatCommandSetting[]) => void;
 };
 
 /**
@@ -74,6 +90,7 @@ export const useShell = create<ShellState>()(
       marketHelp: true,
       marketBudget: 30,
       hotkeys: { check: ["Ctrl", "D"], palette: ["Ctrl", "K"] },
+      chatCommands: DEFAULT_CHAT_COMMANDS,
 
       openModule: (activeModule) => set({ activeModule }),
       setSim: (target, value) => set((s) => ({ sim: { ...s.sim, [target]: value } })),
@@ -88,6 +105,7 @@ export const useShell = create<ShellState>()(
       setPanelHidden: (panelHidden) => set({ panelHidden }),
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
       setHotkey: (name, keys) => set((s) => ({ hotkeys: { ...s.hotkeys, [name]: keys } })),
+      setChatCommands: (chatCommands) => set({ chatCommands }),
     }),
     {
       name: "poe-manager.shell",
@@ -102,6 +120,7 @@ export const useShell = create<ShellState>()(
         sidebarCollapsed: s.sidebarCollapsed,
         panelHidden: s.panelHidden,
         hotkeys: s.hotkeys,
+        chatCommands: s.chatCommands,
         developerMode: s.developerMode,
         apiUrlOverride: s.apiUrlOverride,
         discordPresence: s.discordPresence,

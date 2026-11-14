@@ -18,11 +18,8 @@ export type { Appraisal };
 /** Последняя оценка: захват по горячей клавише, из буфера или текста. */
 export const useAppraisal = create<{ last: Appraisal | null; at: number | null }>(() => ({ last: null, at: null }));
 
-/** Горячая клавиша — ядру, оценки и ошибки захвата — в стор. Ставится один раз в корне приложения. */
+/** Оценки и ошибки захвата — в стор (клавиши ядру отдаёт `useGameHotkeysSync`). Ставится один раз в корне приложения. */
 export function useCaptureSync() {
-  const hotkey = useShell((s) => s.hotkeys.check);
-  const hotkeyText = hotkey.join("+");
-
   useEffect(() => {
     if (!inTauri) return;
     const unlisteners: Promise<() => void>[] = [
@@ -41,13 +38,6 @@ export function useCaptureSync() {
     invoke<Appraisal | null>("item_last_appraisal").then((last) => last && useAppraisal.setState({ last, at: Date.now() }));
     return () => unlisteners.forEach((p) => p.then((fn) => fn()));
   }, []);
-
-  useEffect(() => {
-    if (!inTauri) return;
-    invoke("capture_set_hotkey", { keys: hotkeyText.split("+") }).catch((e) =>
-      toast({ status: "warning", title: "Горячая клавиша не назначена", description: String(e) }),
-    );
-  }, [hotkeyText]);
 }
 
 export function appraiseText(text: string): Promise<Appraisal> {

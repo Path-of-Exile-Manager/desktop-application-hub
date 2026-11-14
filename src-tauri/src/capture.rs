@@ -1,8 +1,6 @@
 //! Захват предмета из игры: горячая клавиша → Ctrl+Alt+C в игру → текст из буфера обмена → оценка.
 //!
-//! Горячая клавиша регистрируется только пока окно PoE1 в фокусе (`on_game_status` из `game.rs`):
-//! иначе она перехватывала бы, например, Ctrl+D в браузере. Какая клавиша — задаёт интерфейс
-//! (`capture_set_hotkey`, по умолчанию Ctrl+D из настроек).
+//! Клавишу (по умолчанию Ctrl+D) регистрирует и разбирает `hotkeys.rs` вместе с командами чата.
 //!
 //! Буфер обмена пользователя не портится: прежний текст запоминается и возвращается после захвата.
 
@@ -10,10 +8,8 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use game_window::{GameKind, GameState, GameStatus};
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, Manager, State};
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+use tauri::{AppHandle, Emitter, Manager};
 use ts_rs::TS;
 
 use crate::appraise;
@@ -32,71 +28,22 @@ pub struct CaptureFailure {
     pub message: String,
 }
 
-struct Inner {
-    /// Клавиша из настроек: `Ctrl+D`.
-    hotkey: Option<Shortcut>,
-    /// Зарегистрирована сейчас (игра в фокусе).
-    registered: Option<Shortcut>,
-    game_focused: bool,
-    busy: bool,
+/// Идёт захват: повторное нажатие до его конца игнорируется.
+pub struct CaptureService(Mutex<bool>);
+
+pub fn start(app: &AppHandle) {
+    app.manage(CaptureService(Mutex::new(false)));
 }
 
-pub struct CaptureService(Mutex<Inner>);
-
-pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
-    tauri_plugin_global_shortcut::Builder::new()
-        .with_handler(|app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                trigger(app);
-            }
-        })
-        .build()
-}
-
-pub fn start(app: &AppHandle, game: &GameStatus) {
-    let hotkey = "Ctrl+D".parse::<Shortcut>().ok();
-    app.manage(CaptureService(Mutex::new(Inner { hotkey, registered: None, game_focused: false, busy: false })));
-    on_game_status(app, game);
-}
-
-fn poe1_focused(status: &GameStatus) -> bool {
-    status.state == GameState::Running && status.window.as_ref().is_some_and(|w| w.kind == GameKind::Poe1 && w.focused)
-}
-
-/// Игра получила или потеряла фокус — включить или снять горячую клавишу.
-pub fn on_game_status(app: &AppHandle, status: &GameStatus) {
-    let Some(service) = app.try_state::<CaptureService>() else { return };
-    let mut inner = service.0.lock().unwrap();
-    inner.game_focused = poe1_focused(status);
-    sync_registration(app, &mut inner);
-}
-
-fn sync_registration(app: &AppHandle, inner: &mut Inner) {
-    let wanted = if inner.game_focused { inner.hotkey } else { None };
-    if inner.registered == wanted {
-        return;
-    }
-    let shortcuts = app.global_shortcut();
-    if let Some(old) = inner.registered.take() {
-        let _ = shortcuts.unregister(old);
-    }
-    if let Some(new) = wanted {
-        match shortcuts.register(new) {
-            Ok(()) => inner.registered = Some(new),
-            Err(e) => eprintln!("[capture] горячая клавиша не зарегистрирована: {e}"),
-        }
-    }
-}
-
-/// Нажата горячая клавиша — захват в своём потоке; повторное нажатие во время захвата игнорируется.
-fn trigger(app: &AppHandle) {
+/// Нажата клавиша проверки (`hotkeys.rs`) — захват в своём потоке; повторное нажатие во время захвата игнорируется.
+pub fn trigger(app: &AppHandle) {
     let service = app.state::<CaptureService>();
     {
-        let mut inner = service.0.lock().unwrap();
-        if inner.busy {
+        let mut busy = service.0.lock().unwrap();
+        if *busy {
             return;
         }
-        inner.busy = true;
+        *busy = true;
     }
     let app = app.clone();
     thread::spawn(move || {
@@ -111,7 +58,7 @@ fn trigger(app: &AppHandle) {
                 let _ = app.emit(EVENT_FAILED, CaptureFailure { message });
             }
         }
-        app.state::<CaptureService>().0.lock().unwrap().busy = false;
+        *app.state::<CaptureService>().0.lock().unwrap() = false;
     });
 }
 
@@ -172,17 +119,6 @@ fn send_copy_advanced() {
 
 #[cfg(not(windows))]
 fn send_copy_advanced() {}
-
-/// Горячая клавиша захвата из настроек: `["Ctrl", "D"]`.
-#[tauri::command]
-pub fn capture_set_hotkey(app: AppHandle, service: State<CaptureService>, keys: Vec<String>) -> Result<(), String> {
-    let text = keys.join("+");
-    let shortcut = text.parse::<Shortcut>().map_err(|e| format!("клавиша «{text}» не поддерживается: {e}"))?;
-    let mut inner = service.0.lock().unwrap();
-    inner.hotkey = Some(shortcut);
-    sync_registration(&app, &mut inner);
-    Ok(())
-}
 
 /// Оценить предмет, который уже лежит в буфере обмена (скопирован в игре вручную).
 #[tauri::command]

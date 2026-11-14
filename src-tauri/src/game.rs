@@ -30,7 +30,7 @@ pub fn start(app: &AppHandle) {
                 *last = status.clone();
                 drop(last);
                 crate::discord::on_game_status(&app, &status);
-                crate::capture::on_game_status(&app, &status);
+                crate::hotkeys::on_game_status(&app, &status);
                 let _ = app.emit(EVENT, status);
             }
         })

@@ -9,6 +9,7 @@ mod account;
 mod api;
 mod appraise;
 mod capture;
+mod chat;
 /// Расчёт «Выгодных кластеров» без Tauri: открыт для примера `clusters_offline`.
 pub mod cluster_plans;
 mod clusters;
@@ -17,6 +18,7 @@ mod device;
 mod discord;
 mod extension;
 mod game;
+mod hotkeys;
 mod icons;
 mod item_mods;
 mod leagues;
@@ -77,7 +79,7 @@ fn open_devtools(window: tauri::WebviewWindow) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(capture::plugin())
+        .plugin(hotkeys::plugin())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .register_asynchronous_uri_scheme_protocol(icons::SCHEME, icons::handle)
@@ -99,7 +101,8 @@ pub fn run() {
             market::start(app.handle());
             updater::start(app.handle(), &app_root);
             app.manage(appraise::LastAppraisal::default());
-            capture::start(app.handle(), &game::current(app.handle()));
+            capture::start(app.handle());
+            hotkeys::start(app.handle(), &game::current(app.handle()));
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
             // Последним: создание окна крутит очередь сообщений, и главное окно уже вызывает
@@ -158,7 +161,7 @@ pub fn run() {
             clusters::clusters_currency,
             appraise::item_appraise,
             appraise::item_last_appraisal,
-            capture::capture_set_hotkey,
+            hotkeys::hotkeys_set,
             capture::capture_from_clipboard,
             overlay::overlay_show,
             overlay::overlay_hide,

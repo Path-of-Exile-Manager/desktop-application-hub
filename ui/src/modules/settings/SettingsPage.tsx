@@ -1,7 +1,9 @@
 import { Card, CardHeader, CardSection, Checkbox, Field, HotkeyInput, Page, PRICE_MODES, Select, Switch, type PriceMode } from "@/design-system";
 import { usePriceMode } from "@/app/price-mode";
 import { useShell } from "@/app/store";
+import { useHotkeyProblems } from "@/app/hotkeys";
 import { AccountCard } from "./AccountCard";
+import { ChatCommandsCard } from "./ChatCommandsCard";
 import { MarketCard } from "./MarketCard";
 import { UpdatesCard } from "./UpdatesCard";
 
@@ -12,6 +14,7 @@ export function SettingsPage() {
   const s = useShell();
   const priceMode = usePriceMode((p) => p.mode);
   const setPriceMode = usePriceMode((p) => p.setMode);
+  const checkProblem = useHotkeyProblems((p) => p.problems.find((x) => x.command === null)?.message);
 
   return (
     <Page title="Настройки" subtitle="Сохраняются автоматически">
@@ -20,7 +23,7 @@ export function SettingsPage() {
           <Card>
             <CardHeader title="Горячие клавиши" />
             <CardSection className="flex flex-col gap-4">
-              <Field label="Проверить предмет под курсором" hint="Работает, когда игра в фокусе">
+              <Field label="Проверить предмет под курсором" hint="Работает, когда игра в фокусе" error={checkProblem}>
                 {({ id, describedBy }) => (
                   <HotkeyInput id={id} aria-describedby={describedBy} value={s.hotkeys.check} onChange={(k) => s.setHotkey("check", k)} />
                 )}
@@ -33,6 +36,7 @@ export function SettingsPage() {
             </CardSection>
           </Card>
 
+          <ChatCommandsCard />
           <UpdatesCard />
         </div>
 
