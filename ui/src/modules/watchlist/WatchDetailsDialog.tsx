@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Badge, Button, Card, CardHeader, CardSection, cx, Dialog, ItemIcon, RARITY_TEXT, StatusBadge, usePriceText, type Rarity } from "@/design-system";
 import { iconUrl, itemName, type CatalogItem } from "@/app/dataset";
@@ -105,8 +105,27 @@ function OtherVariants({ variants, current }: { variants: Price[]; current: stri
   );
 }
 
-export function WatchDetailsDialog({ entry, item, onClose }: { entry: WatchEntry; item: CatalogItem; onClose: () => void }) {
+/**
+ * Окно предмета с подробной ценой: Watchlist («Просмотр») и Экономика. `leagueId` — лига записи
+ * Watchlist (`null` — текущая), `actions` — кнопки слева от «Искать на трейде».
+ */
+export function ItemPriceDialog({
+  item,
+  variantKey,
+  leagueId = null,
+  note = null,
+  actions,
+  onClose,
+}: {
+  item: CatalogItem;
+  variantKey: string;
+  leagueId?: string | null;
+  note?: string | null;
+  actions?: ReactNode;
+  onClose: () => void;
+}) {
   const league = useCurrentLeague();
+  const entry = { itemId: item.id, variantKey, leagueId, note };
   const otherLeague = entry.leagueId !== null && entry.leagueId !== league?.id;
   const [variants, setVariants] = useState<Price[] | null>(null);
   const [base, setBase] = useState<CatalogItem | null>(null);
@@ -134,6 +153,7 @@ export function WatchDetailsDialog({ entry, item, onClose }: { entry: WatchEntry
       className="w-180"
       footer={
         <>
+          {actions}
           <TradeButton spec={() => variantSpec(entry.itemId, entry.variantKey)} league={entry.leagueId ?? league?.id}>
             Искать на трейде
           </TradeButton>
@@ -205,4 +225,9 @@ export function WatchDetailsDialog({ entry, item, onClose }: { entry: WatchEntry
       </div>
     </Dialog>
   );
+}
+
+/** «Просмотр» записи Watchlist. */
+export function WatchDetailsDialog({ entry, item, onClose }: { entry: WatchEntry; item: CatalogItem; onClose: () => void }) {
+  return <ItemPriceDialog item={item} variantKey={entry.variantKey} leagueId={entry.leagueId} note={entry.note} onClose={onClose} />;
 }

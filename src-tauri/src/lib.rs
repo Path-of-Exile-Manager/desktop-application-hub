@@ -16,6 +16,7 @@ mod clusters;
 mod dataset;
 mod device;
 mod discord;
+mod economy;
 mod extension;
 mod game;
 mod hotkeys;
@@ -145,6 +146,8 @@ pub fn run() {
             dataset::catalog_ascendancies,
             trade::stats::trade_stats_lookup,
             trade::query::trade_query,
+            economy::economy_overview,
+            economy::economy_rows,
             trade::item_search::trade_variant_spec,
             trade::live::trade_live_search,
             trade::live::trade_live_fetch,

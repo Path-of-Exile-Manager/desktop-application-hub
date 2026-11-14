@@ -18,7 +18,7 @@ function noPriceReason(appraisal: Appraisal, leagueTracked: boolean | undefined)
 }
 
 /** «В watchlist»: вариант — тот, чья цена показана (или самого предмета, если цены нет). */
-function WatchButton({ itemId, variantKey }: { itemId: string; variantKey: string }) {
+export function WatchButton({ itemId, variantKey }: { itemId: string; variantKey: string }) {
   const entries = useWatchlist((w) => w.entries);
   const watched = findWatch(entries, itemId, variantKey);
   const fail = (e: unknown) => toast({ status: "warning", title: "Watchlist не изменён", description: String(e) });

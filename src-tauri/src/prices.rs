@@ -181,6 +181,11 @@ impl PricesService {
         self.board().map(|b| b.variants(item_id).into_iter().cloned().collect()).unwrap_or_default()
     }
 
+    /// Все цены текущей лиги (вкладка «Экономика»); пусто — цены не загружены.
+    pub fn all(&self) -> Vec<Price> {
+        self.board().map(|b| b.prices.clone()).unwrap_or_default()
+    }
+
     /// Сводная цена простого предмета (`variantKey = ''`) в текущей лиге.
     pub fn chaos(&self, item_id: &str) -> Option<f64> {
         self.board().and_then(|b| b.get(item_id, "").map(|p| p.chaos_value))

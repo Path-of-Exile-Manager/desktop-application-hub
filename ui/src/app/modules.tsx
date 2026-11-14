@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Bookmark, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { BarChart3, Bookmark, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
@@ -7,6 +7,7 @@ import { MapRegexPage } from "@/modules/map-regex/MapRegexPage";
 import { ClustersPage } from "@/modules/clusters/ClustersPage";
 import { PobBuildsPage } from "@/modules/pob-builds/PobBuildsPage";
 import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
+import { EconomyPage } from "@/modules/economy/EconomyPage";
 import { BookmarksPage } from "@/modules/user-data/BookmarksPage";
 import { HistoryPage } from "@/modules/user-data/HistoryPage";
 import { PinsPage } from "@/modules/user-data/PinsPage";
@@ -66,6 +67,16 @@ const WATCHLIST: ModuleDef = {
   group: "check",
   component: WatchlistPage,
   keywords: "отслеживание избранное цены список",
+};
+
+/** Цены лиги по разделам, как Economy на poe.ninja. */
+const ECONOMY: ModuleDef = {
+  id: "economy",
+  label: "Экономика",
+  icon: BarChart3,
+  group: "check",
+  component: EconomyPage,
+  keywords: "цены экономика poe.ninja валюта эссенции скарабеи карты уники камни базы economy",
 };
 
 /** Данные сайта торговли — общие с расширением браузера (Ф10). */
@@ -140,7 +151,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, WATCHLIST, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, ECONOMY, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
