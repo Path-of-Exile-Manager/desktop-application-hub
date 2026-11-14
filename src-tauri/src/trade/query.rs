@@ -239,7 +239,9 @@ pub fn build_query(spec: &TradeSearchSpec) -> Result<Value, String> {
         return Err("не известен тип предмета".into());
     }
     let mut query = Map::new();
-    query.insert("status".into(), json!({ "option": "online" }));
+    // «Instant Buyout and In Person»: мгновенный выкуп и продавцы в сети. Сервер для своих
+    // котировок цен билдов всё равно ставит только мгновенный выкуп (`canonicalizeTradeQuery`).
+    query.insert("status".into(), json!({ "option": "available" }));
     if let Some(name) = &spec.name {
         query.insert("name".into(), json!(name));
     }

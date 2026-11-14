@@ -28,7 +28,7 @@ const SEEDS: Seed[] = [
   ["large", 8, ["Heavy Hitter", "Martial Prowess"], 0.012, null, 1, 25, "fossil", "Dagger and Claw Damage"],
 ];
 
-const DEMO_TRADE = { query: { status: { option: "securable" }, type: "Large Cluster Jewel" }, sort: { price: "asc" } };
+const DEMO_TRADE = { query: { status: { option: "available" }, type: "Large Cluster Jewel" }, sort: { price: "asc" } };
 
 /** Карточка цели из строки: лучший план и два других для сравнения. */
 function demoDetail(row: ClusterRow): ClusterDetail {

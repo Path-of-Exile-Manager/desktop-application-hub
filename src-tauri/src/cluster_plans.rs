@@ -198,7 +198,7 @@ pub struct CraftPlan {
     pub profit: Option<f64>,
     pub roi: Option<f64>,
     /// Запрос сайта торговли для покупки базы (`?q=` поиска): белая база с энчантом, числом
-    /// пассивов и уровнем не ниже нужного, мгновенный выкуп, дешёвые сначала.
+    /// пассивов и уровнем не ниже нужного, мгновенный выкуп и продавцы в сети, дешёвые сначала.
     #[ts(type = "unknown")]
     pub trade_base: Option<serde_json::Value>,
 }
@@ -486,7 +486,7 @@ fn evaluate(engine: &Engine, names: &dyn MarketData, market: &Prices, offers: &B
     (row.clone(), ClusterDetail { row, plans, enchants, trade_target })
 }
 
-/// Запрос готовых самоцветов цели: база, notable, пассивов не больше, мгновенный выкуп.
+/// Запрос готовых самоцветов цели: база, notable, пассивов не больше; мгновенный выкуп и продавцы в сети.
 fn target_query(engine: &Engine, target: &TargetReply) -> Option<serde_json::Value> {
     let data = engine.data();
     let size = data.clusters.sizes.iter().find(|size| size.id == target.size)?;
@@ -498,7 +498,7 @@ fn target_query(engine: &Engine, target: &TargetReply) -> Option<serde_json::Val
     filters.push(json!({ "id": PASSIVES_STAT, "value": { "max": target.passives } }));
     Some(json!({
         "query": {
-            "status": { "option": "securable" },
+            "status": { "option": "available" },
             "type": size.name.en,
             "stats": [{ "type": "and", "filters": filters }],
             "filters": { "misc_filters": { "filters": { "corrupted": { "option": "false" } } } }
@@ -507,7 +507,7 @@ fn target_query(engine: &Engine, target: &TargetReply) -> Option<serde_json::Val
     }))
 }
 
-/// Запрос базы плана: белая, энчант, ровно столько пассивов, уровень не ниже, мгновенный выкуп.
+/// Запрос базы плана: белая, энчант, ровно столько пассивов, уровень не ниже; мгновенный выкуп и продавцы в сети.
 fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, item_level: u32) -> Option<serde_json::Value> {
     let data = engine.data();
     let size = data.clusters.sizes.iter().find(|size| size.id == target.size)?;
@@ -517,7 +517,7 @@ fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, item_leve
     let option: u32 = option.parse().ok()?;
     Some(json!({
         "query": {
-            "status": { "option": "securable" },
+            "status": { "option": "available" },
             "type": size.name.en,
             "stats": [{ "type": "and", "filters": [
                 { "id": stat, "value": { "option": option } },
