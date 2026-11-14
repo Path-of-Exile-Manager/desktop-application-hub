@@ -70,6 +70,18 @@ export function itemName(item: CatalogItem): string {
   return item.name.ru ?? item.name.en;
 }
 
+export type NameLanguage = "en" | "ru";
+
+/** Язык, на котором набран поиск: есть кириллица — русский, иначе английский. */
+export function queryLanguage(query: string): NameLanguage {
+  return /[а-яё]/i.test(query) ? "ru" : "en";
+}
+
+/** Название на языке поиска; русского нет — английское. */
+export function itemNameIn(item: CatalogItem, language: NameLanguage): string {
+  return language === "ru" ? (item.name.ru ?? item.name.en) : item.name.en;
+}
+
 /** Первое состояние набора, известное после запуска (не «загрузка»), или `null` по таймауту. */
 export function firstDatasetResult(timeoutMs: number): Promise<DatasetStatus | null> {
   const ready = (s: DatasetStatus | null) => s && s.state !== "loading";

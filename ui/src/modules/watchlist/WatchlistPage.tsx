@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Eye, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { Button, Card, CardHeader, CardSection, CURRENCY, cx, EmptyState, Input, ItemIcon, MarketPrice, Page, Select, toast, usePriceText } from "@/design-system";
-import { iconUrl, itemName, searchCatalog, type CatalogItem } from "@/app/dataset";
+import { iconUrl, itemName, itemNameIn, queryLanguage, searchCatalog, type CatalogItem } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
 import { formatAge, isFresh, priceVariants, usePrices, type Price as LeaguePrice } from "@/app/prices";
 import { usePriceHistoryIn } from "@/app/price-history";
@@ -36,6 +36,8 @@ function AddFromCatalog() {
   const [item, setItem] = useState<CatalogItem | null>(null);
   const [variants, setVariants] = useState<LeaguePrice[]>([]);
   const [variant, setVariant] = useState(PLAIN);
+  // Набрано по-английски — названия по-английски, по-русски — по-русски.
+  const language = queryLanguage(query);
 
   useEffect(() => {
     if (!query.trim() || item) return setFound([]);
@@ -69,8 +71,8 @@ function AddFromCatalog() {
       <CardSection className="flex flex-col gap-2">
         {item ? (
           <div className="flex flex-wrap items-center gap-3">
-            <ItemIcon variant="thumb" size={[item.size.w, item.size.h]} src={iconUrl(item.iconSha256)} alt={itemName(item)} />
-            <span className="min-w-0 flex-1 truncate text-body font-semibold">{itemName(item)}</span>
+            <ItemIcon variant="thumb" size={[item.size.w, item.size.h]} src={iconUrl(item.iconSha256)} alt={itemNameIn(item, language)} />
+            <span className="min-w-0 flex-1 truncate text-body font-semibold">{itemNameIn(item, language)}</span>
             <Select aria-label="Вариант" value={variant} onValueChange={setVariant} options={options} className="w-64" />
             <Button
               variant="primary"
@@ -94,8 +96,8 @@ function AddFromCatalog() {
             <Input aria-label="Поиск предмета" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Название предмета: Mageblood, Сфера хаоса…" disabled={!inTauri} />
             {found.map((f) => (
               <Button key={f.id} variant="ghost" className="h-auto justify-start py-1 text-left" onClick={() => setItem(f)}>
-                <ItemIcon variant="thumb" size={[f.size.w, f.size.h]} src={iconUrl(f.iconSha256)} alt={itemName(f)} />
-                <span className="min-w-0 truncate">{itemName(f)}</span>
+                <ItemIcon variant="thumb" size={[f.size.w, f.size.h]} src={iconUrl(f.iconSha256)} alt={itemNameIn(f, language)} />
+                <span className="min-w-0 truncate">{itemNameIn(f, language)}</span>
               </Button>
             ))}
           </>
