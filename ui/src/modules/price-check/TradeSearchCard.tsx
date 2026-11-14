@@ -1,10 +1,45 @@
 import { LoaderCircle, RotateCcw, Search } from "lucide-react";
-import { Button, Card, CardHeader, CardSection, cx, Tooltip } from "@/design-system";
+import { Button, Card, CardHeader, CardSection, cx, SegmentedControl, Tooltip } from "@/design-system";
 import { inTauri } from "@/app/window";
 import { TradeButton } from "@/components/trade/TradeButton";
 import { TradeFilters } from "@/components/trade/TradeFilters";
 import { fromChoice, IdentifiedControl, toChoice } from "@/components/trade/identified";
 import { modCounts, specError, type TradeSearchSpec } from "@/components/trade/spec";
+
+/** Категория сайта торговли (`TradeSearchSpec.category`) — словами для переключателя базы. */
+const CATEGORY_LABEL: Record<string, string> = {
+  "armour.boots": "ботинки",
+  "armour.gloves": "перчатки",
+  "armour.helmet": "шлемы",
+  "armour.chest": "нательные доспехи",
+  "armour.shield": "щиты",
+  "armour.quiver": "колчаны",
+  "accessory.ring": "кольца",
+  "accessory.amulet": "амулеты",
+  "accessory.belt": "пояса",
+  "accessory.trinket": "безделушки",
+  "weapon.bow": "луки",
+  "weapon.claw": "когти",
+  "weapon.basedagger": "кинжалы",
+  "weapon.runedagger": "рунические кинжалы",
+  "weapon.oneaxe": "одноручные топоры",
+  "weapon.basesword": "одноручные мечи",
+  "weapon.rapier": "рапиры",
+  "weapon.basemace": "одноручные булавы",
+  "weapon.sceptre": "скипетры",
+  "weapon.basestaff": "посохи",
+  "weapon.warstaff": "боевые посохи",
+  "weapon.twoaxe": "двуручные топоры",
+  "weapon.twomace": "двуручные булавы",
+  "weapon.twosword": "двуручные мечи",
+  "weapon.wand": "жезлы",
+  "weapon.rod": "удочки",
+  "jewel.base": "самоцветы",
+  "jewel.abyss": "абиссальные самоцветы",
+  "jewel.cluster": "кластерные самоцветы",
+  flask: "флаконы",
+  tincture: "настойки",
+};
 
 /**
  * Поиск на трейде из Price check: моды предмета с галочками и MIN/MAX (умолчания ядра: значение
@@ -49,9 +84,22 @@ export function TradeSearchCard({
           spec={spec}
           onChange={onChange}
           extra={
-            spec.identified !== null || defaults.identified !== null ? (
-              <IdentifiedControl value={toChoice(spec.identified)} onChange={(v) => onChange({ ...spec, identified: fromChoice(v) })} />
-            ) : undefined
+            <>
+              {spec.category && !spec.name && spec.typeLine && (
+                <SegmentedControl<"base" | "any">
+                  aria-label="База в поиске"
+                  value={spec.anyBase ? "any" : "base"}
+                  onValueChange={(v) => onChange({ ...spec, anyBase: v === "any" })}
+                  options={[
+                    { value: "base", label: spec.typeLine },
+                    { value: "any", label: `Любые: ${CATEGORY_LABEL[spec.category] ?? "этого типа"}` },
+                  ]}
+                />
+              )}
+              {(spec.identified !== null || defaults.identified !== null) && (
+                <IdentifiedControl value={toChoice(spec.identified)} onChange={(v) => onChange({ ...spec, identified: fromChoice(v) })} />
+              )}
+            </>
           }
         />
         {spec.mods.length === 0 && <p className="mt-2 text-label text-text-secondary">Ищем по названию и базе — модов для поиска у предмета нет.</p>}

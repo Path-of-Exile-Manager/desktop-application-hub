@@ -41,4 +41,12 @@ mapBlight: string | null,
 /**
  * Опознан ли предмет (`misc_filters.identified`); `null` — любой.
  */
-identified: boolean | null, };
+identified: boolean | null, 
+/**
+ * Категория базы на сайте (`armour.boots`, `weapon.claw`); `null` — у предмета её нет.
+ */
+category: string | null, 
+/**
+ * Любая база этой категории: вместо `type` — `type_filters.category` (только без имени уникального).
+ */
+anyBase: boolean, };

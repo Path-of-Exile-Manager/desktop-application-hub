@@ -53,6 +53,8 @@ pub fn appraisal_spec(catalog: &Catalog, stats: Option<&StatIndex>, appraisal: &
     spec.links = item.sockets.as_ref().map(|s| s.links).filter(|l| *l >= 5);
     spec.corrupted = if item.corrupted { Corrupted::Yes } else { Corrupted::Any };
     if !unique && gear {
+        // Для «любой базы этого типа» в поиске: ботинки вместо Sorcerer Boots.
+        spec.category = trade_category(entry).map(str::to_string);
         // У редкого цену решают моды: уровень предмета сузил бы поиск зря.
         if item.rarity != Rarity::Rare || entry.kind == ItemKind::Jewel {
             spec.item_level = item.item_level.filter(|l| *l > 1);
@@ -175,6 +177,45 @@ fn local_slot(entry: &CatalogItem) -> &'static str {
         ItemDetails::Equipment { tags, .. } if tags.iter().any(|t| t == "weapon" || t == "armour") => "Weapon",
         _ => "",
     }
+}
+
+/// Категория сайта торговли (`type_filters.category`) по классу базы справочника.
+fn trade_category(entry: &CatalogItem) -> Option<&'static str> {
+    Some(match entry.class_id.as_str() {
+        "Boots" => "armour.boots",
+        "Gloves" => "armour.gloves",
+        "Helmet" => "armour.helmet",
+        "Body Armour" => "armour.chest",
+        "Shield" => "armour.shield",
+        "Quiver" => "armour.quiver",
+        "Ring" => "accessory.ring",
+        "Amulet" => "accessory.amulet",
+        "Belt" => "accessory.belt",
+        "Trinket" => "accessory.trinket",
+        "Bow" => "weapon.bow",
+        "Claw" => "weapon.claw",
+        "Dagger" => "weapon.basedagger",
+        "Rune Dagger" => "weapon.runedagger",
+        "One Hand Axe" => "weapon.oneaxe",
+        "One Hand Sword" => "weapon.basesword",
+        "Thrusting One Hand Sword" => "weapon.rapier",
+        "One Hand Mace" => "weapon.basemace",
+        "Sceptre" => "weapon.sceptre",
+        "Staff" => "weapon.basestaff",
+        "Warstaff" => "weapon.warstaff",
+        "Two Hand Axe" => "weapon.twoaxe",
+        "Two Hand Mace" => "weapon.twomace",
+        "Two Hand Sword" => "weapon.twosword",
+        "Wand" => "weapon.wand",
+        "FishingRod" => "weapon.rod",
+        "AbyssJewel" => "jewel.abyss",
+        // Кластерный самоцвет — свой тип на сайте; базы у него и так одна на размер.
+        "Jewel" if entry.name.en.contains("Cluster Jewel") => "jewel.cluster",
+        "Jewel" => "jewel.base",
+        "LifeFlask" | "ManaFlask" | "HybridFlask" | "UtilityFlask" => "flask",
+        "Tincture" => "tincture",
+        _ => return None,
+    })
 }
 
 fn influence_filter(influence: Influence) -> &'static str {

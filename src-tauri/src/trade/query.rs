@@ -85,6 +85,12 @@ pub struct TradeSearchSpec {
     /// Опознан ли предмет (`misc_filters.identified`); `null` — любой.
     #[serde(default)]
     pub identified: Option<bool>,
+    /// Категория базы на сайте (`armour.boots`, `weapon.claw`); `null` — у предмета её нет.
+    #[serde(default)]
+    pub category: Option<String>,
+    /// Любая база этой категории: вместо `type` — `type_filters.category` (только без имени уникального).
+    #[serde(default)]
+    pub any_base: bool,
 }
 
 impl TradeSearchSpec {
@@ -106,6 +112,8 @@ impl TradeSearchSpec {
             map_tier: None,
             map_blight: None,
             identified: None,
+            category: None,
+            any_base: false,
         }
     }
 
@@ -245,7 +253,9 @@ pub fn build_query(spec: &TradeSearchSpec) -> Result<Value, String> {
     if let Some(name) = &spec.name {
         query.insert("name".into(), json!(name));
     }
-    if let Some(ty) = &spec.type_line {
+    // Любая база категории (ботинки, кольца…): тип не пишем, ниже — `type_filters.category`.
+    let category = spec.category.as_ref().filter(|_| spec.any_base && spec.name.is_none());
+    if let Some(ty) = spec.type_line.as_ref().filter(|_| category.is_none()) {
         query.insert(
             "type".into(),
             match &spec.discriminator {
@@ -353,8 +363,15 @@ pub fn build_query(spec: &TradeSearchSpec) -> Result<Value, String> {
     if !map.is_empty() {
         filters.insert("map_filters".into(), json!({ "filters": map }));
     }
+    let mut type_filters = Map::new();
+    if let Some(category) = category {
+        type_filters.insert("category".into(), json!({ "option": category }));
+    }
     if let Some(rarity) = &spec.rarity {
-        filters.insert("type_filters".into(), json!({ "filters": { "rarity": { "option": rarity } } }));
+        type_filters.insert("rarity".into(), json!({ "option": rarity }));
+    }
+    if !type_filters.is_empty() {
+        filters.insert("type_filters".into(), json!({ "filters": type_filters }));
     }
     if !filters.is_empty() {
         query.insert("filters".into(), Value::Object(filters));
