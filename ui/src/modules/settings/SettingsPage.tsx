@@ -18,7 +18,9 @@ export function SettingsPage() {
 
   return (
     <Page title="Настройки" subtitle="Сохраняются автоматически">
-      <div className="grid min-h-0 grid-cols-2 items-start gap-4">
+      {/* Настроек больше, чем помещается на экране (команды чата), — область прокручивается (решение пользователя 14.11.2026). */}
+      <div className="grid min-h-0 flex-1 grid-cols-2 items-start gap-4 overflow-y-auto pr-1">
+
         <div className="flex min-w-0 flex-col gap-4">
           <Card>
             <CardHeader title="Горячие клавиши" />
