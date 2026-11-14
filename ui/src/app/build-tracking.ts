@@ -115,7 +115,17 @@ export function useBuildPriceEvents(names: Record<string, string>) {
 }
 /** Уведомления о цене отслеживаемых билдов: ставится один раз в корне приложения. */
 export function useBuildPriceEventsSync() {
-  const records = useRecords<{ id: string; name: string }>("pobBuilds");
-  const names = useMemo(() => Object.fromEntries((records ?? []).map((r) => [r.id, r.name])), [records]);
+  const records = useRecords<{ id: string; name: string; groupId: string | null }>("pobBuilds");
+  const groups = useRecords<{ id: string; name: string }>("pobBuildGroups");
+  // С группой: билды часто названы по месту в ней («1», «2»), без неё в уведомлении непонятно.
+  const names = useMemo(() => {
+    const groupName = new Map((groups ?? []).map((g) => [g.id, g.name]));
+    return Object.fromEntries(
+      (records ?? []).map((r) => {
+        const group = r.groupId ? groupName.get(r.groupId) : undefined;
+        return [r.id, group ? `${group} · ${r.name}` : r.name];
+      }),
+    );
+  }, [records, groups]);
   useBuildPriceEvents(names);
 }

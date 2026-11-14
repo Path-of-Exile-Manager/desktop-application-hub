@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { AppWindow, ChevronLeft, ChevronRight, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Import, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader, cx, EmptyState, IconButton, Menu, Page, Pagination, SearchInput, usePageSize, type MenuEntry } from "@/design-system";
 import { useAccount } from "@/app/account";
@@ -12,6 +12,7 @@ import {
   inGroup,
   matchesQuery,
   NAME_MAX,
+  nameWithGroup,
   newBuildRecord,
   type GroupFilter,
   type PobBuildGroup,
@@ -83,12 +84,12 @@ export function PobBuildsPage() {
     else if (seenGroup.current === filter.id) setFilter({ kind: "all" });
   }, [filter, activeGroup]);
 
+  const groupName = useCallback((b: PobBuildRecord) => (b.groupId && groups.find((g) => g.id === b.groupId)?.name) || null, [groups]);
   const shown = useMemo(
-    () => all.filter((b) => inGroup(b, filter, groupIds) && matchesQuery(b, query)).sort(byCreatedDesc),
-    [all, filter, groupIds, query],
+    () => all.filter((b) => inGroup(b, filter, groupIds) && matchesQuery(b, query, groupName(b))).sort(byCreatedDesc),
+    [all, filter, groupIds, query, groupName],
   );
   const countOf = (f: GroupFilter) => all.filter((b) => inGroup(b, f, groupIds)).length;
-  const groupName = (b: PobBuildRecord) => (b.groupId && groups.find((g) => g.id === b.groupId)?.name) || null;
 
   const moveTo = (build: PobBuildRecord, groupId: string | null) =>
     build.groupId === groupId ? Promise.resolve() : saveRecord("pobBuilds", { ...build, groupId }).then(() => undefined, fail("Не перенесено"));
@@ -105,7 +106,7 @@ export function PobBuildsPage() {
   if (opened)
     return (
       <>
-        <BuildView key={opened.id} record={opened} onBack={() => setOpenId(null)} onShare={share} />
+        <BuildView key={opened.id} record={opened} group={groupName(opened)} onBack={() => setOpenId(null)} onShare={share} />
         {publishDialog}
       </>
     );
@@ -173,6 +174,7 @@ export function PobBuildsPage() {
               builds={shown}
               groups={groups}
               groupName={groupName}
+              mixed={filter.kind === "all"}
               onOpen={(b) => setOpenId(b.id)}
               onRename={(build) => setDialog({ kind: "rename-build", build })}
               onDelete={(build) => setDialog({ kind: "delete-build", build })}
@@ -250,7 +252,7 @@ export function PobBuildsPage() {
       {dialog?.kind === "delete-build" && (
         <ConfirmDialog
           title="Удалить билд?"
-          text={`«${dialog.build.name}» удалится из библиотеки${signedIn ? " и с других устройств" : ""}.`}
+          text={`«${nameWithGroup(dialog.build, groupName(dialog.build))}» удалится из библиотеки${signedIn ? " и с других устройств" : ""}.`}
           action="Удалить"
           onClose={() => setDialog(null)}
           onConfirm={() => removeRecord("pobBuilds", dialog.build.id)}
@@ -406,6 +408,7 @@ function BuildList({
   builds,
   groups,
   groupName,
+  mixed,
   onOpen,
   onRename,
   onDelete,
@@ -415,6 +418,8 @@ function BuildList({
   builds: PobBuildRecord[];
   groups: PobBuildGroup[];
   groupName: (b: PobBuildRecord) => string | null;
+  /** Билды разных групп вперемешку («Все билды»): перед названием — группа. */
+  mixed: boolean;
   onOpen: (b: PobBuildRecord) => void;
   onRename: (b: PobBuildRecord) => void;
   onDelete: (b: PobBuildRecord) => void;
@@ -457,7 +462,10 @@ function BuildList({
               >
                 <Portrait build={b} />
                 <button type="button" onClick={() => onOpen(b)} className="flex min-w-0 flex-1 flex-col text-left" title="Открыть">
-                  <span className="truncate text-body font-medium text-text-primary">{b.name}</span>
+                  <span className="truncate text-body font-medium text-text-primary">
+                    {mixed && group && <span className="font-normal text-text-secondary">{group} · </span>}
+                    {b.name}
+                  </span>
                   <span className="truncate text-label text-text-secondary">{buildSubtitle(b)}</span>
                 </button>
                 <TrackedPrice recordId={b.id} />
@@ -470,7 +478,7 @@ function BuildList({
                   <IconButton icon={Copy} label="Скопировать код для PoB" onClick={() => copyCode(b.code)} />
                   <IconButton icon={ExternalLink} label={b.source ? pageLabel(b) : `${pageLabel(b)} (выгрузить)`} onClick={() => onShare(b, "page")} />
                   <IconButton icon={AppWindow} label="Открыть в Path of Building" onClick={() => onShare(b, "pob")} />
-                  <Menu align="end" items={menu} trigger={<IconButton icon={Ellipsis} label={`Действия: ${b.name}`} />} />
+                  <Menu align="end" items={menu} trigger={<IconButton icon={Ellipsis} label={`Действия: ${nameWithGroup(b, group)}`} />} />
                 </div>
               </li>
             );

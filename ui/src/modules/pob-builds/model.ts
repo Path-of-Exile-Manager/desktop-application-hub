@@ -81,11 +81,15 @@ export const CLASS_TONE: Record<string, string> = {
 };
 
 /** Подходит ли билд под строку поиска: название, класс, восхождение. */
-export function matchesQuery(b: PobBuildRecord, query: string): boolean {
+/** Поиск по названию, классу и группе: билды часто названы по месту в группе («1», «2»). */
+export function matchesQuery(b: PobBuildRecord, query: string, group: string | null = null): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return [b.name, b.className, b.ascendancy ?? ""].some((s) => s.toLowerCase().includes(q));
+  return [b.name, b.className, b.ascendancy ?? "", group ?? ""].some((s) => s.toLowerCase().includes(q));
 }
+
+/** Название с группой — для списков, где билды разных групп вперемешку: «Blade fall toxic · 1». */
+export const nameWithGroup = (b: PobBuildRecord, group: string | null) => (group ? `${group} · ${b.name}` : b.name);
 
 export function inGroup(b: PobBuildRecord, filter: GroupFilter, groupIds: Set<string>): boolean {
   if (filter.kind === "all") return true;

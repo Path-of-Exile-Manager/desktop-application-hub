@@ -12,7 +12,7 @@ import type { PobStageRow } from "@/generated/PobStageRow";
 import type { BuildPrice } from "@/generated/BuildPrice";
 import type { RowPrice } from "@/generated/RowPrice";
 import { copyCode, fail } from "./dialogs";
-import { buildSubtitle, decodeBuild, type PobBuildRecord } from "./model";
+import { buildSubtitle, decodeBuild, nameWithGroup, type PobBuildRecord } from "./model";
 import { Portrait } from "./parts";
 import { pageLabel, type ShareAction } from "./share";
 import { ItemCard } from "./ItemCard";
@@ -46,7 +46,7 @@ function matchStage(build: PobBuild, item: number, fallback: { skill: number; tr
   return { item, skill: skill >= 0 ? skill : fallback.skill, tree: tree >= 0 ? tree : fallback.tree };
 }
 
-export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord; onBack: () => void; onShare: (b: PobBuildRecord, action: ShareAction) => void }) {
+export function BuildView({ record, group, onBack, onShare }: { record: PobBuildRecord; group: string | null; onBack: () => void; onShare: (b: PobBuildRecord, action: ShareAction) => void }) {
   const [build, setBuild] = useState<PobBuild | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [choice, setChoice] = useState<{ item: number; skill: number; tree: number } | null>(null);
@@ -138,7 +138,7 @@ export function BuildView({ record, onBack, onShare }: { record: PobBuildRecord;
 
   return (
     <Page
-      title={record.name}
+      title={nameWithGroup(record, group)}
       subtitle={buildSubtitle(record)}
       actions={
         <>
