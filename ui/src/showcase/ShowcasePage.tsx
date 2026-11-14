@@ -508,6 +508,8 @@ function GameSection() {
         <Price price={DOOM_SHELL_PRICE} approx size="xl" />
         <Price price={DOOM_SHELL_PRICE} approx size="lg" />
         <Price price={{ amount: 105, currency: "chaos" }} size="md" />
+        <Price price={{ amount: 0.0318, currency: "chaos" }} approx size="lg" />
+        <PriceConversion price={{ amount: 0.13, currency: "divine" }} />
         <PriceConversion price={DOOM_SHELL_DIVINE} />
         <FreshnessTag fresh>данные свежие · 2 мин</FreshnessTag>
         <FreshnessTag fresh={false}>старше часа</FreshnessTag>

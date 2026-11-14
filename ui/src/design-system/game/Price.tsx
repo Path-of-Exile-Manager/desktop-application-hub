@@ -17,6 +17,27 @@ export function formatAmount(amount: number): string {
   return amount.toLocaleString("ru-RU", options).replace(",", ".").replace(/^-/, "−");
 }
 
+/**
+ * Сколько штук за одну валюту, если штука дешевле половины валюты: «0.05 chaos» не читается,
+ * «20 шт. за 1 chaos» — сразу понятно. Дороже — `null`, цена показывается как есть.
+ */
+export function unitsPerCurrency(amount: number): number | null {
+  return amount > 0 && amount < 0.5 ? 1 / amount : null;
+}
+
+/** Число штук: от 10 — целое (`1 566`), меньше — с одним знаком (`2.5`). */
+export function formatUnits(units: number): string {
+  const value = units >= 10 ? Math.round(units) : Math.round(units * 10) / 10;
+  return value.toLocaleString("ru-RU").replace(",", ".");
+}
+
+/** Цена строкой: `120 c`, `1.25 div`, дешёвое — `20 шт. за 1 c`. `unit` — подпись валюты. */
+export function formatPriceAmount(price: PriceAmount, unit: "abbr" | "short" = "abbr"): string {
+  const label = CURRENCY[price.currency][unit];
+  const units = unitsPerCurrency(price.amount);
+  return units === null ? `${formatAmount(price.amount)} ${label}` : `${formatUnits(units)} шт. за 1 ${label}`;
+}
+
 // Валюта отображения (shared/docs/price-currency.md). Цены хранятся и считаются в chaos,
 // валюта выбирается только при показе — по режиму и курсу divine текущей лиги.
 
@@ -43,11 +64,10 @@ export function displayPrice(chaos: number, divineChaos: number | null | undefin
   return { primary, secondary: mode === "both" ? (divineFirst ? inChaos : inDivine) : null };
 }
 
-/** Цена строкой: `120 c`, `1.25 div`, в режиме «обе» — `1.25 div (262 c)`. */
+/** Цена строкой: `120 c`, `1.25 div`, `20 шт. за 1 c`, в режиме «обе» — `1.25 div (262 c)`. */
 export function priceText(chaos: number, divineChaos: number | null | undefined, mode: PriceMode): string {
   const { primary, secondary } = displayPrice(chaos, divineChaos, mode);
-  const text = (p: PriceAmount) => `${formatAmount(p.amount)} ${CURRENCY[p.currency].abbr}`;
-  return secondary ? `${text(primary)} (${text(secondary)})` : text(primary);
+  return secondary ? `${formatPriceAmount(primary)} (${formatPriceAmount(secondary)})` : formatPriceAmount(primary);
 }
 
 type PriceDisplay = { mode: PriceMode; divineChaos: number | null };
@@ -119,9 +139,26 @@ export type PriceProps = {
   className?: string;
 };
 
-/** Цена: `~120` моно semibold + иконка валюты + название (components.md, п. 7). */
+/**
+ * Цена: `~120` моно semibold + иконка валюты + название (components.md, п. 7).
+ * Дешевле половины валюты — сколько штук за одну: `~20 шт. за 1 (иконка) chaos`, точная цена — в подсказке.
+ */
 export function Price({ price, approx, size = "lg", className }: PriceProps) {
   const s = PRICE_SIZE[size];
+  const units = unitsPerCurrency(price.amount);
+  if (units !== null) {
+    return (
+      <span className={cx("inline-flex items-center gap-2", className)} title={`${formatAmount(price.amount)} ${CURRENCY[price.currency].short} за штуку`}>
+        <span className={cx("font-mono font-semibold text-text-primary", s.number)}>
+          {approx && "~"}
+          {formatUnits(units)}
+        </span>
+        <span className={cx("text-text-secondary", s.name)}>шт. за 1</span>
+        <CurrencyIcon currency={price.currency} size={s.icon} />
+        <span className={cx("text-text-secondary", s.name)}>{CURRENCY[price.currency].short}</span>
+      </span>
+    );
+  }
   return (
     <span className={cx("inline-flex items-center gap-2", className)}>
       <span className={cx("font-mono font-semibold text-text-primary", s.number)}>
@@ -134,13 +171,9 @@ export function Price({ price, approx, size = "lg", className }: PriceProps) {
   );
 }
 
-/** Пересчёт в другую валюту: `≈ 0.6 divine`, моно secondary. */
+/** Пересчёт в другую валюту: `≈ 0.6 divine`, `≈ 5 шт. за 1 divine`, моно secondary. */
 export function PriceConversion({ price, className }: { price: PriceAmount; className?: string }) {
-  return (
-    <span className={cx("font-mono text-text-secondary", className)}>
-      ≈ {formatAmount(price.amount)} {CURRENCY[price.currency].short}
-    </span>
-  );
+  return <span className={cx("font-mono text-text-secondary", className)}>≈ {formatPriceAmount(price, "short")}</span>;
 }
 
 export type MarketPriceProps = Omit<PriceProps, "price"> & {
