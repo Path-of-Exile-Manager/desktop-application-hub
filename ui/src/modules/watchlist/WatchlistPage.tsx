@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Eye, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { Eye, Info, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { Button, Card, CardHeader, CardSection, CURRENCY, cx, EmptyState, Input, ItemIcon, MarketPrice, Page, Select, toast, usePriceText } from "@/design-system";
 import { iconUrl, itemName, itemNameIn, queryLanguage, searchCatalog, type CatalogItem } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
@@ -11,6 +11,7 @@ import { addToWatchlist, findWatch, NOTE_MAX, removeFromWatchlist, setWatchNote,
 import { inTauri } from "@/app/window";
 import { variantSpec } from "@/components/trade/spec";
 import { TradeButton } from "@/components/trade/TradeButton";
+import { WatchDetailsDialog } from "./WatchDetailsDialog";
 
 /** Значение «обычного» варианта в выпадающем списке: Radix Select не принимает пустую строку. */
 const PLAIN = "__plain";
@@ -134,6 +135,7 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
   const change = week ? weekChange(week.series) : null;
 
   const name = item ? itemName(item) : item === null ? entry.itemId : "…";
+  const [details, setDetails] = useState(false);
 
   return (
     <li className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] items-center gap-4 border-b border-border-subtle py-2.5 last:border-b-0">
@@ -181,6 +183,9 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
       />
 
       <div className="flex items-center gap-1">
+        <Button variant="ghost" icon={Info} disabled={!item} aria-label={`Просмотр: ${name}`} onClick={() => setDetails(true)}>
+          Просмотр
+        </Button>
         <TradeButton
           variant="ghost"
           aria-label={`Искать на трейде: ${name}`}
@@ -191,6 +196,7 @@ function WatchRow({ entry }: { entry: WatchEntry }) {
           Убрать
         </Button>
       </div>
+      {details && item && <WatchDetailsDialog entry={entry} item={item} onClose={() => setDetails(false)} />}
     </li>
   );
 }
