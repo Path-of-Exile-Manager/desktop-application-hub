@@ -15,6 +15,7 @@ use super::stats::StatIndex;
 use crate::appraise::Appraisal;
 use crate::dataset::model::{CatalogItem, ItemDetails, ItemKind, ItemRarity};
 use crate::dataset::{Catalog, DatasetService};
+use crate::item_mods::ModLabel;
 
 /// Камень: трансфигурированный (`base:<путь камня>:alt_x`) на сайте — базовый камень с дискриминатором.
 pub fn gem_spec(catalog: &Catalog, entry: &CatalogItem, level: u32, quality: u32, corrupted: bool) -> TradeSearchSpec {
@@ -87,7 +88,9 @@ pub fn appraisal_spec(catalog: &Catalog, stats: Option<&StatIndex>, appraisal: &
                     ModKind::Fractured => (PobModKind::Explicit, false, true),
                 };
                 let enabled = wanted(m.kind);
-                m.lines.iter().map(move |l| Line { text: strip_ranges(l), kind, crafted, fractured, enabled })
+                // Префикс/суффикс и тир — из текста игры (с заголовком мода — точно) или угаданные `label_mods`.
+                let label = m.affix.map(|affix| ModLabel { affix, tier: m.tier, exact: m.name.is_some() });
+                m.lines.iter().map(move |l| Line { text: strip_ranges(l), kind, crafted, fractured, enabled, label })
             })
             .collect();
         spec.mods = spec_mods(stats, &lines, item.language, local_slot(entry));
@@ -131,10 +134,10 @@ pub fn variant_spec(catalog: &Catalog, stats: Option<&StatIndex>, entry: &Catalo
     {
         let mut lines = Vec::new();
         if let Some(n) = v.passives {
-            lines.push(Line { text: format!("Adds {n} Passive Skills"), kind: PobModKind::Enchant, crafted: false, fractured: false, enabled: true });
+            lines.push(Line { text: format!("Adds {n} Passive Skills"), kind: PobModKind::Enchant, crafted: false, fractured: false, enabled: true, label: None });
         }
         if let Some(grant) = &v.enchant {
-            lines.push(Line { text: format!("Added Small Passive Skills grant: {grant}"), kind: PobModKind::Enchant, crafted: false, fractured: false, enabled: true });
+            lines.push(Line { text: format!("Added Small Passive Skills grant: {grant}"), kind: PobModKind::Enchant, crafted: false, fractured: false, enabled: true, label: None });
         }
         spec.mods = spec_mods(stats, &lines, Language::En, "");
         // Число пассивов — ровно такое: 8 и 12 пассивов — разные самоцветы.
@@ -200,6 +203,7 @@ struct Line {
     fractured: bool,
     /// Включить в поиск, если фильтр найден.
     enabled: bool,
+    label: Option<ModLabel>,
 }
 
 /// Моды спецификации: стат каждой строки; второй мод с тем же статом — дубль первого.
@@ -242,7 +246,7 @@ fn spec_mods(stats: &StatIndex, lines: &[Line], language: Language, slot: &str) 
                 use_fractured: false,
                 unavailable,
                 duplicate_of,
-                label: None,
+                label: line.label,
             }
         })
         .collect()

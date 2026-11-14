@@ -5,7 +5,9 @@ import type { TradeSearchSpec } from "./spec";
 /** Опознан ли предмет в поиске на сайте торговли. */
 export type IdentifiedChoice = "any" | "yes" | "no";
 
-const toChoice = (identified: boolean | null): IdentifiedChoice => (identified === null ? "any" : identified ? "yes" : "no");
+export const toChoice = (identified: boolean | null): IdentifiedChoice => (identified === null ? "any" : identified ? "yes" : "no");
+
+export const fromChoice = (choice: IdentifiedChoice): boolean | null => (choice === "any" ? null : choice === "yes");
 
 /**
  * Выбор «опознан / не опознан / любой» для поиска пойманного предмета. Умолчание — из спецификации
@@ -20,7 +22,7 @@ export function useIdentifiedChoice(spec: TradeSearchSpec | null | undefined) {
     applicable: !!spec && spec.identified !== null,
     choice,
     setChoice: (next: IdentifiedChoice) => setState({ spec, choice: next }),
-    spec: spec ? { ...spec, identified: choice === "any" ? null : choice === "yes" } : null,
+    spec: spec ? { ...spec, identified: fromChoice(choice) } : null,
   };
 }
 

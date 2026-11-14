@@ -1,7 +1,10 @@
 import { Card, CardSection, ItemHeader, ItemProperties, ItemStateBadge, ModList, Sockets, type Item } from "@/design-system";
 
-/** Карточка разобранного предмета: шапка, свойства и сокеты, моды, состояние. */
-export function ItemCard({ item, className }: { item: Item; className?: string }) {
+/**
+ * Карточка разобранного предмета: шапка, свойства и сокеты, моды, состояние.
+ * `hideMods` — моды показывает поиск на трейде (с галочками), здесь второй раз не нужно.
+ */
+export function ItemCard({ item, hideMods, className }: { item: Item; hideMods?: boolean; className?: string }) {
   return (
     <Card className={className}>
       <CardSection className="flex flex-col gap-1.5">
@@ -13,7 +16,7 @@ export function ItemCard({ item, className }: { item: Item; className?: string }
           </div>
         )}
       </CardSection>
-      {item.mods.length > 0 && (
+      {!hideMods && item.mods.length > 0 && (
         <CardSection>
           <ModList mods={item.mods} />
         </CardSection>

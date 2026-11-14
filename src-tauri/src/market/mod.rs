@@ -8,7 +8,7 @@
 //! конца его окна. 429 — пауза на `Retry-After`, задания возвращаются в пул.
 //! Отслеживание билдов и цены — `tracking.rs` (шаг T7).
 
-mod trade_client;
+pub mod trade_client;
 pub mod tracking;
 
 use std::collections::VecDeque;
@@ -136,7 +136,7 @@ pub fn start(app: &AppHandle) {
     });
     let app = app.clone();
     let _ = thread::Builder::new().name("market".into()).spawn(move || {
-        let mut client = TradeClient::new();
+        let mut client = TradeClient::new("build price helper");
         loop {
             let wait = step(&app, &mut client);
             match wakes.recv_timeout(wait) {

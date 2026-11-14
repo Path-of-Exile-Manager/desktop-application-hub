@@ -1,13 +1,65 @@
+import { useState } from "react";
 import { ClipboardPaste, ScanSearch } from "lucide-react";
-import { Banner, Button, EmptyState, Hotkey, Page, toast } from "@/design-system";
+import { Banner, Button, Card, CardSection, EmptyState, Hotkey, Page, toast } from "@/design-system";
 import { useShell } from "@/app/store";
 import { inputBlocked, useGameStatus } from "@/app/game";
-import { appraiseClipboard, useAppraisal } from "@/app/appraise";
+import { appraiseClipboard, useAppraisal, type Appraisal } from "@/app/appraise";
 import { appraisalToItem } from "@/app/item-view";
+import { useCurrentLeague } from "@/app/leagues";
 import { inTauri } from "@/app/window";
+import type { TradeSearchSpec } from "@/components/trade/spec";
 import { ItemCard } from "./ItemCard";
+import { LotsCard } from "./LotsCard";
 import { PriceCard } from "./PriceCard";
+import { TradeSearchCard } from "./TradeSearchCard";
+import { useLiveSearch } from "./useLiveSearch";
 import { WeaponDamageCard } from "./WeaponDamage";
+
+/**
+ * Пойманный предмет в три колонки: предмет и поиск на трейде (моды с галочками и MIN/MAX), цена,
+ * лоты на рынке по этому поиску. Правки поиска и выдача — для этого предмета; новый предмет
+ * начинает с умолчаний ядра.
+ */
+function CheckedItem({ appraisal }: { appraisal: Appraisal }) {
+  const league = useCurrentLeague();
+  const defaults = appraisal.tradeSpec;
+  const [edited, setEdited] = useState<{ owner: Appraisal; spec: TradeSearchSpec } | null>(null);
+  const spec = edited?.owner === appraisal ? edited.spec : defaults;
+  const live = useLiveSearch(appraisal);
+  const hasFilters = !!spec && spec.mods.length > 0;
+
+  return (
+    <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)_minmax(0,1.15fr)] gap-4">
+      <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-hidden">
+        <ItemCard item={appraisalToItem(appraisal)} hideMods={hasFilters} className="shrink-0" />
+        {spec && defaults && (
+          <TradeSearchCard
+            spec={spec}
+            defaults={defaults}
+            onChange={(next) => setEdited({ owner: appraisal, spec: next })}
+            league={league?.id}
+            searching={live.loading}
+            onSearch={() => league && live.search(spec, league.id)}
+            className="min-h-0 flex-1"
+          />
+        )}
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-hidden">
+        <PriceCard appraisal={appraisal} />
+        <WeaponDamageCard appraisal={appraisal} />
+      </div>
+      {spec ? (
+        <LotsCard live={live} className="min-w-0" />
+      ) : (
+        <Card className="min-w-0">
+          <CardSection>
+            <p className="text-body text-text-secondary">Предмета нет в справочнике — искать на трейде нечего.</p>
+          </CardSection>
+        </Card>
+      )}
+    </div>
+  );
+}
 
 /**
  * Модуль Price check (app-shell.md, экран A1): последний оценённый предмет — карточка и цена.
@@ -50,13 +102,7 @@ export function PriceCheckPage() {
       )}
 
       {appraisal ? (
-        <div className="flex min-h-0 flex-wrap items-start gap-4">
-          <div className="flex min-w-0 grow basis-90 flex-col gap-4">
-            <ItemCard item={appraisalToItem(appraisal)} />
-            <WeaponDamageCard appraisal={appraisal} />
-          </div>
-          <PriceCard appraisal={appraisal} className="min-w-0 grow basis-110" />
-        </div>
+        <CheckedItem appraisal={appraisal} />
       ) : (
         <EmptyState icon={ScanSearch} title="Предмет ещё не пойман">
           Наведите на предмет в игре и нажмите <Hotkey keys={hotkeys.check} className="align-middle" />

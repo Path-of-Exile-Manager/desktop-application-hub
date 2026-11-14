@@ -58,19 +58,21 @@ pub struct TradeClient {
     policies: HashMap<String, PolicyState>,
 }
 
+/// Ответ поиска: id запроса (для fetch и ссылки на сайт), сколько всего и id первых предложений (до 100).
 #[derive(Deserialize)]
-struct SearchResponse {
-    id: String,
-    total: u32,
+pub struct SearchResponse {
+    pub id: String,
+    pub total: u32,
     #[serde(default)]
-    result: Vec<String>,
+    pub result: Vec<String>,
 }
 
 impl TradeClient {
-    pub fn new() -> Self {
+    /// `purpose` — для User-Agent: сайт видит, кто и зачем ищет.
+    pub fn new(purpose: &str) -> Self {
         let agent = ureq::Agent::config_builder()
             .http_status_as_error(false)
-            .user_agent(format!("poe-manager-desktop/{} (build price helper)", env!("CARGO_PKG_VERSION")))
+            .user_agent(format!("poe-manager-desktop/{} ({purpose})", env!("CARGO_PKG_VERSION")))
             .timeout_global(Some(TIMEOUT))
             .build()
             .into();
@@ -83,45 +85,47 @@ impl TradeClient {
         self.wait_for("trade-search-request-limit").max(self.wait_for("trade-fetch-request-limit"))
     }
 
+    /// Сколько ждать до запроса человека: только если правило уже исчерпано или сайт ограничил
+    /// запросы. Фоновый искатель уступает раньше (`search_wait`), человек — ищет, пока можно.
+    pub fn wait_strict(&self, policy: &str) -> u64 {
+        self.wait_with(policy, |rule| if rule.restricted > 0 { rule.restricted } else if rule.hits >= rule.max { rule.period } else { 0 })
+    }
+
     fn wait_for(&self, policy: &str) -> u64 {
+        self.wait_with(policy, |rule| if rule.restricted > 0 { rule.restricted } else if rule.hits * 3 >= rule.max * 2 { rule.period } else { 0 })
+    }
+
+    fn wait_with(&self, policy: &str, window: impl Fn(&Rule) -> u64) -> u64 {
         let Some(state) = self.policies.get(policy) else { return 0 };
         let elapsed = state.observed.elapsed().as_secs();
-        state
-            .rules
-            .iter()
-            .map(|rule| {
-                let window = if rule.restricted > 0 {
-                    rule.restricted
-                } else if rule.hits * 3 >= rule.max * 2 {
-                    rule.period
-                } else {
-                    0
-                };
-                window.saturating_sub(elapsed)
-            })
-            .max()
-            .unwrap_or(0)
+        state.rules.iter().map(|rule| window(rule).saturating_sub(elapsed)).max().unwrap_or(0)
+    }
+
+    /// Поиск: id запроса, сколько всего, id первых до 100 предложений. `league` — как его называет сайт.
+    pub fn search(&mut self, league: &str, payload: &Value) -> Result<SearchResponse, TradeError> {
+        let url = format!("{TRADE}/search/{}", encode(league));
+        let response = self.agent.post(&url).header("Accept", "application/json").send_json(payload);
+        self.read(response)
+    }
+
+    /// Предложения по id (не больше 10 за раз) из поиска `query`: ответ сайта как есть.
+    pub fn fetch(&mut self, ids: &[String], query: &str) -> Result<Vec<Value>, TradeError> {
+        let ids: Vec<&str> = ids.iter().take(FETCH_LIMIT).map(String::as_str).collect();
+        let url = format!("{TRADE}/fetch/{}?query={}", ids.join(","), encode(query));
+        let response = self.agent.get(&url).header("Accept", "application/json").call();
+        let fetched: Value = self.read(response)?;
+        Ok(fetched.get("result").and_then(Value::as_array).cloned().unwrap_or_default().into_iter().filter(|v| !v.is_null()).collect())
     }
 
     /// Поиск и, если предложений хотя бы 3, 10 самых дешёвых. `league` — как его называет сайт.
     pub fn quote(&mut self, league: &str, payload: &Value) -> Result<SearchOutcome, TradeError> {
-        let url = format!("{TRADE}/search/{}", encode(league));
-        let response = self.agent.post(&url).header("Accept", "application/json").send_json(payload);
-        let body: SearchResponse = self.read(response)?;
+        let body = self.search(league, payload)?;
         if body.total < 3 || body.result.is_empty() {
             return Ok(SearchOutcome { total: body.total, listings: Vec::new() });
         }
         std::thread::sleep(Duration::from_secs(1));
-        let ids: Vec<&str> = body.result.iter().take(FETCH_LIMIT).map(String::as_str).collect();
-        let url = format!("{TRADE}/fetch/{}?query={}", ids.join(","), encode(&body.id));
-        let response = self.agent.get(&url).header("Accept", "application/json").call();
-        let fetched: Value = self.read(response)?;
-        let listings = fetched
-            .get("result")
-            .and_then(Value::as_array)
-            .map(|entries| entries.iter().filter_map(listing).collect())
-            .unwrap_or_default();
-        Ok(SearchOutcome { total: body.total, listings })
+        let fetched = self.fetch(&body.result, &body.id)?;
+        Ok(SearchOutcome { total: body.total, listings: fetched.iter().filter_map(listing).collect() })
     }
 
     fn read<T: serde::de::DeserializeOwned>(&mut self, response: Result<ureq::http::Response<ureq::Body>, ureq::Error>) -> Result<T, TradeError> {
@@ -177,7 +181,7 @@ fn parse_rules(rules: &str, state: &str) -> Vec<Rule> {
         .collect()
 }
 
-fn encode(text: &str) -> String {
+pub fn encode(text: &str) -> String {
     let mut out = String::with_capacity(text.len() * 2);
     for b in text.bytes() {
         match b {

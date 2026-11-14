@@ -7,8 +7,6 @@ import type { Appraisal } from "@/app/appraise";
 import { useCurrentLeague } from "@/app/leagues";
 import { formatAge, isFresh, type HistoryRange } from "@/app/prices";
 import { usePriceHistoryIn } from "@/app/price-history";
-import { TradeButton } from "@/components/trade/TradeButton";
-import { IdentifiedControl, useIdentifiedChoice } from "@/components/trade/identified";
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
 
@@ -41,7 +39,6 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
   const text = usePriceText();
   const price = appraisal.price;
   const watchKey = price?.variantKey ?? appraisal.variantKey ?? "";
-  const identified = useIdentifiedChoice(appraisal.tradeSpec);
 
   const [range, setRange] = useState<HistoryRange>("week");
   const { history, error: historyError } = usePriceHistoryIn(league?.id, price, range);
@@ -114,14 +111,12 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
           </CardSection>
         </>
       )}
-      <CardSection className="flex flex-wrap items-center gap-3">
-        <TradeButton variant="primary" spec={identified.spec} league={league?.id}>
-          Искать на трейде
-        </TradeButton>
-        {identified.applicable && <IdentifiedControl value={identified.choice} onChange={identified.setChoice} />}
-        {appraisal.catalogItem && <WatchButton itemId={appraisal.catalogItem.id} variantKey={watchKey} />}
-        {appraisal.catalogItem && <span className="text-label text-text-secondary">{variantLabel(watchKey)}</span>}
-      </CardSection>
+      {appraisal.catalogItem && (
+        <CardSection className="flex flex-wrap items-center gap-3">
+          <WatchButton itemId={appraisal.catalogItem.id} variantKey={watchKey} />
+          <span className="text-label text-text-secondary">{variantLabel(watchKey)}</span>
+        </CardSection>
+      )}
       {appraisal.notes.length > 0 && (
         <CardSection>
           <ul className="flex flex-col gap-1 text-label text-text-secondary">

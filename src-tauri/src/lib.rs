@@ -102,6 +102,7 @@ pub fn run() {
             updater::start(app.handle(), &app_root);
             app.manage(appraise::LastAppraisal::default());
             capture::start(app.handle());
+            app.manage(trade::live::LiveTradeService::new());
             hotkeys::start(app.handle(), &game::current(app.handle()));
             extension::start(app.handle());
             discord::start(app.handle(), &game::current(app.handle()));
@@ -145,6 +146,8 @@ pub fn run() {
             trade::stats::trade_stats_lookup,
             trade::query::trade_query,
             trade::item_search::trade_variant_spec,
+            trade::live::trade_live_search,
+            trade::live::trade_live_fetch,
             leagues::leagues_status,
             leagues::leagues_refresh,
             prices::prices_status,
