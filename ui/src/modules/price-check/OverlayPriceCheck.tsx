@@ -25,6 +25,8 @@ export type OverlayPriceCheckProps = {
   similar?: number;
   /** Подпись под ценой или вместо неё: свежесть, «ближайший вариант», «нет цены». */
   priceNote?: ReactNode;
+  /** Стопка: «за 7 шт. ≈ 3.5 chaos» — под ценой штуки. */
+  stackTotal?: ReactNode;
   pinned: boolean;
   onPinnedChange: (pinned: boolean) => void;
   onClose: () => void;
@@ -43,7 +45,7 @@ export type OverlayPriceCheckProps = {
  * Виджет оверлея Price check (экран A4, OvA.dc.html). Порядок сверху вниз (guide.md, п. 4):
  * редкость и имя → базовые свойства → моды → состояние → цена → действия.
  */
-export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenTrade, tradeOptions, damage, onOpenCraft }: OverlayPriceCheckProps) {
+export function OverlayPriceCheck({ item, price, conversion, similar, priceNote, stackTotal, pinned, onPinnedChange, onClose, onOpenInWindow, onOpenTrade, tradeOptions, damage, onOpenCraft }: OverlayPriceCheckProps) {
   return (
     <OverlayFrame
       title="Price check"
@@ -115,6 +117,7 @@ export function OverlayPriceCheck({ item, price, conversion, similar, priceNote,
               {similar !== undefined && `${similar} похожих`}
             </span>
           )}
+          {stackTotal && <span className="text-body text-text-primary">{stackTotal}</span>}
           {priceNote && <span className="text-label text-text-secondary">{priceNote}</span>}
         </div>
       </OverlaySection>

@@ -70,7 +70,7 @@ function LotPrice({ price }: { price: LivePrice }) {
           <span className="text-text-secondary">{price.currency}</span>
         </span>
       )}
-      {/* Пересчёт дешёвого лота («≈ 22 шт. за 1 c») только путает — показываем от половины chaos. */}
+      {/* Пересчёт дешёвого лота («≈ 22 / c») только путает — показываем от половины chaos. */}
       {price.chaos !== null && price.chaos >= 0.5 && price.currency !== "chaos" && <span className="font-mono text-caption text-text-secondary">≈ {text(price.chaos, true)}</span>}
     </div>
   );

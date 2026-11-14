@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { CurrencyIconsProvider, DesignSystemProvider, displayPrice } from "@/design-system";
+import { CurrencyIconsProvider, DesignSystemProvider, displayPrice, totalPriceText } from "@/design-system";
 import type { Appraisal } from "@/app/appraise";
 import { useDatasetStatusSync } from "@/app/dataset";
 import { appraisalToItem } from "@/app/item-view";
@@ -77,6 +77,9 @@ export function OverlayApp() {
   const tradeSpec = identified.spec;
   const league = prices?.league;
   const shown = price ? displayPrice(price.chaosValue, prices?.divineChaos, priceMode) : null;
+  // Стопка валюты: сколько стоит вся.
+  const stack = appraisal.item.stackSize;
+  const stackTotal = price && stack && stack > 1 ? `за ${stack.toLocaleString("ru-RU")} шт. ≈ ${totalPriceText(price.chaosValue * stack, prices?.divineChaos, priceMode)}` : null;
   const note = !price
     ? appraisal.catalogItem
       ? "в этой лиге цены нет"
@@ -99,6 +102,7 @@ export function OverlayApp() {
             price={shown?.primary ?? null}
             conversion={shown?.secondary ?? null}
             priceNote={note}
+            stackTotal={stackTotal}
             pinned={pinned}
             onPinnedChange={setPinned}
             onClose={() => void invoke("overlay_hide", { restoreGame: true })}

@@ -47,6 +47,7 @@ export {
   usePriceText,
   displayPrice,
   priceText,
+  totalPriceText,
   FreshnessTag,
   CURRENCY,
   PRICE_MODES,

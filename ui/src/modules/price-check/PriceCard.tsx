@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Button, Card, CardHeader, CardSection, CURRENCY, FreshnessTag, MarketPrice, PriceChart, SegmentedControl, StatusBadge, toast, usePriceText } from "@/design-system";
+import { Button, Card, CardHeader, CardSection, CURRENCY, FreshnessTag, MarketPrice, PriceChart, SegmentedControl, StatusBadge, toast, totalPriceText, usePriceDisplay, usePriceText } from "@/design-system";
 import { addToWatchlist, findWatch, removeFromWatchlist, useWatchlist, variantLabel } from "@/app/watchlist";
 import { inTauri } from "@/app/window";
 import type { Appraisal } from "@/app/appraise";
@@ -38,6 +38,8 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
   const league = useCurrentLeague();
   const text = usePriceText();
   const price = appraisal.price;
+  const stack = appraisal.item.stackSize ?? 0;
+  const priceDisplay = usePriceDisplay();
   const watchKey = price?.variantKey ?? appraisal.variantKey ?? "";
 
   const [range, setRange] = useState<HistoryRange>("week");
@@ -63,6 +65,12 @@ export function PriceCard({ appraisal, className }: { appraisal: Appraisal; clas
         <>
           <CardSection className="flex flex-col gap-2">
             <MarketPrice chaos={price.chaosValue} approx size="xl" conversionClassName="text-body" />
+            {stack > 1 && (
+              <p className="flex flex-wrap items-center gap-2 text-body text-text-secondary">
+                за {stack.toLocaleString("ru-RU")} шт. ≈{" "}
+                <span className="font-mono font-semibold text-text-primary">{totalPriceText(price.chaosValue * stack, priceDisplay.divineChaos, priceDisplay.mode)}</span>
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <FreshnessTag fresh={isFresh(price.updatedAt)}>{isFresh(price.updatedAt) ? `данные свежие · ${formatAge(price.updatedAt)}` : `обновлено ${formatAge(price.updatedAt)} назад`}</FreshnessTag>
               {!price.reliable && <StatusBadge status="warning">мало данных — цена приблизительная</StatusBadge>}
