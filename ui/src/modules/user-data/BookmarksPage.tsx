@@ -240,7 +240,7 @@ export function BookmarksPage() {
           Сохраняйте поиски в панели расширения на сайте торговли — они появятся здесь. Или создайте папку и добавьте адрес поиска.
         </EmptyState>
       ) : (
-        <div className="flex min-h-0 flex-col gap-4">
+        <div className="flex flex-col gap-4">
           {visible.map((folder) => {
             const Icon = FOLDER_ICONS[folder.icon] ?? FolderIcon;
             const list = marks.filter((b) => b.folderId === folder.id).sort(bySortKey);

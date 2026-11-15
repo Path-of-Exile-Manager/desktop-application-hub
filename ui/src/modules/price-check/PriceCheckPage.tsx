@@ -30,7 +30,7 @@ function CheckedItem({ appraisal }: { appraisal: Appraisal }) {
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)_minmax(0,1.15fr)] gap-4">
-      <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
         <ItemCard item={appraisalToItem(appraisal)} hideMods={hasFilters} className="shrink-0" />
         {spec && defaults && (
           <TradeSearchCard
@@ -44,7 +44,7 @@ function CheckedItem({ appraisal }: { appraisal: Appraisal }) {
           />
         )}
       </div>
-      <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
         <PriceCard appraisal={appraisal} />
         <WeaponDamageCard appraisal={appraisal} />
       </div>

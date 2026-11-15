@@ -43,7 +43,7 @@ export function PinsPage() {
           Нажмите «Закрепить» у лота на сайте торговли — он появится здесь.
         </EmptyState>
       ) : (
-        <div className="grid min-h-0 grid-cols-2 items-start gap-4">
+        <div className="grid grid-cols-2 items-start gap-4">
           {sorted.map((p) => (
             <div key={p.id} className="flex min-w-0 flex-col gap-2">
               <ItemCard item={p.item} />

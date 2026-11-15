@@ -209,7 +209,7 @@ export function WatchlistPage() {
 
   return (
     <Page title="Watchlist" subtitle={league ? `Цены лиги ${league.name}${signedIn ? " · список синхронизируется с аккаунтом" : " · список хранится на этом компьютере"}` : undefined}>
-      <div className="flex min-h-0 flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <AddFromCatalog />
         {entries === null ? null : entries.length === 0 ? (
           <EmptyState icon={Eye} title="Список пуст">

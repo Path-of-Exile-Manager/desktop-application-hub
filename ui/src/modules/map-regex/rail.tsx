@@ -1,6 +1,6 @@
-import { forwardRef, useEffect, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, ClipboardCopy, Ellipsis, Import, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Trash } from "lucide-react";
-import { Button, IconButton, Menu, cx, usePageSize, type MenuEntry } from "@/design-system";
+import { forwardRef, useEffect, useRef, type ReactNode } from "react";
+import { ClipboardCopy, Ellipsis, Import, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Trash } from "lucide-react";
+import { Button, IconButton, Menu, cx, type MenuEntry } from "@/design-system";
 import type { MapRegexPreset, MapSearchIndex } from "./model";
 import { DRAFT_ID } from "./store";
 import { PresetHoverCard } from "./preview";
@@ -21,9 +21,6 @@ export type RailActions = {
 /** Ширина раскрытого столбика и полосы, px. */
 export const RAIL_WIDTH = 216;
 export const STRIP_WIDTH = 52;
-
-const ROW_HEIGHT = 48;
-const CHIP_HEIGHT = 40;
 
 /** «T16 без отражения» → «T1», «Мой первый набор» → «МП». */
 function initials(name: string): string {
@@ -47,33 +44,14 @@ function summary(preset: MapRegexPreset, index: MapSearchIndex | null): string {
   return parts.join(" · ");
 }
 
-function usePaged<T>(items: T[], itemHeight: number, activeIndex: number) {
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight });
-  const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
-  // Активный набор всегда на видимой странице.
+/** Список наборов прокручивается; активный набор всегда прокручен в видимую часть. */
+function useScrollList(activeId: string) {
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (activeIndex >= 0) setPage(Math.floor(activeIndex / pageSize) + 1);
-  }, [activeIndex, pageSize]);
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
-  return { ref, page, pageCount, setPage, visible: items.slice((page - 1) * pageSize, page * pageSize) };
+    ref.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [activeId]);
+  return ref;
 }
-
-function Pager({ page, pageCount, setPage, compact }: { page: number; pageCount: number; setPage: (p: number) => void; compact?: boolean }) {
-  if (pageCount <= 1) return null;
-  return (
-    <div className={cx("flex shrink-0 items-center justify-center gap-1 border-t border-border-subtle py-1", compact && "flex-col")}>
-      <IconButton icon={ChevronLeft} label="Предыдущие наборы" disabled={page <= 1} onClick={() => setPage(page - 1)} className="size-7" iconSize={14} />
-      <span className="font-mono text-caption text-text-muted">
-        {page}/{pageCount}
-      </span>
-      <IconButton icon={ChevronRight} label="Следующие наборы" disabled={page >= pageCount} onClick={() => setPage(page + 1)} className="size-7" iconSize={14} />
-    </div>
-  );
-}
-
 /** Раскрытый столбик: в потоке страницы или поверх содержимого (`floating`). */
 export function PresetRail({
   presets,
@@ -90,8 +68,7 @@ export function PresetRail({
   floating?: boolean;
   onCollapse: () => void;
 }) {
-  const activeIndex = presets.findIndex((p) => p.id === activeId);
-  const { ref, page, pageCount, setPage, visible } = usePaged(presets, ROW_HEIGHT, activeIndex);
+  const ref = useScrollList(activeId);
   const listMenu: MenuEntry[] = [
     { label: "Импорт наборов…", icon: Import, onSelect: actions.onImport },
     { label: "Экспорт наборов", icon: ClipboardCopy, disabled: !actions.onExport, onSelect: () => actions.onExport?.() },
@@ -114,15 +91,14 @@ export function PresetRail({
         <IconButton icon={PanelLeftClose} label="Свернуть наборы" onClick={onCollapse} className="size-7" iconSize={16} />
       </header>
 
-      <div ref={ref} className="flex min-h-0 flex-1 flex-col overflow-hidden py-1">
+      <div ref={ref} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-1">
         <ul className="flex flex-col">
-          {visible.map((preset) => (
+          {presets.map((preset) => (
             <PresetRow key={preset.id} preset={preset} active={preset.id === activeId} index={index} actions={actions} />
           ))}
         </ul>
       </div>
 
-      <Pager page={page} pageCount={pageCount} setPage={setPage} />
       <div className="shrink-0 border-t border-border-subtle p-2">
         <Button variant="ghost" icon={Plus} block className="justify-start" onClick={actions.onNew}>
           Новый набор
@@ -177,15 +153,14 @@ export function PresetStrip({
   actions: RailActions;
   onExpand: () => void;
 }) {
-  const activeIndex = presets.findIndex((p) => p.id === activeId);
-  const { ref, page, pageCount, setPage, visible } = usePaged(presets, CHIP_HEIGHT, activeIndex);
+  const ref = useScrollList(activeId);
   return (
     <nav aria-label="Наборы" style={{ width: STRIP_WIDTH }} className="flex min-h-0 shrink-0 flex-col items-center rounded-lg border border-border-default bg-bg-surface">
       <div className="flex h-11 shrink-0 items-center">
         <IconButton icon={PanelLeftOpen} label="Показать наборы" onClick={onExpand} className="size-8" iconSize={16} />
       </div>
-      <div ref={ref} className="flex min-h-0 w-full flex-1 flex-col items-center overflow-hidden border-t border-border-subtle py-1">
-        {visible.map((preset) => (
+      <div ref={ref} className="flex min-h-0 w-full flex-1 flex-col items-center overflow-y-auto border-t border-border-subtle py-1">
+        {presets.map((preset) => (
           <PresetHoverCard key={preset.id} preset={preset} index={index}>
             <StripChip label={preset.name} active={preset.id === activeId} onClick={() => actions.onSelect(preset.id)}>
               {initials(preset.name)}
@@ -193,7 +168,6 @@ export function PresetStrip({
           </PresetHoverCard>
         ))}
       </div>
-      <Pager page={page} pageCount={pageCount} setPage={setPage} compact />
       <div className="flex shrink-0 justify-center border-t border-border-subtle py-1.5">
         <IconButton icon={Plus} label="Новый набор" onClick={actions.onNew} className="size-8" iconSize={16} />
       </div>

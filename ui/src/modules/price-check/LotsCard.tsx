@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Copy, ExternalLink, LoaderCircle, PackageSearch, Zap } from "lucide-react";
 import {
   Button,
@@ -11,12 +11,10 @@ import {
   formatAmount,
   IconButton,
   ModList,
-  Pagination,
   Price,
   RARITY_TEXT,
   toast,
   Tooltip,
-  usePageSize,
   usePriceText,
   type CurrencyId,
   type ItemMod,
@@ -30,9 +28,8 @@ import type { LiveMod } from "@/generated/LiveMod";
 import type { LivePrice } from "@/generated/LivePrice";
 import type { useLiveSearch } from "./useLiveSearch";
 
-// Лоты на рынке рядом с предметом (живой поиск Price check). Окно без прокрутки (app-shell.md):
-// строки одной высоты, постранично; моды — строкой, полный список — в подсказке. Страница дальше
-// загруженного подгружается с сайта (по 10).
+// Лоты на рынке рядом с предметом (живой поиск Price check): список прокручивается, моды — строкой,
+// полный список — в подсказке. Дошли до конца загруженного — следующие лоты подгружаются с сайта (по 10).
 
 /** Высота строки лота, px: имя и цена, база, моды строкой, продавец. */
 const ROW_HEIGHT = 92;
@@ -140,16 +137,20 @@ function LotRow({ lot }: { lot: LiveListing }) {
 /** Столбец лотов рядом с поиском: пусто до «Найти лоты», потом выдача сайта по цене. */
 export function LotsCard({ live, className }: { live: ReturnType<typeof useLiveSearch>; className?: string }) {
   const { result, listings, loading, error, hasMore, more } = live;
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
-  const [page, setPage] = useState(1);
+  const scroller = useRef<HTMLDivElement>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
   const total = result?.ids.length ?? 0;
-  const visible = listings.slice((page - 1) * pageSize, page * pageSize);
 
-  // Новая выдача — с первой страницы; страница дальше загруженного — догрузить с сайта.
-  useEffect(() => setPage(1), [result]);
+  // Новая выдача — с начала списка.
+  useEffect(() => scroller.current?.scrollTo({ top: 0 }), [result]);
+  // Дошли до конца загруженного — догрузить с сайта.
   useEffect(() => {
-    if (page * pageSize > listings.length && hasMore && !loading && !error) more();
-  }, [page, pageSize, listings.length, hasMore, loading, error, more]);
+    const target = sentinel.current;
+    if (!target || !hasMore || loading || error) return;
+    const observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && more(), { root: scroller.current, rootMargin: `px` });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, loading, error, more, listings.length]);
 
   return (
     <Card className={cx("flex min-h-0 flex-col", className)}>
@@ -168,8 +169,7 @@ export function LotsCard({ live, className }: { live: ReturnType<typeof useLiveS
           <p className="text-label text-status-danger-fg">{error}</p>
         </CardSection>
       )}
-      {/* Контейнер всегда на месте: по его высоте считается, сколько лотов на странице. */}
-      <div ref={ref} className="flex min-h-0 flex-1 flex-col overflow-hidden px-card-padding-x">
+      <div ref={scroller} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-card-padding-x">
         {!result ? (
           <div className="flex flex-1 items-center justify-center">
             {loading ? (
@@ -184,12 +184,19 @@ export function LotsCard({ live, className }: { live: ReturnType<typeof useLiveS
           </div>
         ) : total === 0 ? (
           <p className="py-4 text-body text-text-secondary">Ничего не нашлось — ослабьте условия: снимите часть модов или уменьшите MIN.</p>
-        ) : visible.length > 0 ? (
-          <ul className="flex flex-col">
-            {visible.map((lot) => (
-              <LotRow key={lot.id} lot={lot} />
-            ))}
-          </ul>
+        ) : listings.length > 0 ? (
+          <>
+            <ul className="flex flex-col">
+              {listings.map((lot) => (
+                <LotRow key={lot.id} lot={lot} />
+              ))}
+            </ul>
+            {hasMore && (
+              <div ref={sentinel} className="flex shrink-0 items-center gap-2 py-3 text-label text-text-secondary">
+                <LoaderCircle aria-hidden className="size-4 animate-spin" /> Подгружаем ещё…
+              </div>
+            )}
+          </>
         ) : (
           <p className="inline-flex items-center gap-2 py-4 text-label text-text-secondary">
             <LoaderCircle aria-hidden className="size-4 animate-spin" /> Загружаем лоты…
@@ -197,7 +204,9 @@ export function LotsCard({ live, className }: { live: ReturnType<typeof useLiveS
         )}
       </div>
       {result && total > 0 && (
-        <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} className="border-t border-border-subtle px-card-padding-x py-2" />
+        <p className="border-t border-border-subtle px-card-padding-x py-2 text-caption text-text-secondary">
+          Показано {listings.length.toLocaleString("ru-RU")} из {total.toLocaleString("ru-RU")}
+        </p>
       )}
     </Card>
   );

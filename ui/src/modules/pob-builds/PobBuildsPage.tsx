@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
-import { AppWindow, ChevronLeft, ChevronRight, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Import, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
-import { Button, Card, CardHeader, cx, EmptyState, IconButton, Menu, Page, Pagination, SearchInput, usePageSize, type MenuEntry } from "@/design-system";
+import { AppWindow, Copy, Ellipsis, ExternalLink, FolderInput, FolderMinus, Import, Inbox, Layers, Library, Pencil, Plus, Swords, Trash2 } from "lucide-react";
+import { Button, Card, CardHeader, cx, EmptyState, IconButton, Menu, Page, SearchInput, type MenuEntry } from "@/design-system";
 import { useAccount } from "@/app/account";
 import { bySortKey, keyBetween, removeRecord, saveRecord, useRecords } from "@/app/user-data";
 import { AddBuildDialog, BuildSummaryDialog, ConfirmDialog, copyCode, fail, ImportDialog, NameDialog, PublishDialog, type AddForm } from "./dialogs";
@@ -281,13 +281,6 @@ function GroupRail({
   onDelete: (g: PobBuildGroup) => void;
   onDrop: (buildId: string, groupId: string | null) => void;
 }) {
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: GROUP_ROW_HEIGHT });
-  const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(groups.length / pageSize));
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
-  const visible = groups.slice((page - 1) * pageSize, page * pageSize);
   const same = (f: GroupFilter) => f.kind === filter.kind && (f.kind !== "group" || (filter.kind === "group" && filter.id === f.id));
 
   return (
@@ -307,11 +300,11 @@ function GroupRail({
         <span className="text-caption font-semibold tracking-caps text-text-muted uppercase">Группы</span>
         <IconButton icon={Plus} label="Новая группа" onClick={onNew} className="size-7" iconSize={16} />
       </header>
-      <div ref={ref} className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden px-1.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1.5">
         {groups.length === 0 ? (
           <p className="px-2 py-1 text-caption text-text-muted">Групп нет — «+» создаст первую.</p>
         ) : (
-          visible.map((g) => {
+          groups.map((g) => {
             const f: GroupFilter = { kind: "group", id: g.id };
             return (
               <GroupRow
@@ -331,13 +324,6 @@ function GroupRail({
           })
         )}
       </div>
-      {pageCount > 1 && (
-        <div className="flex shrink-0 items-center justify-center gap-2 border-t border-border-subtle py-1 font-mono text-caption text-text-muted">
-          <IconButton icon={ChevronLeft} label="Предыдущие группы" disabled={page <= 1} onClick={() => setPage(page - 1)} className="size-7" iconSize={14} />
-          {page}/{pageCount}
-          <IconButton icon={ChevronRight} label="Следующие группы" disabled={page >= pageCount} onClick={() => setPage(page + 1)} className="size-7" iconSize={14} />
-        </div>
-      )}
     </nav>
   );
 }
@@ -426,19 +412,11 @@ function BuildList({
   onMove: (b: PobBuildRecord, groupId: string | null) => void;
   onShare: (b: PobBuildRecord, action: ShareAction) => void;
 }) {
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
-  const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(builds.length / pageSize));
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
-  const visible = builds.slice((page - 1) * pageSize, page * pageSize);
-
   return (
     <>
-      <div ref={ref} className="min-h-0 flex-1 overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <ul className="flex flex-col">
-          {visible.map((b) => {
+          {builds.map((b) => {
             const group = groupName(b);
             const menu: MenuEntry[] = [
               { label: "Переименовать", icon: Pencil, onSelect: () => onRename(b) },
@@ -485,7 +463,6 @@ function BuildList({
           })}
         </ul>
       </div>
-      {pageCount > 1 && <Pagination page={page} pageSize={pageSize} total={builds.length} onPageChange={setPage} className="border-t border-border-subtle px-card-padding-x py-2" />}
     </>
   );
 }

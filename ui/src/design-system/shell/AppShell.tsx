@@ -43,11 +43,12 @@ export type PageProps = {
 
 /**
  * Страница модуля: отступы page-padding (20×28), заголовок 22 + действия, содержимое занимает остаток высоты.
- * Содержимое не прокручивается — большие наборы данных выводите постранично (usePageSize + Pagination).
+ * Не поместилось — страница прокручивается целиком (решение пользователя 15.11.2026: прокрутка
+ * вместо страниц). Длинные списки лучше прокручивать внутри своей карточки (`min-h-0 flex-1 overflow-y-auto`).
  */
 export function Page({ title, subtitle, actions, children, className }: PageProps) {
   return (
-    <div className={cx("flex h-full min-h-0 flex-col gap-5 overflow-hidden px-page-padding-x py-page-padding-y", className)}>
+    <div className={cx("flex h-full min-h-0 flex-col gap-5 overflow-y-auto px-page-padding-x py-page-padding-y", className)}>
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h1 className="text-title font-semibold text-text-primary">{title}</h1>

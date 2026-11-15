@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ExternalLink, Info, Pencil, RotateCcw } from "lucide-react";
-import { Badge, Button, cx, EmptyState, IconButton, Input, ItemIcon, MarketPrice, Pagination, Popover, RARITY_TEXT, Tooltip, usePageSize, type Rarity } from "@/design-system";
+import { Badge, Button, cx, EmptyState, IconButton, Input, ItemIcon, MarketPrice, Popover, RARITY_TEXT, Tooltip, type Rarity } from "@/design-system";
 import { iconUrl } from "@/app/dataset";
 import { openTrade } from "@/app/user-data";
 import type { PobStageRow } from "@/generated/PobStageRow";
@@ -99,22 +99,17 @@ export function RowList({
   /** Цены строк отслеживаемого билда (сервер) по ключу строки. */
   market?: Record<string, RowPrice>;
 }) {
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
-  const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const ref = useRef<HTMLDivElement>(null);
+  // Подсвеченная строка — прокрутить в видимую часть.
   useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
-  useEffect(() => {
-    const index = highlight ? rows.findIndex((r) => r.key === highlight) : -1;
-    if (index >= 0) setPage(Math.floor(index / pageSize) + 1);
-  }, [highlight, rows, pageSize]);
+    if (highlight) ref.current?.querySelector(`[data-row-key="${CSS.escape(highlight)}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [highlight, rows]);
   if (rows.length === 0) return <EmptyState icon={Info} title="В этой секции пусто" className="flex-1" />;
   return (
     <>
-      <div ref={ref} className="min-h-0 flex-1 overflow-hidden">
+      <div ref={ref} className="min-h-0 flex-1 overflow-y-auto">
         <ul className="flex flex-col">
-          {rows.slice((page - 1) * pageSize, page * pageSize).map((row) => (
+          {rows.map((row) => (
             <StageRow
               key={row.key}
               row={row}
@@ -130,7 +125,6 @@ export function RowList({
           ))}
         </ul>
       </div>
-      {pageCount > 1 && <Pagination page={page} pageSize={pageSize} total={rows.length} onPageChange={setPage} className="border-t border-border-subtle py-2" />}
     </>
   );
 }
@@ -176,6 +170,7 @@ function StageRow({
       ];
   return (
     <li
+      data-row-key={row.key}
       style={{ height: ROW_HEIGHT }}
       className={cx("flex items-center gap-3 border-b border-border-subtle px-1 last:border-b-0", highlighted && "rounded-md bg-bg-selected", !row.counted && "opacity-50")}
     >
