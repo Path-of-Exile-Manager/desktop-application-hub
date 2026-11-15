@@ -78,6 +78,7 @@ export function clustersDemo(): { status: ClustersStatus; rows: ClusterRow[]; de
       passives,
       minIlvl: notables.length > 1 ? 50 : 1,
       notables: notables.map((en) => ({ en, ru: null })),
+      enchantIds: [enchant],
       demand: { characters: Math.round(share * 124352), share, previousShare: index % 3 === 0 ? share - 0.004 : index % 3 === 1 ? share + 0.002 : null },
       market: sale === null ? null : { status: "OK", priceChaos: sale, minChaos: sale * 0.8, listings: 200 + index * 37, sampled: 10, fetchedAt: iso(20 + index * 9) },
       best: {

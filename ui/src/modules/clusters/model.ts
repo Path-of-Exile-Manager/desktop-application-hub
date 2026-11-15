@@ -1,4 +1,5 @@
 import type { ClusterIssue } from "@/generated/ClusterIssue";
+import type { ClusterName } from "@/generated/ClusterName";
 import type { ClusterRow } from "@/generated/ClusterRow";
 import type { CraftMethodKind } from "@/generated/CraftMethodKind";
 import type { CraftPlan } from "@/generated/CraftPlan";
@@ -284,6 +285,31 @@ export function craftSteps(plan: CraftPlan, notables: string, language: NameLang
     }
   }
 }
+/** Другая цель, которая может выпасть на той же базе: её цена на рынке и общие с целью notable. */
+export type Alternative = { row: ClusterRow; price: number; shared: ClusterName[] };
+
+/**
+ * Что ещё может выпасть при крафте цели и стоит денег: цели того же размера и числа пассивов,
+ * которые выпадают на энчанте базы плана и на её уровне (без плана — на любом энчанте цели), с
+ * ценой на рынке дороже самой базы. Сначала — с общими notable (пара одного из них, он же один),
+ * внутри — дорогие первыми.
+ */
+export function alternativesFor(target: ClusterRow, plan: CraftPlan | null, rows: ClusterRow[]): Alternative[] {
+  const enchants = plan ? [plan.enchantId] : target.enchantIds;
+  const floor = plan?.basePrice ?? 0;
+  const own = new Set(target.notables.map((n) => n.en));
+  const result: Alternative[] = [];
+  for (const row of rows) {
+    if (row.key === target.key || row.size !== target.size || row.passives !== target.passives) continue;
+    if (!row.enchantIds.some((id) => enchants.includes(id))) continue;
+    if (plan && row.minIlvl > plan.itemLevel) continue;
+    const price = row.market?.status === "OK" ? row.market.priceChaos : null;
+    if (price === null || !(price > floor)) continue;
+    result.push({ row, price, shared: row.notables.filter((n) => own.has(n.en)) });
+  }
+  return result.sort((a, b) => Number(b.shared.length > 0) - Number(a.shared.length > 0) || b.price - a.price);
+}
+
 export const ISSUE_LABEL: Record<ClusterIssue, string> = {
   unreachable: "не выпадает на базах этой версии игры",
   noBasePrice: "нет цен баз с таким числом пассивов",

@@ -5,7 +5,12 @@ import type { ClusterName } from "./ClusterName";
 import type { ClusterTargetDemand } from "./ClusterTargetDemand";
 import type { CraftPlan } from "./CraftPlan";
 
-export type ClusterRow = { key: string, size: string, sizeName: ClusterName, passives: number, minIlvl: number, notables: Array<ClusterName>, demand: ClusterTargetDemand, market: ClusterMarket | null, 
+export type ClusterRow = { key: string, size: string, sizeName: ClusterName, passives: number, minIlvl: number, notables: Array<ClusterName>, 
+/**
+ * Id энчантов размера, на которых выпадают все notable цели: по ним карточка находит
+ * другие цели, которые могут выпасть на той же базе.
+ */
+enchantIds: Array<string>, demand: ClusterTargetDemand, market: ClusterMarket | null, 
 /**
  * Лучший план: наименьшие вложения.
  */

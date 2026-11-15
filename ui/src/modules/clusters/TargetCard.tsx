@@ -1,11 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Copy, ExternalLink, LoaderCircle, RefreshCw } from "lucide-react";
-import { Button, cx, Dialog, IconButton, ItemIcon, MarketPrice, StatusIcon, toast, usePriceText } from "@/design-system";
+import { Button, cx, Dialog, IconButton, ItemIcon, MarketPrice, StatusIcon, toast, Tooltip, usePriceText } from "@/design-system";
 import { iconUrl, searchCatalog } from "@/app/dataset";
 import type { ClusterName } from "@/generated/ClusterName";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
-import { craftSteps, formatRoi, formatShare, levelRange, methodName, nameIn, SIZE_LABEL, type NameLanguage, type PlanStep } from "./model";
+import { alternativesFor, craftSteps, formatRoi, formatShare, levelRange, methodName, nameIn, SIZE_LABEL, type Alternative, type NameLanguage, type PlanStep } from "./model";
 import { checkBase, clusterDetail, tradeUrl, useBaseChecks, useClustersData, type BaseCheckState, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -196,8 +196,88 @@ function BaseCard({ row, plan, planned, check, enchants, language, onBuy }: { ro
   );
 }
 
+function AlternativeItem({ alt, plan, language, onOpen }: { alt: Alternative; plan: CraftPlan | null; language: NameLanguage; onOpen: () => void }) {
+  const shared = new Set(alt.shared.map((n) => n.en));
+  const english = alt.row.notables.map((n) => n.en).join(" + ");
+  const pays = plan !== null && alt.price >= plan.totalCost;
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-bg-hover focus-visible:bg-bg-hover focus-visible:outline-none"
+      >
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <Tooltip content={language === "ru" ? english : undefined}>
+            <span className="text-label text-text-primary">
+              {alt.row.notables.map((n, i) => (
+                <span key={n.en}>
+                  {i > 0 && " + "}
+                  <span className={cx(shared.has(n.en) && "font-semibold text-text-accent")}>{nameIn(n, language)}</span>
+                </span>
+              ))}
+            </span>
+          </Tooltip>
+          <span className="text-caption text-text-secondary">
+            {alt.row.market?.listings?.toLocaleString("ru-RU") ?? "—"} лотов
+            {pays && <span className="text-status-success-fg"> · окупит крафт</span>}
+          </span>
+        </span>
+        <MarketPrice chaos={alt.price} approx size="md" compact className="shrink-0" />
+      </button>
+    </li>
+  );
+}
+
+/**
+ * Столбец рядом с планом: что ещё может выпасть на той же базе и стоит дороже неё — на случай,
+ * если вместо цели выпало другое (например, пара с тем же notable). Нажатие открывает ту цель.
+ */
+function Alternatives({ row, plan, language, onOpen }: { row: ClusterRow; plan: CraftPlan | null; language: NameLanguage; onOpen: (row: ClusterRow) => void }) {
+  const rows = useClustersData((d) => d.rows);
+  const alternatives = useMemo(() => alternativesFor(row, plan, rows), [row, plan, rows]);
+  const withShared = alternatives.filter((a) => a.shared.length > 0);
+  const others = alternatives.filter((a) => a.shared.length === 0);
+  const group = (title: string, items: Alternative[]) =>
+    items.length > 0 && (
+      <div className="flex flex-col gap-0.5">
+        <span className="px-2 text-caption font-semibold tracking-caps text-text-secondary uppercase">{title}</span>
+        <ul className="flex flex-col">
+          {items.map((alt) => (
+            <AlternativeItem key={alt.row.key} alt={alt} plan={plan} language={language} onOpen={() => onOpen(alt.row)} />
+          ))}
+        </ul>
+      </div>
+    );
+
+  return (
+    <aside className="sticky top-0 flex max-h-[calc(85vh-10rem)] flex-col gap-2 rounded-lg border border-border-subtle bg-bg-surface py-3">
+      <div className="flex flex-col gap-1 px-4">
+        <h3 className="text-body font-semibold text-text-primary">
+          Тоже в цене <span className="font-mono font-normal text-text-secondary">{alternatives.length}</span>
+        </h3>
+        <p className="text-caption text-text-secondary">
+          {plan
+            ? `Что ещё может выпасть на этой базе (${nameIn(plan.enchant, language)}, ур. ${levelRange(plan)}) и стоит дороже неё — цена готовых на рынке. Нажмите, чтобы открыть.`
+            : "Что ещё выпадает на тех же энчантах и стоит денег — цена готовых на рынке. Нажмите, чтобы открыть."}
+        </p>
+      </div>
+      <div className="flex min-h-0 flex-col gap-3 overflow-y-auto px-2">
+        {alternatives.length === 0 ? (
+          <p className="px-2 text-label text-text-secondary">Других целей дороже базы здесь нет.</p>
+        ) : (
+          <>
+            {group("С notable цели", withShared)}
+            {group("Другие на этой базе", others)}
+          </>
+        )}
+      </div>
+    </aside>
+  );
+}
+
 /** Карточка цели: лучший план по шагам, разброс, сравнение методов, ссылки на сайт торговли. */
-export function TargetCard({ row, language, onClose }: { row: ClusterRow | null; language: NameLanguage; onClose: () => void }) {
+export function TargetCard({ row, language, onClose, onOpen }: { row: ClusterRow | null; language: NameLanguage; onClose: () => void; onOpen: (row: ClusterRow) => void }) {
   const league = useClustersData((d) => d.status?.league);
   const text = usePriceText();
   const [detail, setDetail] = useState<ClusterDetail | null>(null);
@@ -235,7 +315,7 @@ export function TargetCard({ row, language, onClose }: { row: ClusterRow | null;
       onOpenChange={(value) => !value && onClose()}
       title={names}
       description={`${namesRu !== names ? `${namesRu} · ` : ""}${SIZE_LABEL[row.size] ?? row.size} кластерный самоцвет · ${row.passives} пасс.`}
-      className="w-220"
+      className="w-312"
       footer={
         <>
           <Button variant="ghost" icon={Copy} onClick={() => navigator.clipboard.writeText(names).then(() => toast({ status: "success", title: "Скопировано", description: names }), fail("Не скопировано"))}>
@@ -247,74 +327,77 @@ export function TargetCard({ row, language, onClose }: { row: ClusterRow | null;
         </>
       }
     >
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-label text-text-secondary">
-          <span>
-            Спрос: <span className="font-mono text-text-primary">{formatShare(row.demand.share)}</span> персонажей ({row.demand.characters.toLocaleString("ru-RU")})
-          </span>
-          {market?.status === "OK" && market.priceChaos !== null ? (
-            <span className="inline-flex items-center gap-2">
-              На рынке: <MarketPrice chaos={market.priceChaos} approx size="md" />
-              <span>
-                ({market.listings?.toLocaleString("ru-RU")} лотов, проверено {formatAge(market.fetchedAt)} назад; дешевле всех — {text(market.minChaos ?? market.priceChaos, true)})
-              </span>
+      <div className="grid grid-cols-[minmax(0,1fr)_20rem] items-start gap-5">
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-label text-text-secondary">
+            <span>
+              Спрос: <span className="font-mono text-text-primary">{formatShare(row.demand.share)}</span> персонажей ({row.demand.characters.toLocaleString("ru-RU")})
             </span>
+            {market?.status === "OK" && market.priceChaos !== null ? (
+              <span className="inline-flex items-center gap-2">
+                На рынке: <MarketPrice chaos={market.priceChaos} approx size="md" />
+                <span>
+                  ({market.listings?.toLocaleString("ru-RU")} лотов, проверено {formatAge(market.fetchedAt)} назад; дешевле всех — {text(market.minChaos ?? market.priceChaos, true)})
+                </span>
+              </span>
+            ) : (
+              <span>{market?.status === "NO_MARKET" ? "На рынке меньше трёх объявлений" : "Цена на рынке ещё не проверена"}</span>
+            )}
+          </div>
+
+          {best && planned && (
+            <BaseCard
+              row={row}
+              plan={best}
+              planned={planned}
+              check={check}
+              enchants={detail?.enchants ?? []}
+              language={language}
+              onBuy={best.tradeBase && league ? () => open(league, best.tradeBase) : null}
+            />
+          )}
+
+          {best && <Totals plan={best} sale={market?.status === "OK" ? market.priceChaos : null} />}
+
+          {best ? (
+            <section className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="text-body font-semibold text-text-primary">Крафт: {methodName(best, language)}</h3>
+              </div>
+              {/* Шаг 1 — покупка базы — в блоке «Нужная база» выше. */}
+              <Steps steps={craftSteps(best, names, language)} />
+              <Figures plan={best} />
+              <p className="text-caption text-text-secondary">
+                p50 — хватит в половине случаев, p90 — в 9 из 10. Число попыток — как у костей: неудачная серия не делает следующую попытку удачнее.
+              </p>
+            </section>
           ) : (
-            <span>{market?.status === "NO_MARKET" ? "На рынке меньше трёх объявлений" : "Цена на рынке ещё не проверена"}</span>
+            <p className="text-label text-text-secondary">Плана нет: не хватает цен базы или валюты.</p>
+          )}
+
+          {plans.length > 1 && (
+            <section className="flex flex-col gap-1">
+              <h3 className="text-body font-semibold text-text-primary">Сравнение способов</h3>
+              <div className="grid grid-cols-[minmax(0,1.8fr)_minmax(0,1.7fr)_repeat(3,minmax(0,0.6fr))_minmax(0,0.7fr)_auto] items-center gap-x-3 text-label">
+                {["Способ", "База", "Шанс", "Попыток", "Вложения", "Прибыль", ""].map((h, i) => (
+                  <span key={i} className="border-b border-border-subtle pb-1 text-caption text-text-secondary">
+                    {h}
+                  </span>
+                ))}
+                {plans.map((plan, index) => (
+                  <PlanRow key={`${plan.method}-${index}`} plan={plan} language={language} best={index === 0} onBuy={() => open(league, plan.tradeBase)} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {detail && detail.enchants.length > 0 && (
+            <p className="text-caption text-text-secondary">
+              Выпадает на энчантах: {detail.enchants.map((e) => nameIn(e, language)).join(", ")}.
+            </p>
           )}
         </div>
-
-        {best && planned && (
-          <BaseCard
-            row={row}
-            plan={best}
-            planned={planned}
-            check={check}
-            enchants={detail?.enchants ?? []}
-            language={language}
-            onBuy={best.tradeBase && league ? () => open(league, best.tradeBase) : null}
-          />
-        )}
-
-        {best && <Totals plan={best} sale={market?.status === "OK" ? market.priceChaos : null} />}
-
-        {best ? (
-          <section className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="text-body font-semibold text-text-primary">Крафт: {methodName(best, language)}</h3>
-            </div>
-            {/* Шаг 1 — покупка базы — в блоке «Нужная база» выше. */}
-            <Steps steps={craftSteps(best, names, language)} />
-            <Figures plan={best} />
-            <p className="text-caption text-text-secondary">
-              p50 — хватит в половине случаев, p90 — в 9 из 10. Число попыток — как у костей: неудачная серия не делает следующую попытку удачнее.
-            </p>
-          </section>
-        ) : (
-          <p className="text-label text-text-secondary">Плана нет: не хватает цен базы или валюты.</p>
-        )}
-
-        {plans.length > 1 && (
-          <section className="flex flex-col gap-1">
-            <h3 className="text-body font-semibold text-text-primary">Сравнение способов</h3>
-            <div className="grid grid-cols-[minmax(0,1.8fr)_minmax(0,1.7fr)_repeat(3,minmax(0,0.6fr))_minmax(0,0.7fr)_auto] items-center gap-x-3 text-label">
-              {["Способ", "База", "Шанс", "Попыток", "Вложения", "Прибыль", ""].map((h, i) => (
-                <span key={i} className="border-b border-border-subtle pb-1 text-caption text-text-secondary">
-                  {h}
-                </span>
-              ))}
-              {plans.map((plan, index) => (
-                <PlanRow key={`${plan.method}-${index}`} plan={plan} language={language} best={index === 0} onBuy={() => open(league, plan.tradeBase)} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {detail && detail.enchants.length > 0 && (
-          <p className="text-caption text-text-secondary">
-            Выпадает на энчантах: {detail.enchants.map((e) => nameIn(e, language)).join(", ")}.
-          </p>
-        )}
+        <Alternatives row={row} plan={best ?? null} language={language} onOpen={onOpen} />
       </div>
     </Dialog>
   );

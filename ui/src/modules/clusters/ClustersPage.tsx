@@ -401,7 +401,7 @@ export function ClustersPage() {
           </p>
         )}
       </div>
-      <TargetCard row={selected && (rows.find((r) => r.key === selected.key) ?? selected)} language={language} onClose={() => setSelected(null)} />
+      <TargetCard row={selected && (rows.find((r) => r.key === selected.key) ?? selected)} language={language} onClose={() => setSelected(null)} onOpen={setSelected} />
       <CurrencyDialog open={currencyOpen} language={language} onOpenChange={setCurrencyOpen} />
     </Page>
   );

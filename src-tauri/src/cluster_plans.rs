@@ -261,6 +261,9 @@ pub struct ClusterRow {
     pub passives: u32,
     pub min_ilvl: u32,
     pub notables: Vec<ClusterName>,
+    /// Id энчантов размера, на которых выпадают все notable цели: по ним карточка находит
+    /// другие цели, которые могут выпасть на той же базе.
+    pub enchant_ids: Vec<String>,
     pub demand: ClusterTargetDemand,
     pub market: Option<ClusterMarket>,
     /// Лучший план: наименьшие вложения.
@@ -490,6 +493,7 @@ fn evaluate(engine: &Engine, names: &dyn MarketData, market: &Prices, offers: &B
         passives: target.passives,
         min_ilvl: target.min_ilvl,
         notables: target.notables.iter().map(|name| notable_name(engine, name)).collect(),
+        enchant_ids: target.enchants.clone(),
         demand: target.demand.clone(),
         market: target.market.clone(),
         best: plans.first().cloned(),
