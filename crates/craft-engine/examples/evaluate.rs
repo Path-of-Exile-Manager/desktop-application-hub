@@ -35,6 +35,7 @@ const POLICIES: [(&str, AltPolicy); 4] = [
             augment: false,
             regal: false,
             exalt: false,
+            first: None,
         },
     ),
     (
@@ -43,6 +44,7 @@ const POLICIES: [(&str, AltPolicy); 4] = [
             augment: true,
             regal: false,
             exalt: false,
+            first: None,
         },
     ),
     (
@@ -51,6 +53,7 @@ const POLICIES: [(&str, AltPolicy); 4] = [
             augment: true,
             regal: true,
             exalt: false,
+            first: None,
         },
     ),
     (
@@ -59,6 +62,7 @@ const POLICIES: [(&str, AltPolicy); 4] = [
             augment: true,
             regal: true,
             exalt: true,
+            first: None,
         },
     ),
 ];

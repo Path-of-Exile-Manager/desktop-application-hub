@@ -20,6 +20,9 @@ pub struct AltPolicy {
     pub augment: bool,
     pub regal: bool,
     pub exalt: bool,
+    /// Царь — только когда на предмете этот notable цели (индекс в цели): его ловят сферами
+    /// перемен, остальное добирают царём и возвышением. `None` — царь на любом notable цели.
+    pub first: Option<usize>,
 }
 
 /// Цены шагов попытки, в хаосах.
@@ -59,12 +62,35 @@ impl<'a> Decider<'a> {
         self.pool.hit(state.taken)
     }
 
+    /// На магическом предмете уже то, после чего метод берёт царя.
+    fn ready(&self, policy: AltPolicy, state: State) -> bool {
+        match policy.first {
+            Some(index) => self.pool.has_target(state.taken, index),
+            None => self.pool.any_target(state.taken),
+        }
+    }
+
+    /// Шанс, что после сферы перемен (без усиления) на предмете есть каждый notable цели.
+    pub fn notable_chances(&mut self) -> Vec<f64> {
+        let outcomes = self.magic.reroll_outcomes(Rarity::Magic.mod_counts());
+
+        (0..self.pool.target_count())
+            .map(|index| {
+                outcomes
+                    .iter()
+                    .filter(|(state, _)| self.pool.has_target(state.taken, index))
+                    .map(|(_, chance)| chance)
+                    .sum()
+            })
+            .collect()
+    }
+
     pub fn should_augment(&mut self, policy: AltPolicy, state: State) -> bool {
         if !policy.augment || state.mods() != 1 || self.hit(state) {
             return false;
         }
 
-        let ready = self.pool.any_target(state.taken);
+        let ready = self.ready(policy, state);
 
         for (next, _) in self.magic.add_one(state) {
             if self.hit(next) || (policy.regal && !ready && self.should_regal(policy, next)) {
@@ -76,7 +102,7 @@ impl<'a> Decider<'a> {
     }
 
     pub fn should_regal(&mut self, policy: AltPolicy, state: State) -> bool {
-        if !policy.regal || self.hit(state) || !self.pool.any_target(state.taken) {
+        if !policy.regal || self.hit(state) || !self.ready(policy, state) {
             return false;
         }
 

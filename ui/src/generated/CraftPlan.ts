@@ -4,6 +4,7 @@ import type { CraftFossil } from "./CraftFossil";
 import type { CraftHarvest } from "./CraftHarvest";
 import type { CraftMethodKind } from "./CraftMethodKind";
 import type { CraftSpread } from "./CraftSpread";
+import type { NotableChance } from "./NotableChance";
 
 /**
  * Как получить цель: какую базу купить и как крафтить.
@@ -28,7 +29,16 @@ itemLevelMax: number | null, basePrice: number,
 /**
  * Шанс закончить цель одной попыткой.
  */
-probability: number, attempts: CraftSpread, 
+probability: number, 
+/**
+ * Методы с царём на цели из нескольких notable: какой ловить сферами перемен (остальные
+ * добирает царь); `null` — любой из них.
+ */
+fishFirst: ClusterName | null, 
+/**
+ * Методы на сферах перемен: шанс каждого notable цели за одну сферу перемен.
+ */
+notableChances: Array<NotableChance>, attempts: CraftSpread, 
 /**
  * Ожидаемая цена попытки, chaos.
  */

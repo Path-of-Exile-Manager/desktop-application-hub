@@ -194,44 +194,93 @@ export function levelRange(plan: CraftPlan): string {
   return plan.itemLevelMax === plan.itemLevel ? String(plan.itemLevel) : `${plan.itemLevel}–${plan.itemLevelMax}`;
 }
 
-/** Шаги метода словами: что купить и что делать до попадания. `price` — цена в chaos строкой (валюта показа). */
-export function methodSteps(plan: CraftPlan, notables: string, price: (chaos: number) => string, language: NameLanguage = "ru"): string[] {
+/** Шаг плана крафта: что сделать, подробности и главный ли это шаг (его выделяют). */
+export type PlanStep = { title: string; detail?: string; key?: boolean };
+
+/** Шанс в процентах для подсказок: 0.0196 → «1,96 %». */
+export function formatChance(chance: number): string {
+  const percent = chance * 100;
+  return `${percent.toLocaleString("ru-RU", { maximumFractionDigits: percent < 10 ? 2 : 1 })} %`;
+}
+
+/**
+ * Шаги крафта после покупки базы (её — блок «Нужная база»). Для царя с несколькими notable
+ * говорит, какой ловить сферами перемен первым (движок выбрал выгоднейший, обычно — реже
+ * выпадающий) и с каким шансом выпадает каждый.
+ */
+export function craftSteps(plan: CraftPlan, notables: string, language: NameLanguage = "ru"): PlanStep[] {
   const o = ORBS[language];
-  const base = `Купить белую базу: ${nameIn(plan.enchant, language)}, уровень предмета ${levelRange(plan)} (≈ ${price(plan.basePrice)}).`;
-  const target = `Цель — ${notables}.`;
+  const done: PlanStep = { title: `Готово: ${notables}` };
+  const chances = plan.notableChances;
+  const chanceList = chances.length > 0 ? chances.map((c) => `${nameIn(c.name, language)} — ${formatChance(c.chance)}`).join(", ") : null;
+  const fishing = (): PlanStep => {
+    if (chances.length < 2) {
+      return {
+        title: `${o.alts} — до notable цели`,
+        detail: `${chanceList ? `Шанс за одну сферу: ${chanceList}. ` : ""}${o.aug} — если на предмете один мод и она может дать нужный notable.`,
+        key: true,
+      };
+    }
+    const first = plan.fishFirst ? nameIn(plan.fishFirst, language) : null;
+    const others = chances.filter((c) => c.name.en !== plan.fishFirst?.en).map((c) => nameIn(c.name, language)).join(" + ");
+    const rarest = [...chances].sort((a, b) => a.chance - b.chance)[0]!;
+    return first
+      ? {
+          title: `${o.alts} — ловите первым ${first}`,
+          detail:
+            `Шанс за одну сферу: ${chanceList}. ${first} выпадает ${rarest.name.en === plan.fishFirst?.en ? "реже" : "сложнее добрать царём"} — его выгоднее ловить переменами, а ${others} добирать царём. ` +
+            `Выпал только ${others} — крутите дальше. ${o.aug} — если на предмете один мод и она может дать ${first}.`,
+          key: true,
+        }
+      : {
+          title: `${o.alts} — до любого notable цели`,
+          detail: `Шанс за одну сферу: ${chanceList}. Подойдёт любой: как только на предмете есть один из них — переходите к царю. ${o.aug} — если на предмете один мод и она может дать notable цели.`,
+          key: true,
+        };
+  };
+  const regalTarget = plan.fishFirst
+    ? chances
+        .filter((c) => c.name.en !== plan.fishFirst?.en)
+        .map((c) => nameIn(c.name, language))
+        .join(" + ")
+    : "недостающий notable";
+
   switch (plan.method) {
     case "alteration":
-      return [base, `${o.transmute}.`, `${o.alts}, пока не выпадет цель. ${target}`];
+      return [{ title: o.transmute, detail: "Белая база станет магической." }, { ...fishing(), detail: `${chanceList ? `Шанс за одну сферу: ${chanceList}. ` : ""}Крутите, пока не выпадет вся цель.` }, done];
     case "altAug":
-      return [base, `${o.transmute}.`, `${o.alt}; если у предмета один мод и ${o.aug} может закончить цель — ${o.aug}.`, `Повторять до попадания. ${target}`];
+      return [{ title: o.transmute, detail: "Белая база станет магической." }, fishing(), done];
     case "altAugRegal":
       return [
-        base,
-        `${o.transmute}.`,
-        `${o.alts} (и ${o.aug}, когда она может дать нужный notable), пока на предмете не будет notable цели.`,
-        `${o.regal}. Не вышло — ${o.scour}, ${o.transmute} и снова ${o.alts}.`,
-        target,
+        { title: o.transmute, detail: "Белая база станет магической." },
+        fishing(),
+        { title: `${o.regal} — добирает ${regalTarget}`, detail: `Предмет станет редким и получит ещё один мод. Не вышло — ${o.scour}, ${o.transmute} и снова шаг 3.` },
+        done,
       ];
     case "altAugRegalExalt":
       return [
-        base,
-        `${o.transmute}.`,
-        `${o.alts} (и ${o.aug}), пока на предмете не будет notable цели.`,
-        `${o.regal}; если цели не хватает одного мода — ${o.exalt}.`,
-        `Не вышло — ${o.scour}, ${o.transmute} и снова ${o.alts}.`,
-        target,
+        { title: o.transmute, detail: "Белая база станет магической." },
+        fishing(),
+        { title: `${o.regal} — добирает ${regalTarget}`, detail: "Предмет станет редким и получит ещё один мод." },
+        { title: `${o.exalt} — если не хватает одного мода`, detail: `Не вышло и после него — ${o.scour}, ${o.transmute} и снова шаг 3.` },
+        done,
       ];
     case "chaos":
-      return [base, `${o.alch}.`, `${o.chaos}, пока не выпадет цель. ${target}`];
+      return [{ title: o.alch, detail: "Белая база станет редкой." }, { title: `${o.chaos} — пока не выпадет цель`, detail: "Каждая сфера полностью меняет моды.", key: true }, done];
     case "harvest": {
       const h = plan.harvest;
-      const craft = h ? `«${nameIn(h.text, language)}» — ${h.lifeforceCost} ${LIFEFORCE_LABEL[h.lifeforce] ?? h.lifeforce} жизненной силы` : "перековка Harvest";
-      return [base, `${o.alch}.`, `На станции Harvest: ${craft}; повторять до попадания. ${target}`];
+      const craft = h ? `«${nameIn(h.text, language)}»` : "перековка Harvest";
+      const cost = h ? `${h.lifeforceCost} ${LIFEFORCE_LABEL[h.lifeforce] ?? h.lifeforce} жизненной силы за попытку` : undefined;
+      return [{ title: o.alch, detail: "Белая база станет редкой." }, { title: `Harvest: ${craft} — пока не выпадет цель`, ...(cost ? { detail: cost } : {}), key: true }, done];
     }
     case "fossil": {
       const fossils = plan.fossils.map((f) => nameIn(f.name, language)).join(", ");
       const sockets = plan.resonatorSockets ?? plan.fossils.length;
-      return [base, `${o.resonator} (${sockets} ${sockets === 1 ? "гнездо" : "гнезда"}), в него: ${fossils}.`, `Резонатор с ископаемыми на каждую попытку, пока не выпадет цель. ${target}`];
+      return [
+        { title: `${o.resonator} (${sockets} ${sockets === 1 ? "гнездо" : "гнезда"})`, detail: `В него: ${fossils}.` },
+        { title: "Резонатор на базу — пока не выпадет цель", detail: "Каждая попытка — новый резонатор с теми же ископаемыми.", key: true },
+        done,
+      ];
     }
   }
 }

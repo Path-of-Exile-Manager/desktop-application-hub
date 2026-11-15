@@ -5,7 +5,7 @@ import { iconUrl, searchCatalog } from "@/app/dataset";
 import type { ClusterName } from "@/generated/ClusterName";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
-import { formatRoi, formatShare, levelRange, methodName, methodSteps, nameIn, SIZE_LABEL, type NameLanguage } from "./model";
+import { craftSteps, formatRoi, formatShare, levelRange, methodName, nameIn, SIZE_LABEL, type NameLanguage, type PlanStep } from "./model";
 import { checkBase, clusterDetail, tradeUrl, useBaseChecks, useClustersData, type BaseCheckState, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -35,6 +35,39 @@ function Figures({ plan }: { plan: CraftPlan }) {
       {cell("Попыток", plan.attempts.mean.toFixed(1), `p50 ${plan.attempts.p50} · p90 ${plan.attempts.p90}`)}
       {cell("Крафт", text(plan.craftCost.mean), `p50 ${chaos(plan.craftCost.p50)} · p90 ${chaos(plan.craftCost.p90)}`)}
     </div>
+  );
+}
+
+/**
+ * Шаги крафта со второго (первый — покупка базы, блок выше): номер в кружке, что делать и
+ * подробности; главный шаг — тот, что повторяют до попадания, — выделен.
+ */
+function Steps({ steps }: { steps: PlanStep[] }) {
+  return (
+    <ol className="flex flex-col">
+      {steps.map((step, index) => {
+        const last = index === steps.length - 1;
+        return (
+          <li key={step.title} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <span
+                className={cx(
+                  "flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-caption font-semibold",
+                  step.key ? "border-accent-solid bg-accent-solid text-text-on-accent" : last ? "border-status-success-fg text-status-success-fg" : "border-border-strong text-text-secondary",
+                )}
+              >
+                {index + 2}
+              </span>
+              {!last && <span aria-hidden className="w-px flex-1 bg-border-subtle" />}
+            </div>
+            <div className={cx("flex min-w-0 flex-col gap-0.5 pb-3", step.key && "rounded-md border border-accent-solid/40 bg-accent-subtle/30 px-3 py-2 mb-3")}>
+              <span className={cx("text-body font-semibold", last ? "text-status-success-fg" : "text-text-primary")}>{step.title}</span>
+              {step.detail && <span className="text-label text-text-secondary">{step.detail}</span>}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -248,14 +281,10 @@ export function TargetCard({ row, language, onClose }: { row: ClusterRow | null;
         {best ? (
           <section className="flex flex-col gap-2">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="text-body font-semibold text-text-primary">Шаг 2 · крафт: {methodName(best, language)}</h3>
+              <h3 className="text-body font-semibold text-text-primary">Крафт: {methodName(best, language)}</h3>
             </div>
-            {/* Шаг 1 — покупка базы — в карточке «Нужная база» выше. */}
-            <ol start={2} className="flex list-decimal flex-col gap-1 pl-5 text-label text-text-primary">
-              {methodSteps(best, names, (c) => text(c, true), language).slice(1).map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
+            {/* Шаг 1 — покупка базы — в блоке «Нужная база» выше. */}
+            <Steps steps={craftSteps(best, names, language)} />
             <Figures plan={best} />
             <p className="text-caption text-text-secondary">
               p50 — хватит в половине случаев, p90 — в 9 из 10. Число попыток — как у костей: неудачная серия не делает следующую попытку удачнее.

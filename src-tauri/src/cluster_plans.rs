@@ -187,6 +187,11 @@ pub struct CraftPlan {
     pub base_price: f64,
     /// Шанс закончить цель одной попыткой.
     pub probability: f64,
+    /// Методы с царём на цели из нескольких notable: какой ловить сферами перемен (остальные
+    /// добирает царь); `null` — любой из них.
+    pub fish_first: Option<ClusterName>,
+    /// Методы на сферах перемен: шанс каждого notable цели за одну сферу перемен.
+    pub notable_chances: Vec<NotableChance>,
     pub attempts: CraftSpread,
     /// Ожидаемая цена попытки, chaos.
     pub attempt_cost: f64,
@@ -203,6 +208,15 @@ pub struct CraftPlan {
     /// пассивов и уровнем в диапазоне `item_level`–`item_level_max`, мгновенный выкуп и продавцы в сети, дешёвые сначала.
     #[ts(type = "unknown")]
     pub trade_base: Option<serde_json::Value>,
+}
+
+/// Notable цели и шанс, что он будет на предмете после одной сферы перемен.
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct NotableChance {
+    pub name: ClusterName,
+    pub chance: f64,
 }
 
 /// Валюта крафта: цена прайса и действующая (своя, если задана).
@@ -635,6 +649,14 @@ fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &Tar
         item_level_max: levels.1,
         base_price: plan.base.price,
         probability: plan.estimate.probability,
+        fish_first: plan.estimate.fish_first.and_then(|index| target.notables.get(index)).map(|name| notable_name(engine, name)),
+        notable_chances: plan
+            .estimate
+            .notable_chances
+            .iter()
+            .zip(&target.notables)
+            .map(|(chance, name)| NotableChance { name: notable_name(engine, name), chance: *chance })
+            .collect(),
         attempts: spread(plan.estimate.attempts),
         attempt_cost: plan.estimate.attempt_cost,
         craft_cost: spread(plan.estimate.cost),

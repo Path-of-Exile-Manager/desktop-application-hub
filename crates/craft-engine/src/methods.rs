@@ -111,6 +111,12 @@ pub struct Estimate {
     pub attempt_cost: f64,
     /// Стоимость крафта без базы, в хаосах.
     pub cost: Spread,
+    /// Методы с царём: notable цели (индекс), который ловят сферами перемен, остальные — царём
+    /// и возвышением. `None` — царь на любом из них.
+    pub fish_first: Option<usize>,
+    /// Методы на сферах перемен: шанс, что после одной перемены на предмете notable цели (по
+    /// индексу в цели). Пусто у остальных методов.
+    pub notable_chances: Vec<f64>,
 }
 
 /// Оценки всех методов цели на базе; методы без цен или с нулевым шансом пропущены. Из наборов
@@ -145,44 +151,48 @@ pub fn evaluate_base(
                 - alteration,
         };
         let mut decider = Decider::new(&pool);
+        let notable_chances = decider.notable_chances();
+        let policy = |augment: bool, regal: bool, exalt: bool| AltPolicy {
+            augment,
+            regal,
+            exalt,
+            first: None,
+        };
         let methods = [
-            (
-                Method::Alteration,
-                AltPolicy {
-                    augment: false,
-                    regal: false,
-                    exalt: false,
-                },
-            ),
-            (
-                Method::AltAug,
-                AltPolicy {
-                    augment: true,
-                    regal: false,
-                    exalt: false,
-                },
-            ),
-            (
-                Method::AltAugRegal,
-                AltPolicy {
-                    augment: true,
-                    regal: true,
-                    exalt: false,
-                },
-            ),
-            (
-                Method::AltAugRegalExalt,
-                AltPolicy {
-                    augment: true,
-                    regal: true,
-                    exalt: true,
-                },
-            ),
+            (Method::Alteration, policy(false, false, false)),
+            (Method::AltAug, policy(true, false, false)),
+            (Method::AltAugRegal, policy(true, true, false)),
+            (Method::AltAugRegalExalt, policy(true, true, true)),
         ];
         let mut seen: Vec<(f64, f64)> = Vec::new();
+        let expected = |attempt: &crate::strategy::Attempt| {
+            if attempt.success > 0.0 {
+                attempt.cost / attempt.success
+            } else {
+                f64::INFINITY
+            }
+        };
 
         for (method, policy) in methods {
-            let attempt = decider.attempt(policy, costs);
+            // С царём цель из нескольких notable: какой ловить сферами перемен (остальное —
+            // царём), выгоднее всего. Обычно — тот, что выпадает реже: перемены дешевле царя.
+            let mut chosen = (policy, decider.attempt(policy, costs));
+
+            if policy.regal && pool.target_count() > 1 {
+                for index in 0..pool.target_count() {
+                    let candidate = AltPolicy {
+                        first: Some(index),
+                        ..policy
+                    };
+                    let attempt = decider.attempt(candidate, costs);
+
+                    if expected(&attempt) < expected(&chosen.1) {
+                        chosen = (candidate, attempt);
+                    }
+                }
+            }
+
+            let (policy, attempt) = chosen;
 
             // Метод, не меняющий ни шанса, ни цены попытки (одиночная цель: царь не нужен),
             // повторял бы предыдущий.
@@ -194,13 +204,17 @@ pub fn evaluate_base(
 
             seen.push((attempt.success, attempt.cost));
 
-            if attempt.cost.is_finite() {
-                estimates.extend(estimate(
+            if attempt.cost.is_finite()
+                && let Some(mut found) = estimate(
                     method,
                     attempt.success,
                     transmutation - alteration,
                     attempt.cost,
-                ));
+                )
+            {
+                found.fish_first = policy.first;
+                found.notable_chances = notable_chances.clone();
+                estimates.push(found);
             }
         }
     }
@@ -398,6 +412,8 @@ fn estimate(
             p50: cost_of(attempts.p50),
             p90: cost_of(attempts.p90),
         },
+        fish_first: None,
+        notable_chances: Vec::new(),
     })
 }
 

@@ -395,6 +395,18 @@ impl Pool {
         self.target_buckets.iter().any(|mask| taken & mask != 0)
     }
 
+    /// На предмете есть notable цели с индексом `index`.
+    pub(crate) fn has_target(&self, taken: u128, index: usize) -> bool {
+        self.target_buckets
+            .get(index)
+            .is_some_and(|mask| taken & mask != 0)
+    }
+
+    /// Сколько notable в цели.
+    pub(crate) fn target_count(&self) -> usize {
+        self.target_buckets.len()
+    }
+
     pub(crate) fn missing(&self, taken: u128) -> u32 {
         self.target_buckets
             .iter()
