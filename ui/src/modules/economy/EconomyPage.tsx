@@ -1,18 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { BarChart3 } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  cx,
-  EmptyState,
-  MarketPrice,
-  Page,
-  Pagination,
-  SearchInput,
-  SegmentedControl,
-  usePageSize,
-} from "@/design-system";
+import { BarChart3, LayoutGrid } from "lucide-react";
+import { Button, Card, CardHeader, cx, EmptyState, Kbd, MarketPrice, Page, SearchInput, SegmentedControl } from "@/design-system";
 import { iconUrl, type CatalogItem } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
 import { formatAge, isFresh, usePrices } from "@/app/prices";
@@ -20,24 +9,57 @@ import { variantLabel } from "@/app/watchlist";
 import { inTauri } from "@/app/window";
 import { WatchButton } from "@/modules/price-check/PriceCard";
 import { ItemPriceDialog } from "@/modules/watchlist/WatchDetailsDialog";
-import { CATEGORY_GROUPS, categoryLabel, economyOverview, economyRows, useEconomyChoice, type EconomyOverview, type EconomyRow } from "./economy";
+import { ALL_CATEGORY, CATEGORY_GROUPS, categoryLabel, economyOverview, economyRows, useEconomyChoice, type EconomyOverview, type EconomyRow } from "./economy";
 import { EssenceFarm } from "./EssenceFarm";
 
-// «Экономика» — как раздел Economy на poe.ninja: слева столбик разделов, справа цены раздела с
-// поиском и сортировкой, постранично (окно без прокрутки); строка открывает предмет с подробной
-// ценой и историей. Цены — текущей лиги из шапки, валюта показа — из шапки.
+// «Экономика» — как раздел Economy на poe.ninja: слева столбик разделов («Все» — цены всей лиги),
+// справа цены раздела с поиском во всю ширину и сортировкой, бесконечной прокруткой; строка
+// открывает предмет с подробной ценой и историей. Цены — текущей лиги из шапки, валюта показа — из шапки.
 
 const ROW_HEIGHT = 44;
+
+/** Строк за раз в бесконечной прокрутке. */
+const CHUNK = 60;
 
 type Sort = "price" | "listings" | "name";
 
 /** Название на выбранном языке; русского нет — английское. */
 const rowName = (row: EconomyRow, language: "en" | "ru") => (language === "ru" ? (row.nameRu ?? row.nameEn) : row.nameEn);
 
+const COLUMNS = "grid grid-cols-[minmax(0,1fr)_10rem_6rem_6rem] items-center gap-4";
+
+function RailButton({ active, icon, label, count, onClick }: { active: boolean; icon: ReactNode; label: string; count?: number; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cx(
+        "flex h-9 items-center gap-2.5 rounded-md px-2 text-left text-body transition-colors",
+        active ? "bg-accent-subtle font-semibold text-text-accent" : "text-text-primary hover:bg-bg-hover",
+      )}
+    >
+      {icon}
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="font-mono text-caption text-text-muted">{count}</span>
+    </button>
+  );
+}
+
 function CategoryRail({ overview, active, onSelect }: { overview: EconomyOverview | null; active: string; onSelect: (id: string) => void }) {
   const byId = new Map((overview?.categories ?? []).map((c) => [c.id, c]));
+  const total = (overview?.categories ?? []).reduce((sum, c) => sum + c.count, 0);
   return (
     <nav aria-label="Разделы экономики" className="flex w-56 shrink-0 flex-col gap-3 overflow-y-auto">
+      {total > 0 && (
+        <RailButton
+          active={active === ALL_CATEGORY}
+          icon={<LayoutGrid aria-hidden className="size-6 shrink-0 p-0.5 text-icon-default" />}
+          label="Все"
+          count={total}
+          onClick={() => onSelect(ALL_CATEGORY)}
+        />
+      )}
       {CATEGORY_GROUPS.map((group) => {
         const items = group.items.filter((c) => byId.has(c.id));
         if (items.length === 0) return null;
@@ -47,20 +69,14 @@ function CategoryRail({ overview, active, onSelect }: { overview: EconomyOvervie
             {items.map((c) => {
               const info = byId.get(c.id);
               return (
-                <button
+                <RailButton
                   key={c.id}
-                  type="button"
+                  active={c.id === active}
+                  icon={info?.iconSha256 ? <img src={iconUrl(info.iconSha256)} alt="" className="size-6 shrink-0 object-contain" /> : <span className="size-6 shrink-0" />}
+                  label={c.label}
+                  count={info?.count}
                   onClick={() => onSelect(c.id)}
-                  aria-current={c.id === active ? "page" : undefined}
-                  className={cx(
-                    "flex h-9 items-center gap-2.5 rounded-md px-2 text-left text-body transition-colors",
-                    c.id === active ? "bg-accent-subtle font-semibold text-text-accent" : "text-text-primary hover:bg-bg-hover",
-                  )}
-                >
-                  {info?.iconSha256 ? <img src={iconUrl(info.iconSha256)} alt="" className="size-6 shrink-0 object-contain" /> : <span className="size-6 shrink-0" />}
-                  <span className="min-w-0 flex-1 truncate">{c.label}</span>
-                  <span className="font-mono text-caption text-text-muted">{info?.count}</span>
-                </button>
+                />
               );
             })}
           </div>
@@ -70,15 +86,16 @@ function CategoryRail({ overview, active, onSelect }: { overview: EconomyOvervie
   );
 }
 
-function RowView({ row, language, onOpen }: { row: EconomyRow; language: "en" | "ru"; onOpen: () => void }) {
+function RowView({ row, language, showCategory, onOpen }: { row: EconomyRow; language: "en" | "ru"; showCategory: boolean; onOpen: () => void }) {
+  const sub = [showCategory ? categoryLabel(row.category) : null, row.variantKey ? variantLabel(row.variantKey) : null].filter(Boolean).join(" · ");
   return (
     <li style={{ height: ROW_HEIGHT }} className="border-b border-border-subtle last:border-b-0">
-      <button type="button" onClick={onOpen} className="grid h-full w-full grid-cols-[minmax(0,1fr)_10rem_6rem_6rem] items-center gap-4 px-card-padding-x text-left hover:bg-bg-hover">
+      <button type="button" onClick={onOpen} className={cx(COLUMNS, "h-full w-full px-card-padding-x text-left hover:bg-bg-hover")}>
         <span className="flex min-w-0 items-center gap-3">
           {row.iconSha256 ? <img src={iconUrl(row.iconSha256)} alt="" className="size-8 shrink-0 object-contain" /> : <span className="size-8 shrink-0" />}
           <span className="min-w-0">
             <span className="block truncate text-body text-text-primary">{rowName(row, language)}</span>
-            {row.variantKey && <span className="block truncate text-caption text-text-secondary">{variantLabel(row.variantKey)}</span>}
+            {sub && <span className="block truncate text-caption text-text-secondary">{sub}</span>}
           </span>
         </span>
         <span className="flex justify-end">
@@ -102,41 +119,86 @@ export function EconomyPage() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("price");
   const [view, setView] = useState<"table" | "farm">("table");
-  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(CHUNK);
   const [open, setOpen] = useState<{ row: EconomyRow; item: CatalogItem } | null>(null);
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
+  const search = useRef<HTMLInputElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const sentinel = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
     void economyOverview().then(setOverview);
   }, [pricesVersion]);
 
-  // Раздела нет в ценах лиги (другая лига) — первый, где цены есть.
+  // Раздела нет в ценах лиги (другая лига) — первый, где цены есть. «Все» есть всегда.
   const available = overview?.categories ?? [];
-  const active = available.some((c) => c.id === category) || available.length === 0 ? category : (CATEGORY_GROUPS.flatMap((g) => g.items).find((c) => available.some((a) => a.id === c.id))?.id ?? category);
+  const active =
+    category === ALL_CATEGORY || available.some((c) => c.id === category) || available.length === 0
+      ? category
+      : (CATEGORY_GROUPS.flatMap((g) => g.items).find((c) => available.some((a) => a.id === c.id))?.id ?? category);
+  const isAll = active === ALL_CATEGORY;
 
   useEffect(() => {
     setRows(null);
     void economyRows(active).then(setRows);
   }, [active, pricesVersion]);
-  useEffect(() => setPage(1), [active, query, sort]);
   useEffect(() => {
     if (active !== "essences") setView("table");
   }, [active]);
 
+  // Ctrl+F на вкладке — в поиск.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        search.current?.focus();
+        search.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Строка поиска по каждой строке готовится один раз: в «Все» их десятки тысяч.
+  const haystacks = useMemo(
+    () => (rows ?? []).map((r) => `${r.nameEn}\n${r.nameRu ?? ""}\n${r.variantKey ? variantLabel(r.variantKey) : ""}`.toLowerCase().replace(/ё/g, "е")),
+    [rows],
+  );
+
   // Ищем и по-русски, и по-английски, какой бы язык названий ни был выбран.
   const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = (rows ?? []).filter((r) => !q || r.nameEn.toLowerCase().includes(q) || r.nameRu?.toLowerCase().includes(q) || variantLabel(r.variantKey).toLowerCase().includes(q));
+    const q = query.trim().toLowerCase().replace(/ё/g, "е");
+    const list = q ? (rows ?? []).filter((_, i) => haystacks[i]!.includes(q)) : (rows ?? []);
     if (sort === "listings") return [...list].sort((a, b) => (b.listings ?? -1) - (a.listings ?? -1));
     if (sort === "name") return [...list].sort((a, b) => rowName(a, language).localeCompare(rowName(b, language), language));
     return list;
-  }, [rows, query, sort, language]);
-  const pageRows = shown.slice((page - 1) * pageSize, page * pageSize);
+  }, [rows, haystacks, query, sort, language]);
+  const visible = shown.slice(0, limit);
+  const more = limit < shown.length;
+
+  // Другая выборка — снова с начала списка.
+  useEffect(() => {
+    setLimit(CHUNK);
+    scroller.current?.scrollTo({ top: 0 });
+  }, [active, query, sort, pricesVersion]);
+
+  // Бесконечная прокрутка: дошли до конца загруженного — дорисовать следующую порцию.
+  useEffect(() => {
+    const target = sentinel.current;
+    if (!target || !more) return;
+    const observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && setLimit((l) => l + CHUNK), {
+      root: scroller.current,
+      rootMargin: `${ROW_HEIGHT * 8}px`,
+    });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [more, visible.length]);
 
   const openRow = (row: EconomyRow) => {
     if (!inTauri) return;
     void invoke<CatalogItem | null>("catalog_item", { id: row.itemId }).then((item) => item && setOpen({ row, item }));
   };
+
+  const placeholder = isAll ? "Поиск по всем ценам лиги — название или вариант, по-русски или по-английски" : `Поиск в разделе «${categoryLabel(active)}» — по-русски или по-английски`;
 
   return (
     <Page
@@ -160,7 +222,7 @@ export function EconomyPage() {
           <CardHeader
             title={
               <span>
-                {categoryLabel(active)} <span className="font-normal text-text-muted">{rows ? shown.length : ""}</span>
+                {categoryLabel(active)} <span className="font-normal text-text-muted">{rows ? shown.length.toLocaleString("ru-RU") : ""}</span>
               </span>
             }
             aside={
@@ -177,19 +239,16 @@ export function EconomyPage() {
                   />
                 )}
                 {view === "table" && (
-                  <>
-                    <SegmentedControl<Sort>
-                      aria-label="Сортировка"
-                      value={sort}
-                      onValueChange={setSort}
-                      options={[
-                        { value: "price", label: "Цена" },
-                        { value: "listings", label: "Лоты" },
-                        { value: "name", label: "Имя" },
-                      ]}
-                    />
-                    <SearchInput value={query} onValueChange={setQuery} label="Поиск в разделе" placeholder="Название или вариант" className="w-60" />
-                  </>
+                  <SegmentedControl<Sort>
+                    aria-label="Сортировка"
+                    value={sort}
+                    onValueChange={setSort}
+                    options={[
+                      { value: "price", label: "Цена" },
+                      { value: "listings", label: "Лоты" },
+                      { value: "name", label: "Имя" },
+                    ]}
+                  />
                 )}
               </span>
             }
@@ -200,30 +259,52 @@ export function EconomyPage() {
             </div>
           ) : (
             <>
-              <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_10rem_6rem_6rem] gap-4 border-b border-border-subtle px-card-padding-x py-2 text-caption text-text-secondary">
+              <div className="flex shrink-0 items-center gap-3 border-b border-border-subtle bg-bg-surface px-card-padding-x py-3">
+                <SearchInput
+                  ref={search}
+                  autoFocus
+                  value={query}
+                  onValueChange={setQuery}
+                  label={isAll ? "Поиск по всем ценам" : "Поиск в разделе"}
+                  placeholder={placeholder}
+                  className="min-w-0 flex-1"
+                />
+                {query.trim() && !isAll ? (
+                  <Button variant="ghost" className="shrink-0" onClick={() => setCategory(ALL_CATEGORY)}>
+                    Искать во всех разделах
+                  </Button>
+                ) : (
+                  <span className="hidden shrink-0 items-center gap-1 text-caption text-text-muted lg:inline-flex">
+                    <Kbd>Ctrl</Kbd>+<Kbd>F</Kbd>
+                  </span>
+                )}
+              </div>
+              <div className={cx(COLUMNS, "shrink-0 border-b border-border-subtle px-card-padding-x py-2 text-caption text-text-secondary [scrollbar-gutter:stable]")}>
                 <span>Название</span>
                 <span className="text-right">Цена</span>
                 <span className="text-right">Лотов</span>
                 <span className="text-right">Обновлено</span>
               </div>
-              <div ref={ref} className="min-h-0 flex-1 overflow-hidden">
+              <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
                 {rows === null ? (
                   <p className="px-card-padding-x py-4 text-label text-text-secondary">загрузка…</p>
                 ) : shown.length === 0 ? (
                   <EmptyState icon={BarChart3} title={query ? "Ничего не найдено" : "В разделе нет цен"} className="h-full">
-                    {query ? "Попробуйте другое название — ищем и по-русски, и по-английски." : "Для этой лиги цен в разделе пока нет."}
+                    {query
+                      ? isAll
+                        ? "Попробуйте другое название — ищем и по-русски, и по-английски."
+                        : "В этом разделе нет — попробуйте «Искать во всех разделах»."
+                      : "Для этой лиги цен в разделе пока нет."}
                   </EmptyState>
                 ) : (
                   <ul className="flex flex-col">
-                    {pageRows.map((row) => (
-                      <RowView key={`${row.itemId}|${row.variantKey}`} row={row} language={language} onOpen={() => openRow(row)} />
+                    {visible.map((row) => (
+                      <RowView key={`${row.itemId}|${row.variantKey}`} row={row} language={language} showCategory={isAll} onOpen={() => openRow(row)} />
                     ))}
+                    {more && <li ref={sentinel} aria-hidden style={{ height: ROW_HEIGHT }} />}
                   </ul>
                 )}
               </div>
-              {shown.length > pageSize && (
-                <Pagination page={page} pageSize={pageSize} total={shown.length} onPageChange={setPage} className="border-t border-border-subtle px-card-padding-x py-2" />
-              )}
             </>
           )}
         </Card>
@@ -240,4 +321,3 @@ export function EconomyPage() {
     </Page>
   );
 }
-

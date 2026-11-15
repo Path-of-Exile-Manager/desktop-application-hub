@@ -7,4 +7,8 @@ export type EconomyRow = { itemId: string, variantKey: string, nameEn: string, n
 /**
  * Больше всего лотов у одного источника; `null` — источники не сообщают.
  */
-listings: number | null, updatedAt: string, };
+listings: number | null, updatedAt: string, 
+/**
+ * Раздел строки (`currency`, `gems`…) — подпись в разделе «Все».
+ */
+category: string, };

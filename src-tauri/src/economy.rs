@@ -25,6 +25,8 @@ pub struct EconomyRow {
     /// Больше всего лотов у одного источника; `null` — источники не сообщают.
     pub listings: Option<u32>,
     pub updated_at: String,
+    /// Раздел строки (`currency`, `gems`…) — подпись в разделе «Все».
+    pub category: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -118,6 +120,7 @@ fn row(item: &CatalogItem, price: &Price) -> EconomyRow {
         reliable: price.reliable,
         listings: price.sources.iter().filter_map(|s| s.listing_count).max(),
         updated_at: price.updated_at.clone(),
+        category: category_of(item).to_string(),
     }
 }
 
@@ -144,14 +147,17 @@ pub fn economy_overview(dataset: State<DatasetService>, prices: State<PricesServ
     EconomyOverview { league: prices.league(), categories: categories.into_iter().map(|(c, _)| c).collect() }
 }
 
-/// Строки раздела, дорогие сверху.
+/// Раздел «Все»: цены всех разделов сразу — для поиска по всей лиге.
+pub const ALL: &str = "all";
+
+/// Строки раздела (`all` — всех разделов), дорогие сверху.
 #[tauri::command]
 pub fn economy_rows(dataset: State<DatasetService>, prices: State<PricesService>, category: String) -> Vec<EconomyRow> {
     let Some(catalog) = dataset.catalog() else { return Vec::new() };
     let mut rows: Vec<EconomyRow> = prices
         .all()
         .iter()
-        .filter_map(|price| catalog.get(&price.item_id).filter(|item| category_of(item) == category).map(|item| row(item, price)))
+        .filter_map(|price| catalog.get(&price.item_id).filter(|item| category == ALL || category_of(item) == category).map(|item| row(item, price)))
         .collect();
     rows.sort_by(|a, b| b.chaos_value.total_cmp(&a.chaos_value));
     rows

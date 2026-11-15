@@ -54,9 +54,12 @@ export const CATEGORY_GROUPS: { label: string; items: CategoryDef[] }[] = [
   },
 ];
 
-export const categoryLabel = (id: string) => CATEGORY_GROUPS.flatMap((g) => g.items).find((c) => c.id === id)?.label ?? id;
+/** Раздел «Все» — цены всех разделов, для поиска по всей лиге (ядро: `economy_rows("all")`). */
+export const ALL_CATEGORY = "all";
 
-/** Выбранный раздел — между заходами на вкладку (до перезапуска). */
+export const categoryLabel = (id: string) =>
+  id === ALL_CATEGORY ? "Все" : (CATEGORY_GROUPS.flatMap((g) => g.items).find((c) => c.id === id)?.label ?? id);
+
 /** Выбранный раздел и язык названий предметов (переключатель «Рус / Eng»; язык сохраняется). */
 export const useEconomyChoice = create<{
   category: string;
