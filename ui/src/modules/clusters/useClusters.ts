@@ -9,7 +9,7 @@ import type { ClustersStatus } from "@/generated/ClustersStatus";
 import type { CraftCurrency } from "@/generated/CraftCurrency";
 import type { CraftPlan } from "@/generated/CraftPlan";
 import { inTauri } from "@/app/window";
-import { DEFAULT_SORT, firstDirectionDesc, NO_FILTERS, type Band, type Filters, type Sort, type SortKey } from "./model";
+import { DEFAULT_SORT, firstDirectionDesc, NO_FILTERS, type Band, type Filters, type NameLanguage, type Sort, type SortKey } from "./model";
 
 // Цели и планы считает ядро (src-tauri/src/clusters.rs) для лиги цен; вкладка только показывает.
 
@@ -30,7 +30,9 @@ export const useClustersView = create<{
   filters: Filters;
   sort: Sort;
   showLosses: boolean;
-  set: (patch: Partial<{ band: Band | null; filters: Filters; sort: Sort; showLosses: boolean }>) => void;
+  /** Язык названий notable, валюты и энчантов. */
+  language: NameLanguage;
+  set: (patch: Partial<{ band: Band | null; filters: Filters; sort: Sort; showLosses: boolean; language: NameLanguage }>) => void;
 }>()(
   persist(
     (set) => ({
@@ -38,6 +40,7 @@ export const useClustersView = create<{
       filters: NO_FILTERS,
       sort: DEFAULT_SORT,
       showLosses: false,
+      language: "ru",
       set: (patch) => set(patch),
     }),
     {
@@ -49,7 +52,7 @@ export const useClustersView = create<{
         const sort = typeof p.sort === "string" ? { key: p.sort as SortKey, desc: firstDirectionDesc(p.sort as SortKey) } : DEFAULT_SORT;
         return { ...(persisted as object), sort } as never;
       },
-      partialize: ({ band, filters, sort, showLosses }) => ({ band, filters, sort, showLosses }),
+      partialize: ({ band, filters, sort, showLosses, language }) => ({ band, filters, sort, showLosses, language }),
     },
   ),
 );

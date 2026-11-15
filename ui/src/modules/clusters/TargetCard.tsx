@@ -3,7 +3,7 @@ import { Copy, ExternalLink } from "lucide-react";
 import { Button, cx, Dialog, MarketPrice, toast, usePriceText } from "@/design-system";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
-import { formatRoi, formatShare, methodName, methodSteps, SIZE_LABEL } from "./model";
+import { formatRoi, formatShare, methodName, methodSteps, nameIn, SIZE_LABEL, type NameLanguage } from "./model";
 import { clusterDetail, tradeUrl, useClustersData, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -38,7 +38,7 @@ function Figures({ plan }: { plan: CraftPlan }) {
 }
 
 /** Карточка цели: лучший план по шагам, разброс, сравнение методов, ссылки на сайт торговли. */
-export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: () => void }) {
+export function TargetCard({ row, language, onClose }: { row: ClusterRow | null; language: NameLanguage; onClose: () => void }) {
   const league = useClustersData((d) => d.status?.league);
   const text = usePriceText();
   const [detail, setDetail] = useState<ClusterDetail | null>(null);
@@ -101,7 +101,7 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
         {best ? (
           <section className="flex flex-col gap-2">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="text-body font-semibold text-text-primary">Лучший способ: {methodName(best)}</h3>
+              <h3 className="text-body font-semibold text-text-primary">Лучший способ: {methodName(best, language)}</h3>
               {best.profit !== null && (
                 <span className={cx("font-mono text-body font-semibold", best.profit >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>
                   {signed(best.profit, text(best.profit))} · окупаемость {formatRoi(best.roi ?? 0)}
@@ -109,7 +109,7 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
               )}
             </div>
             <ol className="flex list-decimal flex-col gap-1 pl-5 text-label text-text-primary">
-              {methodSteps(best, names, (c) => text(c, true)).map((step) => (
+              {methodSteps(best, names, (c) => text(c, true), language).map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
@@ -132,7 +132,7 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
                 </span>
               ))}
               {plans.map((plan, index) => (
-                <PlanRow key={`${plan.method}-${index}`} plan={plan} best={index === 0} onBuy={() => open(league, plan.tradeBase)} />
+                <PlanRow key={`${plan.method}-${index}`} plan={plan} language={language} best={index === 0} onBuy={() => open(league, plan.tradeBase)} />
               ))}
             </div>
           </section>
@@ -140,7 +140,7 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
 
         {detail && detail.enchants.length > 0 && (
           <p className="text-caption text-text-secondary">
-            Выпадает на энчантах: {detail.enchants.map((e) => e.ru ?? e.en).join(", ")}.
+            Выпадает на энчантах: {detail.enchants.map((e) => nameIn(e, language)).join(", ")}.
           </p>
         )}
       </div>
@@ -148,15 +148,15 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
   );
 }
 
-function PlanRow({ plan, best, onBuy }: { plan: CraftPlan; best: boolean; onBuy: () => void }) {
+function PlanRow({ plan, language, best, onBuy }: { plan: CraftPlan; language: NameLanguage; best: boolean; onBuy: () => void }) {
   const cls = cx("truncate border-b border-border-subtle py-1.5", best && "font-semibold");
   const text = usePriceText();
   const chaos = (amount: number) => text(amount, true);
   return (
     <>
-      <span className={cls} title={methodName(plan)}>{methodName(plan)}</span>
+      <span className={cls} title={methodName(plan, language)}>{methodName(plan, language)}</span>
       <span className={cx(cls, "text-text-secondary")} title={`База ${chaos(plan.basePrice)}`}>
-        {plan.enchant.ru ?? plan.enchant.en} · {plan.itemLevel}+
+        {nameIn(plan.enchant, language)} · {plan.itemLevel}+
       </span>
       <span className={cx(cls, "font-mono")}>{(plan.probability * 100).toFixed(plan.probability < 0.01 ? 2 : 1)} %</span>
       <span className={cx(cls, "font-mono")}>{plan.attempts.mean.toFixed(1)}</span>

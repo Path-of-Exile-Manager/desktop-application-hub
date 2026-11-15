@@ -30,6 +30,7 @@ import {
   formatShare,
   ISSUE_LABEL,
   methodName,
+  nameIn,
   nextSort,
   shareTrend,
   SIZE_LABEL,
@@ -37,6 +38,7 @@ import {
   sortRows,
   UNPRICED_LABEL,
   type Band,
+  type NameLanguage,
   type Sort,
   type SortKey,
 } from "./model";
@@ -111,7 +113,7 @@ function Trend({ row }: { row: ClusterRow }) {
   );
 }
 
-function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
+function TargetRow({ row, language, onOpen }: { row: ClusterRow; language: NameLanguage; onOpen: () => void }) {
   const best = row.best;
   const market = row.market;
   const names = row.notables.map((n) => n.en).join(" + ");
@@ -184,10 +186,10 @@ function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
         {best ? (
           <>
             <p className="truncate text-label text-text-primary">
-              {best.method === "fossil" ? best.fossils.map((f) => f.name.ru ?? f.name.en).join(" + ") : methodName(best)}
+              {best.method === "fossil" ? best.fossils.map((f) => nameIn(f.name, language)).join(" + ") : methodName(best, language)}
             </p>
             <p className="truncate text-caption text-text-secondary">
-              {best.enchant.ru ?? best.enchant.en} · ilvl {best.itemLevel} · шанс {(best.probability * 100).toFixed(best.probability < 0.01 ? 2 : 1)} %
+              {nameIn(best.enchant, language)} · ilvl {best.itemLevel} · шанс {(best.probability * 100).toFixed(best.probability < 0.01 ? 2 : 1)} %
             </p>
           </>
         ) : null}
@@ -243,7 +245,7 @@ export function ClustersPage() {
   useClustersSync();
   const status = useClustersData((d) => d.status);
   const rows = useClustersData((d) => d.rows);
-  const { band: savedBand, filters, sort, showLosses, set } = useClustersView();
+  const { band: savedBand, filters, sort, showLosses, language, set } = useClustersView();
   const [limit, setLimit] = useState(CHUNK);
   const [selected, setSelected] = useState<ClusterRow | null>(null);
   const [currencyOpen, setCurrencyOpen] = useState(() => import.meta.env.DEV && new URLSearchParams(location.search).get("dialog") === "currency");
@@ -298,6 +300,15 @@ export function ClustersPage() {
       subtitle={subtitle(status)}
       actions={
         <>
+          <SegmentedControl<NameLanguage>
+            aria-label="Язык названий валюты и энчантов"
+            value={language}
+            onValueChange={(value) => set({ language: value })}
+            options={[
+              { value: "ru", label: "Рус" },
+              { value: "en", label: "Eng" },
+            ]}
+          />
           <Button icon={Coins} variant="ghost" onClick={() => setCurrencyOpen(true)}>
             {ownCount > 0 ? `Цены валюты · свои ${ownCount}` : "Цены валюты"}
           </Button>
@@ -344,7 +355,7 @@ export function ClustersPage() {
           <SortButton sortKey="cost" sort={sort} onSort={onSort}>
             Вложения
           </SortButton>
-          <span className="inline-flex items-center gap-2">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2">
             <SortButton sortKey="profit" sort={sort} onSort={onSort}>
               Прибыль
             </SortButton>
@@ -374,7 +385,7 @@ export function ClustersPage() {
           ) : (
             <ul className="flex flex-col">
               {shown.map((row) => (
-                <TargetRow key={row.key} row={row} onOpen={() => setSelected(row)} />
+                <TargetRow key={row.key} row={row} language={language} onOpen={() => setSelected(row)} />
               ))}
               {more && <li ref={sentinel} aria-hidden style={{ height: ROW_HEIGHT }} />}
             </ul>
@@ -387,8 +398,8 @@ export function ClustersPage() {
           </p>
         )}
       </div>
-      <TargetCard row={selected && (rows.find((r) => r.key === selected.key) ?? selected)} onClose={() => setSelected(null)} />
-      <CurrencyDialog open={currencyOpen} onOpenChange={setCurrencyOpen} />
+      <TargetCard row={selected && (rows.find((r) => r.key === selected.key) ?? selected)} language={language} onClose={() => setSelected(null)} />
+      <CurrencyDialog open={currencyOpen} language={language} onOpenChange={setCurrencyOpen} />
     </Page>
   );
 }

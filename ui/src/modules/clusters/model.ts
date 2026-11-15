@@ -121,66 +121,111 @@ export function defaultBand(counts: Record<Band, number>, showLosses: boolean): 
   return order.find((band) => counts[band] > 0) ?? "roi0";
 }
 
-export const METHOD_LABEL: Record<CraftMethodKind, string> = {
-  alteration: "Перемены",
-  altAug: "Перемены + усиление",
-  altAugRegal: "Перемены + усиление + царь",
-  altAugRegalExalt: "Перемены + усиление + царь + возвышение",
-  chaos: "Хаос",
-  fossil: "Ископаемые",
-  harvest: "Harvest",
+/** Язык названий игры (notable, валюта, энчанты): переключатель «Рус / Eng» на вкладке. */
+export type NameLanguage = "ru" | "en";
+
+/** Название на выбранном языке; русского нет — английское. */
+export const nameIn = (name: { en: string; ru: string | null }, language: NameLanguage) => (language === "ru" ? (name.ru ?? name.en) : name.en);
+
+export const METHOD_LABEL: Record<NameLanguage, Record<CraftMethodKind, string>> = {
+  ru: {
+    alteration: "Перемены",
+    altAug: "Перемены + усиление",
+    altAugRegal: "Перемены + усиление + царь",
+    altAugRegalExalt: "Перемены + усиление + царь + возвышение",
+    chaos: "Хаос",
+    fossil: "Ископаемые",
+    harvest: "Harvest",
+  },
+  en: {
+    alteration: "Alteration",
+    altAug: "Alteration + Augmentation",
+    altAugRegal: "Alteration + Augmentation + Regal",
+    altAugRegalExalt: "Alteration + Augmentation + Regal + Exalted",
+    chaos: "Chaos",
+    fossil: "Fossils",
+    harvest: "Harvest",
+  },
 };
 
 const LIFEFORCE_LABEL: Record<string, string> = { wild: "дикой (Wild)", vivid: "яркой (Vivid)", primal: "первородной (Primal)" };
 
+/** Валюта в шагах крафта: в «Eng» — названия, как в игре на английском. */
+const ORBS: Record<NameLanguage, Record<"transmute" | "alts" | "alt" | "aug" | "regal" | "scour" | "exalt" | "alch" | "chaos" | "resonator", string>> = {
+  ru: {
+    transmute: "Сфера превращения",
+    alts: "Сферы перемен",
+    alt: "Сфера перемен",
+    aug: "сфера усиления",
+    regal: "Сфера царей",
+    scour: "сфера очищения",
+    exalt: "сфера возвышения",
+    alch: "Сфера алхимии",
+    chaos: "Сферы хаоса",
+    resonator: "Хаотический резонатор",
+  },
+  en: {
+    transmute: "Orb of Transmutation",
+    alts: "Orb of Alteration",
+    alt: "Orb of Alteration",
+    aug: "Orb of Augmentation",
+    regal: "Regal Orb",
+    scour: "Orb of Scouring",
+    exalt: "Exalted Orb",
+    alch: "Orb of Alchemy",
+    chaos: "Chaos Orb",
+    resonator: "Chaotic Resonator",
+  },
+};
+
 /** Название способа: ископаемые и крафт Harvest — по именам. */
-export function methodName(plan: CraftPlan): string {
-  if (plan.method === "fossil") return `Ископаемые: ${plan.fossils.map((f) => f.name.ru ?? f.name.en).join(" + ")}`;
-  if (plan.method === "harvest" && plan.harvest) return `Harvest: перековка с тегом ${plan.harvest.tag}`;
-  return METHOD_LABEL[plan.method];
+export function methodName(plan: CraftPlan, language: NameLanguage = "ru"): string {
+  if (plan.method === "fossil") return `${METHOD_LABEL[language].fossil}: ${plan.fossils.map((f) => nameIn(f.name, language)).join(" + ")}`;
+  if (plan.method === "harvest" && plan.harvest) return `Harvest: ${language === "ru" ? "перековка с тегом" : "reforge"} ${plan.harvest.tag}`;
+  return METHOD_LABEL[language][plan.method];
 }
 
 /** Шаги метода словами: что купить и что делать до попадания. `price` — цена в chaos строкой (валюта показа). */
-export function methodSteps(plan: CraftPlan, notables: string, price: (chaos: number) => string): string[] {
-  const base = `Купить белую базу: ${plan.enchant.ru ?? plan.enchant.en}, уровень не ниже ${plan.itemLevel} (≈ ${price(plan.basePrice)}).`;
+export function methodSteps(plan: CraftPlan, notables: string, price: (chaos: number) => string, language: NameLanguage = "ru"): string[] {
+  const o = ORBS[language];
+  const base = `Купить белую базу: ${nameIn(plan.enchant, language)}, уровень не ниже ${plan.itemLevel} (≈ ${price(plan.basePrice)}).`;
   const target = `Цель — ${notables}.`;
   switch (plan.method) {
     case "alteration":
-      return [base, "Сфера превращения.", `Сферы перемен, пока не выпадет цель. ${target}`];
+      return [base, `${o.transmute}.`, `${o.alts}, пока не выпадет цель. ${target}`];
     case "altAug":
-      return [base, "Сфера превращения.", "Сфера перемен; если у предмета один мод и сфера усиления может закончить цель — усиление.", `Повторять до попадания. ${target}`];
+      return [base, `${o.transmute}.`, `${o.alt}; если у предмета один мод и ${o.aug} может закончить цель — ${o.aug}.`, `Повторять до попадания. ${target}`];
     case "altAugRegal":
       return [
         base,
-        "Сфера превращения.",
-        "Сферы перемен (и усиление, когда оно может дать нужный notable), пока на предмете не будет notable цели.",
-        "Сфера царей. Не вышло — сфера очищения, превращение и снова перемены.",
+        `${o.transmute}.`,
+        `${o.alts} (и ${o.aug}, когда она может дать нужный notable), пока на предмете не будет notable цели.`,
+        `${o.regal}. Не вышло — ${o.scour}, ${o.transmute} и снова ${o.alts}.`,
         target,
       ];
     case "altAugRegalExalt":
       return [
         base,
-        "Сфера превращения.",
-        "Сферы перемен (и усиление), пока на предмете не будет notable цели.",
-        "Сфера царей; если цели не хватает одного мода — сфера возвышения.",
-        "Не вышло — сфера очищения, превращение и снова перемены.",
+        `${o.transmute}.`,
+        `${o.alts} (и ${o.aug}), пока на предмете не будет notable цели.`,
+        `${o.regal}; если цели не хватает одного мода — ${o.exalt}.`,
+        `Не вышло — ${o.scour}, ${o.transmute} и снова ${o.alts}.`,
         target,
       ];
     case "chaos":
-      return [base, "Сфера алхимии.", `Сферы хаоса, пока не выпадет цель. ${target}`];
+      return [base, `${o.alch}.`, `${o.chaos}, пока не выпадет цель. ${target}`];
     case "harvest": {
       const h = plan.harvest;
-      const craft = h ? `«${h.text.ru ?? h.text.en}» — ${h.lifeforceCost} ${LIFEFORCE_LABEL[h.lifeforce] ?? h.lifeforce} жизненной силы` : "перековка Harvest";
-      return [base, "Сфера алхимии.", `На станции Harvest: ${craft}; повторять до попадания. ${target}`];
+      const craft = h ? `«${nameIn(h.text, language)}» — ${h.lifeforceCost} ${LIFEFORCE_LABEL[h.lifeforce] ?? h.lifeforce} жизненной силы` : "перековка Harvest";
+      return [base, `${o.alch}.`, `На станции Harvest: ${craft}; повторять до попадания. ${target}`];
     }
     case "fossil": {
-      const fossils = plan.fossils.map((f) => f.name.ru ?? f.name.en).join(", ");
+      const fossils = plan.fossils.map((f) => nameIn(f.name, language)).join(", ");
       const sockets = plan.resonatorSockets ?? plan.fossils.length;
-      return [base, `Хаотический резонатор (${sockets} ${sockets === 1 ? "гнездо" : "гнезда"}), в него: ${fossils}.`, `Резонатор с ископаемыми на каждую попытку, пока не выпадет цель. ${target}`];
+      return [base, `${o.resonator} (${sockets} ${sockets === 1 ? "гнездо" : "гнезда"}), в него: ${fossils}.`, `Резонатор с ископаемыми на каждую попытку, пока не выпадет цель. ${target}`];
     }
   }
 }
-
 export const ISSUE_LABEL: Record<ClusterIssue, string> = {
   unreachable: "не выпадает на базах этой версии игры",
   noBasePrice: "нет цен баз с таким числом пассивов",
