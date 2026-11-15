@@ -39,6 +39,7 @@ import { pricesStatusItem, usePrices, usePricesSync, useCurrencyIcons } from "@/
 import { useStartup } from "@/app/startup";
 import { splashVersion } from "@/app/SplashReplay";
 import { DevBadge } from "@/app/DevBadge";
+import { PageErrorBoundary } from "@/app/PageErrorBoundary";
 import { MandatoryUpdateScreen, UpdateTitleAction, useUpdaterStatusSync, WhatsNewDialog } from "@/app/updater";
 
 /** При ширине окна меньше 1360 правая панель скрывается автоматически (app-shell.md). */
@@ -185,7 +186,7 @@ export default function App() {
         }
         statusbar={<StatusBar items={[gameStatusItem(game), serverStatusItem(server), datasetStatusItem(dataset), pricesStatusItem(prices), extensionStatusItem(extension)].filter((i) => i !== null)} hint={`${s.hotkeys.palette.join(" + ")} — поиск и команды`} />}
       >
-        {needConnection && dataset ? <NeedConnection status={dataset} /> : <ActivePage key={active.id} />}
+        {needConnection && dataset ? <NeedConnection status={dataset} /> : <PageErrorBoundary resetKey={active.id}><ActivePage key={active.id} /></PageErrorBoundary>}
       </AppShell>
       <MandatoryUpdateScreen />
       <WhatsNewDialog enabled={startup.phase === "done"} />

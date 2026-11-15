@@ -147,7 +147,7 @@ export function LotsCard({ live, className }: { live: ReturnType<typeof useLiveS
   useEffect(() => {
     const target = sentinel.current;
     if (!target || !hasMore || loading || error) return;
-    const observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && more(), { root: scroller.current, rootMargin: `px` });
+    const observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && more(), { root: scroller.current, rootMargin: `${ROW_HEIGHT * 2}px` });
     observer.observe(target);
     return () => observer.disconnect();
   }, [hasMore, loading, error, more, listings.length]);
