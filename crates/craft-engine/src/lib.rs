@@ -23,7 +23,7 @@ use std::fmt;
 pub use exact::{Limits, Rarity, harvest_hit_probability, reroll_hit_probability};
 pub use methods::{Estimate, Method, Prices, Spread, attempts_quantile, evaluate_base};
 pub use plan::{BaseOffer, Plan, plan_target};
-pub use pool::{Base, Pool};
+pub use pool::{Base, Pool, item_level_range};
 pub use simulate::{Rng, simulate_alt_policy, simulate_harvest, simulate_reroll};
 pub use strategy::AltPolicy;
 

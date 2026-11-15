@@ -101,6 +101,41 @@ pub struct Pool {
     all_dynamic: u64,
 }
 
+/// Уровни предмета, на которых у базы тот же пул модов, что на `item_level`: от самого высокого
+/// требования уровня среди модов пула (не ниже 1) до уровня перед следующим модом, который
+/// добавился бы в пул (`None` — выше модов нет). Шанс крафта на всех уровнях диапазона одинаков;
+/// выше — в пуле больше модов и шанс цели не растёт.
+pub fn item_level_range(
+    data: &CraftingData,
+    size: &str,
+    enchant: &str,
+    item_level: u32,
+) -> Result<(u32, Option<u32>), EngineError> {
+    let every = Pool::new(
+        data,
+        Base {
+            size,
+            enchant,
+            item_level: u32::MAX,
+        },
+        &[],
+        &[],
+    )?;
+    let levels = || {
+        every
+            .mods
+            .iter()
+            .map(|pool_mod| data.clusters.mods[pool_mod.source].required_level)
+    };
+    let low = levels().filter(|level| *level <= item_level).max().unwrap_or(1).max(1);
+    let high = levels()
+        .filter(|level| *level > item_level)
+        .min()
+        .map(|level| level - 1);
+
+    Ok((low, high))
+}
+
 /// Влияние ископаемых на тег (как считает Craft of Exile в режиме по умолчанию): множители
 /// больше 1 складываются, остальные перемножаются, вес 0 запрещает тег.
 #[derive(Debug, Clone, Copy, Default)]

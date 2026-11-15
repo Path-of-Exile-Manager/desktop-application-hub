@@ -29,6 +29,7 @@ import {
   formatRoi,
   formatShare,
   ISSUE_LABEL,
+  levelRange,
   methodName,
   nameIn,
   nextSort,
@@ -134,7 +135,7 @@ function TargetRow({ row, language, onOpen }: { row: ClusterRow; language: NameL
           <p className="truncate text-body font-semibold text-text-primary">{names}</p>
         </Tooltip>
         <p className="truncate text-caption text-text-secondary">
-          {SIZE_LABEL[row.size] ?? row.size} · {row.passives} пасс. · ilvl от {Math.max(row.minIlvl, best?.itemLevel ?? 0)}
+          {SIZE_LABEL[row.size] ?? row.size} · {row.passives} пасс. · ilvl {best ? levelRange(best) : `от ${row.minIlvl}`}
         </p>
       </div>
 
@@ -191,7 +192,7 @@ function TargetRow({ row, language, onOpen }: { row: ClusterRow; language: NameL
               {best.method === "fossil" ? best.fossils.map((f) => nameIn(f.name, language)).join(" + ") : methodName(best, language)}
             </p>
             <p className="truncate text-caption text-text-secondary">
-              {nameIn(best.enchant, language)} · ilvl {best.itemLevel} · шанс {(best.probability * 100).toFixed(best.probability < 0.01 ? 2 : 1)} %
+              {nameIn(best.enchant, language)} · ilvl {levelRange(best)} · шанс {(best.probability * 100).toFixed(best.probability < 0.01 ? 2 : 1)} %
             </p>
           </>
         ) : null}

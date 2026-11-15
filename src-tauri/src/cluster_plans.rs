@@ -180,8 +180,10 @@ pub struct CraftPlan {
     pub harvest: Option<CraftHarvest>,
     pub enchant_id: String,
     pub enchant: ClusterName,
-    /// Уровень базы (ступень цен poe.ninja: 1, 50, 68, 75, 84 и выше).
+    /// Уровень базы не ниже: с него в пуле все моды, с которыми посчитан шанс.
     pub item_level: u32,
+    /// Уровень базы не выше: дальше в пул добавляются моды и шанс цели падает. `null` — выше модов нет.
+    pub item_level_max: Option<u32>,
     pub base_price: f64,
     /// Шанс закончить цель одной попыткой.
     pub probability: f64,
@@ -198,7 +200,7 @@ pub struct CraftPlan {
     pub profit: Option<f64>,
     pub roi: Option<f64>,
     /// Запрос сайта торговли для покупки базы (`?q=` поиска): белая база с энчантом, числом
-    /// пассивов и уровнем не ниже нужного, мгновенный выкуп и продавцы в сети, дешёвые сначала.
+    /// пассивов и уровнем в диапазоне `item_level`–`item_level_max`, мгновенный выкуп и продавцы в сети, дешёвые сначала.
     #[ts(type = "unknown")]
     pub trade_base: Option<serde_json::Value>,
 }
@@ -507,8 +509,9 @@ fn target_query(engine: &Engine, target: &TargetReply) -> Option<serde_json::Val
     }))
 }
 
-/// Запрос базы плана: белая, энчант, ровно столько пассивов, уровень не ниже; мгновенный выкуп и продавцы в сети.
-fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, item_level: u32) -> Option<serde_json::Value> {
+/// Запрос базы плана: белая, энчант, ровно столько пассивов, уровень в диапазоне того же пула модов;
+/// мгновенный выкуп и продавцы в сети.
+fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, levels: (u32, Option<u32>)) -> Option<serde_json::Value> {
     let data = engine.data();
     let size = data.clusters.sizes.iter().find(|size| size.id == target.size)?;
     let enchant = data.clusters.enchants.iter().find(|e| e.size == target.size && e.id == enchant_id)?;
@@ -525,13 +528,26 @@ fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, item_leve
             ] }],
             "filters": {
                 "type_filters": { "filters": { "rarity": { "option": "normal" } } },
-                "misc_filters": { "filters": { "ilvl": { "min": item_level }, "corrupted": { "option": "false" } } }
+                "misc_filters": { "filters": { "ilvl": ilvl_filter(levels), "corrupted": { "option": "false" } } }
             }
         },
         "sort": { "price": "asc" }
     }))
 }
 
+/// Уровни базы с тем же пулом модов, что посчитан в плане (ступень цен — `item_level`): шанс на
+/// них одинаков, а база выше диапазона уже хуже. Нижняя граница — не ниже требования цели.
+fn base_levels(engine: &Engine, target: &TargetReply, enchant_id: &str, item_level: u32) -> (u32, Option<u32>) {
+    let (low, high) = craft_engine::item_level_range(engine.data(), &target.size, enchant_id, item_level).unwrap_or((item_level, None));
+    (low.max(target.min_ilvl), high)
+}
+
+fn ilvl_filter((min, max): (u32, Option<u32>)) -> serde_json::Value {
+    match max {
+        Some(max) => json!({ "min": min, "max": max }),
+        None => json!({ "min": min }),
+    }
+}
 fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &TargetReply) -> CraftPlan {
     let (method, fossils, resonator_sockets) = match &plan.estimate.method {
         Method::Alteration => (CraftMethodKind::Alteration, Vec::new(), None),
@@ -566,6 +582,7 @@ fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &Tar
         _ => None,
     };
     let spread = |s: craft_engine::Spread| CraftSpread { mean: s.mean, p50: s.p50, p90: s.p90 };
+    let levels = base_levels(engine, target, &plan.base.enchant, plan.base.item_level);
 
     CraftPlan {
         method,
@@ -574,8 +591,9 @@ fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &Tar
         harvest,
         enchant_id: plan.base.enchant.clone(),
         enchant: enchant_name(engine, &target.size, &plan.base.enchant),
-        trade_base: base_query(engine, target, &plan.base.enchant, plan.base.item_level),
-        item_level: plan.base.item_level,
+        trade_base: base_query(engine, target, &plan.base.enchant, levels),
+        item_level: levels.0,
+        item_level_max: levels.1,
         base_price: plan.base.price,
         probability: plan.estimate.probability,
         attempts: spread(plan.estimate.attempts),

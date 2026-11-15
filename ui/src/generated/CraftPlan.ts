@@ -18,9 +18,13 @@ fossils: Array<CraftFossil>, resonatorSockets: number | null,
  */
 harvest: CraftHarvest | null, enchantId: string, enchant: ClusterName, 
 /**
- * Уровень базы (ступень цен poe.ninja: 1, 50, 68, 75, 84 и выше).
+ * Уровень базы не ниже: с него в пуле все моды, с которыми посчитан шанс.
  */
-itemLevel: number, basePrice: number, 
+itemLevel: number, 
+/**
+ * Уровень базы не выше: дальше в пул добавляются моды и шанс цели падает. `null` — выше модов нет.
+ */
+itemLevelMax: number | null, basePrice: number, 
 /**
  * Шанс закончить цель одной попыткой.
  */
@@ -47,6 +51,6 @@ totalCostP90: number,
 profit: number | null, roi: number | null, 
 /**
  * Запрос сайта торговли для покупки базы (`?q=` поиска): белая база с энчантом, числом
- * пассивов и уровнем не ниже нужного, мгновенный выкуп и продавцы в сети, дешёвые сначала.
+ * пассивов и уровнем в диапазоне `item_level`–`item_level_max`, мгновенный выкуп и продавцы в сети, дешёвые сначала.
  */
 tradeBase: unknown, };

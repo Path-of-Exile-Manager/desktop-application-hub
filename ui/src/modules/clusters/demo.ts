@@ -91,6 +91,7 @@ export function clustersDemo(): { status: ClustersStatus; rows: ClusterRow[]; de
         enchantId: enchant,
         enchant: { en: enchant, ru: null },
         itemLevel: notables.length > 1 ? 75 : 1,
+        itemLevelMax: notables.length > 1 ? 83 : 49,
         basePrice: base,
         probability: 0.6 / (1 + craft),
         attempts: { mean: 1 + craft, p50: Math.ceil(craft * 0.7) + 1, p90: Math.ceil(craft * 2.3) + 1 },

@@ -5,7 +5,7 @@ import { iconUrl, searchCatalog } from "@/app/dataset";
 import type { ClusterName } from "@/generated/ClusterName";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
-import { formatRoi, formatShare, methodName, methodSteps, nameIn, SIZE_LABEL, type NameLanguage } from "./model";
+import { formatRoi, formatShare, levelRange, methodName, methodSteps, nameIn, SIZE_LABEL, type NameLanguage } from "./model";
 import { clusterDetail, tradeUrl, useClustersData, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -110,7 +110,7 @@ function BaseCard({ row, plan, enchants, language, onBuy }: { row: ClusterRow; p
       <div className="grid grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] gap-4 rounded-md border border-border-subtle bg-bg-surface px-4 py-3">
         {fact("Энчант", <span title={enchant}>{enchant}</span>)}
         {fact("Пассивов", `Adds ${row.passives} Passive Skills`)}
-        {fact("Уровень предмета", `${plan.itemLevel} и выше`)}
+        {fact("Уровень предмета", levelRange(plan))}
         {fact("Цена базы", `≈ ${text(plan.basePrice, true)}`)}
       </div>
       {others.length > 0 && (
@@ -246,7 +246,7 @@ function PlanRow({ plan, language, best, onBuy }: { plan: CraftPlan; language: N
     <>
       <span className={cls} title={methodName(plan, language)}>{methodName(plan, language)}</span>
       <span className={cx(cls, "text-text-secondary")} title={`База ${chaos(plan.basePrice)}`}>
-        {nameIn(plan.enchant, language)} · {plan.itemLevel}+
+        {nameIn(plan.enchant, language)} · {levelRange(plan)}
       </span>
       <span className={cx(cls, "font-mono")}>{(plan.probability * 100).toFixed(plan.probability < 0.01 ? 2 : 1)} %</span>
       <span className={cx(cls, "font-mono")}>{plan.attempts.mean.toFixed(1)}</span>

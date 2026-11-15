@@ -185,10 +185,19 @@ export function methodName(plan: CraftPlan, language: NameLanguage = "ru"): stri
   return METHOD_LABEL[language][plan.method];
 }
 
+/**
+ * Уровни базы, на которых посчитан шанс: «68–74», «84+». Выше диапазона в пул добавляются моды и
+ * шанс цели падает, поэтому поиск базы на трейде ограничен им же.
+ */
+export function levelRange(plan: CraftPlan): string {
+  if (plan.itemLevelMax === null) return `+`;
+  return plan.itemLevelMax === plan.itemLevel ? String(plan.itemLevel) : `–`;
+}
+
 /** Шаги метода словами: что купить и что делать до попадания. `price` — цена в chaos строкой (валюта показа). */
 export function methodSteps(plan: CraftPlan, notables: string, price: (chaos: number) => string, language: NameLanguage = "ru"): string[] {
   const o = ORBS[language];
-  const base = `Купить белую базу: ${nameIn(plan.enchant, language)}, уровень не ниже ${plan.itemLevel} (≈ ${price(plan.basePrice)}).`;
+  const base = `Купить белую базу: ${nameIn(plan.enchant, language)}, уровень предмета ${levelRange(plan)} (≈ ${price(plan.basePrice)}).`;
   const target = `Цель — ${notables}.`;
   switch (plan.method) {
     case "alteration":
