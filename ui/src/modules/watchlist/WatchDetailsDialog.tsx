@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Badge, Button, Card, CardHeader, CardSection, cx, Dialog, ItemIcon, RARITY_TEXT, StatusBadge, usePriceText, type Rarity } from "@/design-system";
-import { iconUrl, itemName, type CatalogItem } from "@/app/dataset";
+import { iconUrl, itemNameIn, type CatalogItem, type NameLanguage } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
 import { priceVariants, type Price } from "@/app/prices";
 import { variantLabel, type WatchEntry } from "@/app/watchlist";
@@ -107,7 +107,7 @@ function OtherVariants({ variants, current }: { variants: Price[]; current: stri
 
 /**
  * Окно предмета с подробной ценой: Watchlist («Просмотр») и Экономика. `leagueId` — лига записи
- * Watchlist (`null` — текущая), `actions` — кнопки слева от «Искать на трейде».
+ * Watchlist (`null` — текущая), `actions` — кнопки слева от «Искать на трейде», `language` — язык названий.
  */
 export function ItemPriceDialog({
   item,
@@ -115,6 +115,7 @@ export function ItemPriceDialog({
   leagueId = null,
   note = null,
   actions,
+  language = "ru",
   onClose,
 }: {
   item: CatalogItem;
@@ -122,8 +123,10 @@ export function ItemPriceDialog({
   leagueId?: string | null;
   note?: string | null;
   actions?: ReactNode;
+  language?: NameLanguage;
   onClose: () => void;
 }) {
+  const itemName = (i: CatalogItem) => itemNameIn(i, language);
   const league = useCurrentLeague();
   const entry = { itemId: item.id, variantKey, leagueId, note };
   const otherLeague = entry.leagueId !== null && entry.leagueId !== league?.id;
@@ -150,7 +153,7 @@ export function ItemPriceDialog({
       onOpenChange={(open) => !open && onClose()}
       title={itemName(item)}
       description={`${variantLabel(entry.variantKey)}${entry.leagueId ? ` · ${entry.leagueId}` : ""}`}
-      className="w-180"
+      className="max-h-[92vh] w-300"
       footer={
         <>
           {actions}
@@ -168,7 +171,7 @@ export function ItemPriceDialog({
               <ItemIcon variant="thumb" size={[item.size.w, item.size.h]} src={iconUrl(item.iconSha256)} alt={itemName(item)} />
               <div className="flex min-w-0 flex-col gap-1">
                 <p className={cx("text-body-lg font-semibold", RARITY_TEXT[rarityOf(item)])}>{itemName(item)}</p>
-                {item.name.ru && item.name.ru !== item.name.en && <p className="text-label text-text-secondary">{item.name.en}</p>}
+                {item.name.ru && item.name.ru !== item.name.en && <p className="text-label text-text-secondary">{language === "ru" ? item.name.en : item.name.ru}</p>}
                 {base && <p className="text-label text-text-secondary">{itemName(base)}</p>}
                 <p className="text-label text-text-secondary">
                   {KIND_LABEL[item.kind]} · {item.classId}

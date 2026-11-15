@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { EconomyOverview } from "@/generated/EconomyOverview";
 import type { EconomyRow } from "@/generated/EconomyRow";
 import { inTauri } from "@/app/window";
@@ -56,10 +57,23 @@ export const CATEGORY_GROUPS: { label: string; items: CategoryDef[] }[] = [
 export const categoryLabel = (id: string) => CATEGORY_GROUPS.flatMap((g) => g.items).find((c) => c.id === id)?.label ?? id;
 
 /** Выбранный раздел — между заходами на вкладку (до перезапуска). */
-export const useEconomyChoice = create<{ category: string; setCategory: (id: string) => void }>((set) => ({
-  category: "currency",
-  setCategory: (category) => set({ category }),
-}));
+/** Выбранный раздел и язык названий предметов (переключатель «Рус / Eng»; язык сохраняется). */
+export const useEconomyChoice = create<{
+  category: string;
+  language: "ru" | "en";
+  setCategory: (id: string) => void;
+  setLanguage: (language: "ru" | "en") => void;
+}>()(
+  persist(
+    (set) => ({
+      category: "currency",
+      language: "ru",
+      setCategory: (category) => set({ category }),
+      setLanguage: (language) => set({ language }),
+    }),
+    { name: "poe-manager.economy", partialize: ({ language }) => ({ language }) },
+  ),
+);
 
 export function economyOverview(): Promise<EconomyOverview> {
   if (!inTauri) return Promise.resolve({ league: null, categories: [] });

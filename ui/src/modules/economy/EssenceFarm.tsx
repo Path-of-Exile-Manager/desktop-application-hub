@@ -19,7 +19,7 @@ function TierPrice({ row }: { row: EconomyRow | undefined }) {
   return <span className={cx("font-mono", row.reliable ? "text-text-primary" : "text-status-warning-fg")}>{text(row.chaosValue)}</span>;
 }
 
-export function EssenceFarm({ rows, onOpen }: { rows: EconomyRow[]; onOpen: (row: EconomyRow) => void }) {
+export function EssenceFarm({ rows, language, onOpen }: { rows: EconomyRow[]; language: "ru" | "en"; onOpen: (row: EconomyRow) => void }) {
   const text = usePlainPrice();
   const families = essenceFamilies(rows);
   const choosable = families.filter((f) => UNBECOMING_EMOTION.includes(f.family));
@@ -74,7 +74,7 @@ export function EssenceFarm({ rows, onOpen }: { rows: EconomyRow[]; onOpen: (row
                   <td className="px-3 py-1.5">
                     <span className="inline-flex items-center gap-2">
                       <span className={cx("font-semibold", node ? "text-text-primary" : "text-text-secondary")}>{f.family}</span>
-                      {top?.nameRu && <span className="text-caption text-text-secondary">{top.nameRu.replace(/^\S+\s/, "")}</span>}
+                      {language === "ru" && top?.nameRu && <span className="text-caption text-text-secondary">{top.nameRu.replace(/^\S+\s/, "")}</span>}
                       {node && (
                         <Tooltip content="Можно выбрать в узле атласа Unbecoming Emotion">
                           <span>

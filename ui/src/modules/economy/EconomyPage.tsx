@@ -13,7 +13,7 @@ import {
   SegmentedControl,
   usePageSize,
 } from "@/design-system";
-import { iconUrl, queryLanguage, type CatalogItem } from "@/app/dataset";
+import { iconUrl, type CatalogItem } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
 import { formatAge, isFresh, usePrices } from "@/app/prices";
 import { variantLabel } from "@/app/watchlist";
@@ -31,7 +31,7 @@ const ROW_HEIGHT = 44;
 
 type Sort = "price" | "listings" | "name";
 
-/** Название на языке поиска: набрано латиницей — английское, иначе русское (если есть). */
+/** Название на выбранном языке; русского нет — английское. */
 const rowName = (row: EconomyRow, language: "en" | "ru") => (language === "ru" ? (row.nameRu ?? row.nameEn) : row.nameEn);
 
 function CategoryRail({ overview, active, onSelect }: { overview: EconomyOverview | null; active: string; onSelect: (id: string) => void }) {
@@ -96,7 +96,7 @@ function RowView({ row, language, onOpen }: { row: EconomyRow; language: "en" | 
 export function EconomyPage() {
   const league = useCurrentLeague();
   const pricesVersion = usePrices((p) => `${p.status?.league}|${p.status?.newestUpdate}|${p.status?.count}`);
-  const { category, setCategory } = useEconomyChoice();
+  const { category, setCategory, language, setLanguage } = useEconomyChoice();
   const [overview, setOverview] = useState<EconomyOverview | null>(null);
   const [rows, setRows] = useState<EconomyRow[] | null>(null);
   const [query, setQuery] = useState("");
@@ -123,7 +123,7 @@ export function EconomyPage() {
     if (active !== "essences") setView("table");
   }, [active]);
 
-  const language = query.trim() ? queryLanguage(query) : "ru";
+  // Ищем и по-русски, и по-английски, какой бы язык названий ни был выбран.
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = (rows ?? []).filter((r) => !q || r.nameEn.toLowerCase().includes(q) || r.nameRu?.toLowerCase().includes(q) || variantLabel(r.variantKey).toLowerCase().includes(q));
@@ -139,7 +139,21 @@ export function EconomyPage() {
   };
 
   return (
-    <Page title="Экономика" subtitle={overview?.league ? `Цены лиги ${league?.name ?? overview.league} · валюта показа — в шапке` : "Цены лиги ещё не загружены"}>
+    <Page
+      title="Экономика"
+      subtitle={overview?.league ? `Цены лиги ${league?.name ?? overview.league} · валюта показа — в шапке` : "Цены лиги ещё не загружены"}
+      actions={
+        <SegmentedControl<"ru" | "en">
+          aria-label="Язык названий"
+          value={language}
+          onValueChange={setLanguage}
+          options={[
+            { value: "ru", label: "Рус" },
+            { value: "en", label: "Eng" },
+          ]}
+        />
+      }
+    >
       <div className="flex min-h-0 flex-1 gap-4">
         <CategoryRail overview={overview} active={active} onSelect={setCategory} />
         <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -182,7 +196,7 @@ export function EconomyPage() {
           />
           {view === "farm" && rows ? (
             <div className="flex min-h-0 flex-1 flex-col px-card-padding-x py-3">
-              <EssenceFarm rows={rows} onOpen={openRow} />
+              <EssenceFarm rows={rows} language={language} onOpen={openRow} />
             </div>
           ) : (
             <>
@@ -218,6 +232,7 @@ export function EconomyPage() {
         <ItemPriceDialog
           item={open.item}
           variantKey={open.row.variantKey}
+          language={language}
           actions={<WatchButton itemId={open.item.id} variantKey={open.row.variantKey} />}
           onClose={() => setOpen(null)}
         />
