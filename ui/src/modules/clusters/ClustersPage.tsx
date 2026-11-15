@@ -163,7 +163,9 @@ function TargetRow({ row, language, onOpen }: { row: ClusterRow; language: NameL
           >
             <div className="min-w-0">
               <Amount chaos={best.totalCost} />
-              <p className="truncate text-caption text-text-secondary">p90 ≤ {text(best.totalCostP90, true)}</p>
+              <p className="truncate text-caption text-text-secondary">
+                база {text(best.basePrice, true)} + крафт {text(best.craftCost.mean, true)}
+              </p>
             </div>
           </Tooltip>
         ) : (
@@ -350,10 +352,10 @@ export function ClustersPage() {
             Спрос
           </SortButton>
           <SortButton sortKey="market" sort={sort} onSort={onSort}>
-            Цена на рынке
+            Цена готового
           </SortButton>
           <SortButton sortKey="cost" sort={sort} onSort={onSort}>
-            Вложения
+            Себестоимость
           </SortButton>
           <span className="flex min-w-0 flex-wrap items-center gap-x-2">
             <SortButton sortKey="profit" sort={sort} onSort={onSort}>

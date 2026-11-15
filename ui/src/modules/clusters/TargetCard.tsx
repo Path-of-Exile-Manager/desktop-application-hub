@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Copy, ExternalLink } from "lucide-react";
 import { Button, cx, Dialog, MarketPrice, toast, usePriceText } from "@/design-system";
 import { openTrade } from "@/app/user-data";
@@ -16,7 +16,7 @@ function open(league: string | null | undefined, query: unknown) {
 /** Знак у прибыли: `+12 c`, `−3 c`. */
 const signed = (amount: number, text: string) => `${amount >= 0 ? "+" : ""}${text}`;
 
-/** Числа плана: шанс, попытки, стоимость с разбросом. */
+/** Числа плана: шанс, попытки, крафт с разбросом (итог с базой — в Totals). */
 function Figures({ plan }: { plan: CraftPlan }) {
   const text = usePriceText();
   const chaos = (amount: number) => text(amount, true);
@@ -28,11 +28,35 @@ function Figures({ plan }: { plan: CraftPlan }) {
     </div>
   );
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {cell("Шанс попытки", `${(plan.probability * 100).toFixed(plan.probability < 0.01 ? 2 : 1)} %`, `попытка ≈ ${chaos(plan.attemptCost)}`)}
       {cell("Попыток", plan.attempts.mean.toFixed(1), `p50 ${plan.attempts.p50} · p90 ${plan.attempts.p90}`)}
       {cell("Крафт", text(plan.craftCost.mean), `p50 ${chaos(plan.craftCost.p50)} · p90 ${chaos(plan.craftCost.p90)}`)}
-      {cell("Вложения с базой", text(plan.totalCost), `p90 ${chaos(plan.totalCostP90)}`)}
+    </div>
+  );
+}
+
+/** Итог лучшего плана: почём продать готовый кластер, во что он обойдётся (база + крафт) и что останется. */
+function Totals({ plan, sale }: { plan: CraftPlan; sale: number | null }) {
+  const text = usePriceText();
+  const chaos = (amount: number) => text(amount, true);
+  const cell = (label: string, value: ReactNode, hint: string, tone = "text-text-primary") => (
+    <div className="flex flex-col gap-0.5 rounded-md border border-border-default bg-bg-surface px-3 py-2.5">
+      <span className="text-caption text-text-secondary">{label}</span>
+      <span className={cx("font-mono text-body-lg font-semibold", tone)}>{value}</span>
+      <span className="text-caption text-text-secondary">{hint}</span>
+    </div>
+  );
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {cell("Цена готового кластера", sale !== null ? `≈ ${chaos(sale)}` : "—", sale !== null ? "столько стоят такие на рынке" : "на рынке ещё не проверена")}
+      {cell("Себестоимость", text(plan.totalCost), `база ${chaos(plan.basePrice)} + крафт ${chaos(plan.craftCost.mean)} · p90 ${chaos(plan.totalCostP90)}`)}
+      {cell(
+        "Прибыль",
+        plan.profit === null ? "—" : signed(plan.profit, text(plan.profit)),
+        plan.roi === null ? "нет цены готового" : `окупаемость ${formatRoi(plan.roi)}`,
+        plan.profit === null ? "text-text-secondary" : plan.profit >= 0 ? "text-status-success-fg" : "text-status-danger-fg",
+      )}
     </div>
   );
 }
@@ -98,15 +122,12 @@ export function TargetCard({ row, language, onClose }: { row: ClusterRow | null;
           )}
         </div>
 
+        {best && <Totals plan={best} sale={market?.status === "OK" ? market.priceChaos : null} />}
+
         {best ? (
           <section className="flex flex-col gap-2">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="text-body font-semibold text-text-primary">Лучший способ: {methodName(best, language)}</h3>
-              {best.profit !== null && (
-                <span className={cx("font-mono text-body font-semibold", best.profit >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>
-                  {signed(best.profit, text(best.profit))} · окупаемость {formatRoi(best.roi ?? 0)}
-                </span>
-              )}
             </div>
             <ol className="flex list-decimal flex-col gap-1 pl-5 text-label text-text-primary">
               {methodSteps(best, names, (c) => text(c, true), language).map((step) => (
