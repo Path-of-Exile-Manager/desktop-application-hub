@@ -142,7 +142,10 @@ export function LotsCard({ live, className }: { live: ReturnType<typeof useLiveS
   const total = result?.ids.length ?? 0;
 
   // Новая выдача — с начала списка.
-  useEffect(() => scroller.current?.scrollTo({ top: 0 }), [result]);
+  // Тело в скобках: в новых Chromium scrollTo возвращает Promise, а React вызвал бы его как очистку.
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: 0 });
+  }, [result]);
   // Дошли до конца загруженного — догрузить с сайта.
   useEffect(() => {
     const target = sentinel.current;
