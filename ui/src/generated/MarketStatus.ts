@@ -3,7 +3,7 @@ import type { MarketState } from "./MarketState";
 
 export type MarketStatus = { state: MarketState, enabled: boolean, budgetPerHour: number, 
 /**
- * Право `builds.track` по последнему `/v1/me`; null — ещё не знаем.
+ * Право `builds.track` (отслеживать свои билды) по последнему `/v1/me`; null — ещё не знаем.
  */
 allowed: boolean | null, searchesLastHour: number, searchesToday: number, 
 /**

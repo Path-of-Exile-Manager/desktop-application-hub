@@ -1,9 +1,12 @@
-//! Помощь в оценке билдов (план shared/docs/build-price-tracking.md, 4.4, шаг T6): фоновый
-//! «искатель» берёт у сервера задания пула (`POST /v1/market/lease`), ищет на сайте торговли с
-//! IP пользователя без входа и отправляет найденные предложения (`POST /v1/market/reports`).
+//! Помощь в оценке цен (планы shared/docs/build-price-tracking.md, 4.4, шаг T6, и
+//! shared/docs/cluster-crafting.md, C8): фоновый «искатель» берёт у сервера задания пула
+//! (`POST /v1/market/lease`: вещи отслеживаемых билдов, потом цели крафта кластеров), ищет на
+//! сайте торговли с IP пользователя без входа и отправляет найденные предложения
+//! (`POST /v1/market/reports`).
 //!
-//! Работает, только если пользователь вошёл, у него есть право `builds.track` (`/v1/me`) и
-//! «Помогать оценивать билды» включено в настройках. Бюджет — поисков в час (по умолчанию 30);
+//! Работает у любого вошедшего, если «Помогать оценивать цены» включено в настройках. Право
+//! `builds.track` (`/v1/me`) нужно только для отслеживания своих билдов: искатель читает его для
+//! интерфейса (`allowed`). Бюджет — поисков в час (по умолчанию 30);
 //! поиски человека в браузере главнее: правило лимита сайта, использованное на 2/3, — пауза до
 //! конца его окна. 429 — пауза на `Retry-After`, задания возвращаются в пул.
 //! Отслеживание билдов и цены — `tracking.rs` (шаг T7).
@@ -28,7 +31,7 @@ use trade_client::{report_json, TradeClient, TradeError};
 
 pub const EVENT: &str = "market-status";
 
-/// Право, без которого сервер не выдаёт заданий.
+/// Право отслеживать цены своих билдов (задания пула от него не зависят).
 const PERMISSION: &str = "builds.track";
 /// Без заданий — спросить снова через столько.
 const IDLE_POLL: Duration = Duration::from_secs(120);
@@ -51,8 +54,6 @@ pub enum MarketState {
     /// Выключено в настройках.
     Disabled,
     SignedOut,
-    /// У аккаунта нет права `builds.track`.
-    NotAllowed,
     /// Ждёт заданий или бюджета.
     Idle,
     Searching,
@@ -69,7 +70,7 @@ pub struct MarketStatus {
     pub state: MarketState,
     pub enabled: bool,
     pub budget_per_hour: u32,
-    /// Право `builds.track` по последнему `/v1/me`; null — ещё не знаем.
+    /// Право `builds.track` (отслеживать свои билды) по последнему `/v1/me`; null — ещё не знаем.
     pub allowed: Option<bool>,
     pub searches_last_hour: u32,
     pub searches_today: u32,
@@ -103,11 +104,6 @@ impl MarketService {
     pub fn wake(&self) {
         let _ = self.wake.send(());
     }
-
-    /// Право `builds.track` по последней проверке.
-    pub fn allowed(&self) -> Option<bool> {
-        self.inner.lock().unwrap().status.allowed
-    }
 }
 
 fn now_ms() -> u64 {
@@ -136,7 +132,7 @@ pub fn start(app: &AppHandle) {
     });
     let app = app.clone();
     let _ = thread::Builder::new().name("market".into()).spawn(move || {
-        let mut client = TradeClient::new("build price helper");
+        let mut client = TradeClient::new("price helper");
         loop {
             let wait = step(&app, &mut client);
             match wakes.recv_timeout(wait) {
@@ -267,7 +263,8 @@ fn step(app: &AppHandle, client: &mut TradeClient) -> Duration {
     Duration::from_secs(1)
 }
 
-/// Право `builds.track`: из кэша или `/v1/me`. Ошибка — сколько ждать до следующего шага.
+/// Право `builds.track` для интерфейса: из кэша или `/v1/me`. Задания пула выдаются любому
+/// вошедшему, так что без права искатель работает дальше. Ошибка — сколько ждать до следующего шага.
 fn check_permission(app: &AppHandle) -> Result<(), Duration> {
     let fresh = app.state::<MarketService>().inner.lock().unwrap().permission_checked.is_some_and(|at| at.elapsed() < PERMISSION_TTL);
     if !fresh {
@@ -282,17 +279,13 @@ fn check_permission(app: &AppHandle) -> Result<(), Duration> {
             Err(e) => return Err(failed_request(app, e)),
         }
     }
-    if app.state::<MarketService>().allowed() == Some(false) {
-        set_state(app, MarketState::NotAllowed, None);
-        return Err(IDLE_POLL);
-    }
     Ok(())
 }
 
 fn failed_request(app: &AppHandle, error: SignedInError) -> Duration {
     let offline = matches!(&error, SignedInError::Api(e) if matches!(e.kind, ApiErrorKind::Network | ApiErrorKind::Timeout | ApiErrorKind::Unconfigured));
     if let SignedInError::Api(e) = &error {
-        // Право отняли: сервер отвечает 403 — перечитать /v1/me.
+        // Сервер отказал (старый сервер без права builds.track отвечает 403) — перечитать /v1/me.
         if e.status == Some(403) {
             update(app, |inner| inner.permission_checked = None);
         }

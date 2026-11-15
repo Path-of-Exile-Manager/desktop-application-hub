@@ -46,8 +46,9 @@ type ShellState = {
   /** Показывать статус в Discord (Rich Presence). По умолчанию включено (shared/docs/discord-rich-presence.md). */
   discordPresence: boolean;
   /**
-   * Помогать оценивать билды: фоновые поиски на сайте торговли для пула заданий сервера
-   * (shared/docs/build-price-tracking.md). Включено по умолчанию; работает только при праве builds.track.
+   * Помогать оценивать цены: фоновые поиски на сайте торговли для пула заданий сервера — вещи
+   * билдов и цели крафта кластеров (shared/docs/build-price-tracking.md, cluster-crafting.md C8).
+   * Включено по умолчанию; работает у любого вошедшего.
    */
   marketHelp: boolean;
   /** Поисков в час для пула: 0–60, по умолчанию 30. */
