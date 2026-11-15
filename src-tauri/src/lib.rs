@@ -10,6 +10,7 @@ mod api;
 mod appraise;
 mod capture;
 mod chat;
+mod clicker;
 /// Расчёт «Выгодных кластеров» без Tauri: открыт для примера `clusters_offline`.
 pub mod cluster_plans;
 mod clusters;
@@ -168,6 +169,7 @@ pub fn run() {
             appraise::item_appraise,
             appraise::item_last_appraisal,
             hotkeys::hotkeys_set,
+            hotkeys::hotkeys_recording,
             capture::capture_from_clipboard,
             overlay::overlay_show,
             overlay::overlay_hide,
@@ -199,6 +201,12 @@ pub fn run() {
             updater::updater_restart,
             updater::updater_dismiss_whats_new,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|_app, event| {
+            // Hold-to-Click: не оставить кнопку мыши нажатой при выходе.
+            if let tauri::RunEvent::Exit = event {
+                clicker::shutdown();
+            }
+        });
 }

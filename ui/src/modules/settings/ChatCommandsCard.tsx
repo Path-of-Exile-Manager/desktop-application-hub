@@ -1,6 +1,6 @@
 import { Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { Button, Card, CardHeader, CardSection, Checkbox, HotkeyInput, IconButton, Input } from "@/design-system";
-import { useHotkeyProblems } from "@/app/hotkeys";
+import { setHotkeyRecording, useHotkeyProblems } from "@/app/hotkeys";
 import { DEFAULT_CHAT_COMMANDS, useShell, type ChatCommandSetting } from "@/app/store";
 
 /** Строка чата игры длиннее не бывает; запас — чтобы не обрезать имя после `@`. */
@@ -40,7 +40,7 @@ export function ChatCommandsCard() {
         </p>
         <ul className="flex flex-col gap-2">
           {commands.map((c, i) => {
-            const problem = problems.find((p) => p.command === i);
+            const problem = problems.find((p) => p.target === "chat" && p.command === i);
             return (
               <li key={c.id} className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ export function ChatCommandsCard() {
                     className="min-w-0 flex-1 font-mono"
                     onChange={(e) => update(c.id, { text: e.target.value })}
                   />
-                  <HotkeyInput aria-label={`Клавиша команды ${c.text || i + 1}`} value={c.hotkey} onChange={(hotkey) => update(c.id, { hotkey })} className="w-36" />
+                  <HotkeyInput aria-label={`Клавиша команды ${c.text || i + 1}`} value={c.hotkey} onChange={(hotkey) => update(c.id, { hotkey })} onRecordingChange={setHotkeyRecording} className="w-36" />
                   <IconButton icon={X} label="Снять клавишу" disabled={c.hotkey.length === 0} onClick={() => update(c.id, { hotkey: [] })} />
                   <Checkbox checked={c.send} onCheckedChange={(send) => update(c.id, { send })} label="Отправить" />
                   <IconButton icon={Trash2} label={`Удалить команду ${c.text || i + 1}`} onClick={() => remove(c.id)} />

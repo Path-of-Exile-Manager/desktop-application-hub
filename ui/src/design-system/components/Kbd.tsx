@@ -23,8 +23,30 @@ export type HotkeyProps = {
   className?: string;
 };
 
+/** Подписи физических клавиш (`KeyboardEvent.code`, см. `keysFromEvent`): знаки — как на английской раскладке, кроме Ё. */
+const KEY_LABELS: Record<string, string> = {
+  Backquote: "Ё",
+  Minus: "-",
+  Equal: "=",
+  BracketLeft: "[",
+  BracketRight: "]",
+  Backslash: "\\",
+  Semicolon: ";",
+  Quote: "'",
+  Comma: ",",
+  Period: ".",
+  Slash: "/",
+  IntlBackslash: "\\",
+};
+
+/** Подпись клавиши: `Backquote` → `Ё`, `Numpad1` → `Num 1`. */
+export function keyLabel(key: string): string {
+  return KEY_LABELS[key] ?? (key.startsWith("Numpad") ? `Num ${key.slice(6)}` : key);
+}
+
 /** Сочетание клавиш. */
-export function Hotkey({ keys, variant = "split", className }: HotkeyProps) {
+export function Hotkey({ keys: raw, variant = "split", className }: HotkeyProps) {
+  const keys = raw.map(keyLabel);
   if (variant === "single") return <Kbd className={className}>{keys.join(" ")}</Kbd>;
   return (
     <span className={cx("inline-flex items-center gap-1 text-caption text-text-muted", className)}>

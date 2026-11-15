@@ -1,9 +1,15 @@
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { cx } from "../lib/cx";
 import { fieldClasses } from "./Field";
 import { Hotkey } from "./Kbd";
 
 const MODIFIERS = ["Control", "Alt", "Shift", "Meta"];
+
+/**
+ * Клавиши со знаками и цифровой блок — по физической клавише (`code`): символ зависит от раскладки
+ * (Ё/` — `Backquote`, скан-код 0x29), место — нет.
+ */
+const PHYSICAL_CODES = /^(Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|IntlBackslash|Numpad\w+)$/;
 
 /** Превращает событие клавиатуры в список клавиш: `["Ctrl", "Shift", "D"]`. Только модификаторы — `null`. */
 export function keysFromEvent(e: Pick<KeyboardEvent, "key" | "code" | "ctrlKey" | "altKey" | "shiftKey" | "metaKey">): string[] | null {
@@ -13,7 +19,13 @@ export function keysFromEvent(e: Pick<KeyboardEvent, "key" | "code" | "ctrlKey" 
   if (e.altKey) keys.push("Alt");
   if (e.shiftKey) keys.push("Shift");
   if (e.metaKey) keys.push("Win");
-  const main = e.code.startsWith("Key") ? e.code.slice(3) : e.code.startsWith("Digit") ? e.code.slice(5) : e.key;
+  const main = e.code.startsWith("Key")
+    ? e.code.slice(3)
+    : e.code.startsWith("Digit")
+      ? e.code.slice(5)
+      : PHYSICAL_CODES.test(e.code)
+        ? e.code
+        : e.key;
   keys.push(main.length === 1 ? main.toUpperCase() : main);
   return keys;
 }
@@ -25,14 +37,24 @@ export type HotkeyInputProps = {
   "aria-label"?: string;
   disabled?: boolean;
   className?: string;
+  /** Запись началась или кончилась: игровые клавиши на это время снимаются. */
+  onRecordingChange?: (recording: boolean) => void;
+  "aria-describedby"?: string;
 };
 
 /**
  * Поле горячей клавиши (components.md, п. 2): значение — чипы клавиш;
  * по клику — режим записи «Нажмите сочетание…», Esc отменяет.
  */
-export function HotkeyInput({ value, onChange, id, disabled, className, ...aria }: HotkeyInputProps) {
+export function HotkeyInput({ value, onChange, id, disabled, className, onRecordingChange, ...aria }: HotkeyInputProps) {
   const [recording, setRecording] = useState(false);
+  const notify = useRef(onRecordingChange);
+  notify.current = onRecordingChange;
+  useEffect(() => {
+    if (!recording) return;
+    notify.current?.(true);
+    return () => notify.current?.(false);
+  }, [recording]);
 
   function onKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
     if (!recording) return;
@@ -51,6 +73,7 @@ export function HotkeyInput({ value, onChange, id, disabled, className, ...aria 
       type="button"
       id={id}
       aria-label={aria["aria-label"]}
+      aria-describedby={aria["aria-describedby"]}
       disabled={disabled}
       onClick={() => setRecording((r) => !r)}
       onKeyDown={onKeyDown}

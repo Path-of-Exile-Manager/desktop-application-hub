@@ -22,7 +22,7 @@ export { Popover, Menu, popoverClasses, menuItemClasses, groupLabelClasses, type
 export { Dialog } from "./components/Dialog";
 export { Badge, StatusBadge, badgeBase } from "./components/Badge";
 export { Chip } from "./components/Chip";
-export { Kbd, Hotkey } from "./components/Kbd";
+export { Kbd, Hotkey, keyLabel } from "./components/Kbd";
 export { Card, CardHeader, CardSection, Panel } from "./components/Card";
 export { ListRow } from "./components/ListRow";
 export { Table, type Column, type SortState } from "./components/Table";

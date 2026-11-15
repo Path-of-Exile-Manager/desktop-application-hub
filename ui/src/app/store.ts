@@ -24,6 +24,39 @@ export const DEFAULT_CHAT_COMMANDS: ChatCommandSetting[] = [
   { id: "hideout-last", text: "/hideout @last", hotkey: [], send: true },
 ];
 
+/** Hold-to-Click (src-tauri/src/clicker.rs): клики ЛКМ, пока держат сочетание в игре. Времена — мс. */
+export type HoldClickSetting = {
+  enabled: boolean;
+  /** Ctrl+Ё: знаки — по физической клавише (`KeyboardEvent.code`), Ё — `Backquote` (скан-код 0x29). */
+  hotkey: string[];
+  intervalMin: number;
+  intervalMax: number;
+  holdMin: number;
+  holdMax: number;
+};
+
+export const DEFAULT_HOLD_CLICK_HOTKEY = ["Ctrl", "Backquote"];
+
+/** Выключено по умолчанию: за автокликер GGG может заблокировать аккаунт. */
+export const DEFAULT_HOLD_CLICK: HoldClickSetting = {
+  enabled: false,
+  hotkey: DEFAULT_HOLD_CLICK_HOTKEY,
+  intervalMin: 60,
+  intervalMax: 100,
+  holdMin: 12,
+  holdMax: 28,
+};
+
+/** Почему диапазоны Hold-to-Click нельзя принять; `null` — всё верно. Ядро проверяет то же. */
+export function holdClickRangeError(h: HoldClickSetting): string | null {
+  const values = [h.intervalMin, h.intervalMax, h.holdMin, h.holdMax];
+  if (values.some((v) => !Number.isInteger(v) || v < 1 || v > 5000)) return "Времена — целые миллисекунды от 1 до 5000";
+  if (h.intervalMin > h.intervalMax) return "Минимальный интервал больше максимального";
+  if (h.holdMin > h.holdMax) return "Минимальное удержание больше максимального";
+  if (h.holdMax > h.intervalMin) return "Максимальное удержание больше минимального интервала";
+  return null;
+}
+
 type ShellState = {
   /** Открытый модуль. */
   activeModule: string;
@@ -56,6 +89,7 @@ type ShellState = {
   hotkeys: { check: string[]; palette: string[] };
   /** Команды чата по горячим клавишам; работают, когда игра в фокусе. */
   chatCommands: ChatCommandSetting[];
+  holdClick: HoldClickSetting;
 
   openModule: (id: string) => void;
   setSim: (target: SimTarget, value: Sim) => void;
@@ -69,6 +103,7 @@ type ShellState = {
   setPaletteOpen: (v: boolean) => void;
   setHotkey: (name: "check" | "palette", keys: string[]) => void;
   setChatCommands: (commands: ChatCommandSetting[]) => void;
+  setHoldClick: (patch: Partial<HoldClickSetting>) => void;
 };
 
 /**
@@ -92,6 +127,7 @@ export const useShell = create<ShellState>()(
       marketBudget: 30,
       hotkeys: { check: ["Ctrl", "D"], palette: ["Ctrl", "K"] },
       chatCommands: DEFAULT_CHAT_COMMANDS,
+      holdClick: DEFAULT_HOLD_CLICK,
 
       openModule: (activeModule) => set({ activeModule }),
       setSim: (target, value) => set((s) => ({ sim: { ...s.sim, [target]: value } })),
@@ -107,6 +143,7 @@ export const useShell = create<ShellState>()(
       setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
       setHotkey: (name, keys) => set((s) => ({ hotkeys: { ...s.hotkeys, [name]: keys } })),
       setChatCommands: (chatCommands) => set({ chatCommands }),
+      setHoldClick: (patch) => set((s) => ({ holdClick: { ...s.holdClick, ...patch } })),
     }),
     {
       name: "poe-manager.shell",
@@ -122,6 +159,7 @@ export const useShell = create<ShellState>()(
         panelHidden: s.panelHidden,
         hotkeys: s.hotkeys,
         chatCommands: s.chatCommands,
+        holdClick: s.holdClick,
         developerMode: s.developerMode,
         apiUrlOverride: s.apiUrlOverride,
         discordPresence: s.discordPresence,
