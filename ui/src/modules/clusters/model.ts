@@ -55,29 +55,56 @@ export function applyFilters(rows: ClusterRow[], filters: Filters): ClusterRow[]
   });
 }
 
-export type SortKey = "roi" | "profit" | "demand" | "cost";
+/** По какому столбцу сортировать: название, спрос, цена на рынке, вложения, прибыль, ROI, шанс крафта. */
+export type SortKey = "name" | "demand" | "market" | "cost" | "profit" | "roi" | "chance";
 
-/** Порядок внутри группы; без значения — в конце. */
-export function sortRows(rows: ClusterRow[], key: SortKey): ClusterRow[] {
-  const value = (row: ClusterRow): number | null => {
-    switch (key) {
-      case "roi":
-        return row.best?.roi ?? null;
-      case "profit":
-        return row.best?.profit ?? null;
-      case "demand":
-        return row.demand.share;
-      case "cost":
-        return row.best ? -row.best.totalCost : null;
-    }
-  };
+export type Sort = { key: SortKey; desc: boolean };
+
+export const DEFAULT_SORT: Sort = { key: "roi", desc: true };
+
+/** Первое нажатие на столбец: названия — от А, вложения — от дешёвых, остальное — от большего. */
+export function firstDirectionDesc(key: SortKey): boolean {
+  return key !== "name" && key !== "cost";
+}
+
+/** Сортировка после нажатия на столбец: тот же — в обратную сторону, другой — в свою первую. */
+export function nextSort(current: Sort, key: SortKey): Sort {
+  return current.key === key ? { key, desc: !current.desc } : { key, desc: firstDirectionDesc(key) };
+}
+
+const rowName = (row: ClusterRow) => row.notables.map((n) => n.en).join(" + ");
+
+/** Значение строки для сортировки; `null` — нет значения (такие всегда в конце). */
+function sortValue(row: ClusterRow, key: SortKey): number | string | null {
+  switch (key) {
+    case "name":
+      return rowName(row);
+    case "demand":
+      return row.demand.share;
+    case "market":
+      return row.market?.status === "OK" ? (row.market.priceChaos ?? null) : null;
+    case "cost":
+      return row.best?.totalCost ?? null;
+    case "profit":
+      return row.best?.profit ?? null;
+    case "roi":
+      return row.best?.roi ?? null;
+    case "chance":
+      return row.best?.probability ?? null;
+  }
+}
+
+/** Порядок внутри группы; без значения — в конце при любом направлении, равные — по спросу. */
+export function sortRows(rows: ClusterRow[], sort: Sort): ClusterRow[] {
+  const sign = sort.desc ? -1 : 1;
   return [...rows].sort((a, b) => {
-    const left = value(a);
-    const right = value(b);
+    const left = sortValue(a, sort.key);
+    const right = sortValue(b, sort.key);
     if (left === null && right === null) return b.demand.share - a.demand.share;
     if (left === null) return 1;
     if (right === null) return -1;
-    return right - left || b.demand.share - a.demand.share;
+    const order = typeof left === "string" && typeof right === "string" ? left.localeCompare(right, "en") : Number(left) - Number(right);
+    return sign * order || b.demand.share - a.demand.share;
   });
 }
 

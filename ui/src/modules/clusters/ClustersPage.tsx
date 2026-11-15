@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Coins, Gem, Minus, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ArrowDown, ArrowUp, Coins, Gem, Minus, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
 import {
   Banner,
   Button,
@@ -11,13 +11,10 @@ import {
   formatAmount,
   MarketPrice,
   Page,
-  Pagination,
   SearchInput,
   SegmentedControl,
-  Select,
   Switch,
   Tooltip,
-  usePageSize,
   usePriceDisplay,
   usePriceText,
 } from "@/design-system";
@@ -33,12 +30,14 @@ import {
   formatShare,
   ISSUE_LABEL,
   methodName,
+  nextSort,
   shareTrend,
   SIZE_LABEL,
   SIZES,
   sortRows,
   UNPRICED_LABEL,
   type Band,
+  type Sort,
   type SortKey,
 } from "./model";
 import { CurrencyDialog } from "./CurrencyDialog";
@@ -50,12 +49,38 @@ const ROW_HEIGHT = 52;
 
 const COLUMNS = "grid grid-cols-[minmax(0,2.4fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.7fr)] items-center gap-4";
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "roi", label: "по ROI" },
-  { value: "profit", label: "по прибыли" },
-  { value: "demand", label: "по спросу" },
-  { value: "cost", label: "по вложениям" },
-];
+/** «цель», «цели», «целей» по числу. */
+function targetsWord(n: number): string {
+  const tens = n % 100;
+  const ones = n % 10;
+  if (tens >= 11 && tens <= 14) return "целей";
+  if (ones === 1) return "цель";
+  if (ones >= 2 && ones <= 4) return "цели";
+  return "целей";
+}
+
+/** Строк за раз в бесконечной прокрутке. */
+const CHUNK = 40;
+
+/** Заголовок столбца: нажатие сортирует по нему, повторное — в обратную сторону. */
+function SortButton({ sortKey, sort, onSort, children }: { sortKey: SortKey; sort: Sort; onSort: (key: SortKey) => void; children: ReactNode }) {
+  const active = sort.key === sortKey;
+  const Arrow = sort.desc ? ArrowDown : ArrowUp;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(sortKey)}
+      aria-pressed={active}
+      className={cx(
+        "inline-flex items-center gap-1 rounded-sm text-left transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
+        active && "text-text-primary",
+      )}
+    >
+      {children}
+      {active && <Arrow aria-label={sort.desc ? "по убыванию" : "по возрастанию"} className="size-3 shrink-0" />}
+    </button>
+  );
+}
 
 /** Сумма в строке в валюте показа (без пересчёта): число и значок; цвет — по знаку, если нужно. */
 function Amount({ chaos, signed, className }: { chaos: number; signed?: boolean; className?: string }) {
@@ -219,11 +244,12 @@ export function ClustersPage() {
   const status = useClustersData((d) => d.status);
   const rows = useClustersData((d) => d.rows);
   const { band: savedBand, filters, sort, showLosses, set } = useClustersView();
-  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(CHUNK);
   const [selected, setSelected] = useState<ClusterRow | null>(null);
   const [currencyOpen, setCurrencyOpen] = useState(() => import.meta.env.DEV && new URLSearchParams(location.search).get("dialog") === "currency");
   const ownCount = useOwnPrices((s) => Object.keys(s.prices).length);
-  const { ref, pageSize } = usePageSize<HTMLDivElement>({ itemHeight: ROW_HEIGHT });
+  const scroller = useRef<HTMLDivElement>(null);
+  const sentinel = useRef<HTMLLIElement>(null);
 
   // Только dev: `?dialog=card[&target=<часть ключа>]` открывает карточку цели (скриншоты).
   useEffect(() => {
@@ -237,9 +263,28 @@ export function ClustersPage() {
   const counts = useMemo(() => bandCounts(filtered), [filtered]);
   const band: Band = savedBand && (savedBand !== "loss" || showLosses) && counts[savedBand] > 0 ? savedBand : defaultBand(counts, showLosses);
   const visible = useMemo(() => sortRows(filtered.filter((row) => bandOf(row) === band), sort), [filtered, band, sort]);
-  const shown = visible.slice((page - 1) * pageSize, page * pageSize);
+  const shown = visible.slice(0, limit);
+  const more = limit < visible.length;
 
-  useEffect(() => setPage(1), [band, filters, sort, pageSize, status?.league]);
+  // Другая выборка — снова с начала списка.
+  useEffect(() => {
+    setLimit(CHUNK);
+    scroller.current?.scrollTo({ top: 0 });
+  }, [band, filters, sort, status?.league]);
+
+  // Бесконечная прокрутка: дошли до конца загруженного — дорисовать следующую порцию.
+  useEffect(() => {
+    const target = sentinel.current;
+    if (!target || !more) return;
+    const observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && setLimit((l) => l + CHUNK), {
+      root: scroller.current,
+      rootMargin: `${ROW_HEIGHT * 5}px`,
+    });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [more, shown.length]);
+
+  const onSort = (key: SortKey) => set({ sort: nextSort(sort, key) });
 
   const bandOptions = [
     ...BANDS.filter((b) => b.id !== "loss" || showLosses).map((b) => ({ value: b.id, label: `${b.label} · ${counts[b.id]}` })),
@@ -284,19 +329,36 @@ export function ClustersPage() {
             Пара notable
           </Chip>
           <SearchInput label="Поиск notable" placeholder="Поиск notable" value={filters.query} onValueChange={(query) => set({ filters: { ...filters, query } })} className="w-56" />
-          <Select aria-label="Сортировка" value={sort} onValueChange={(value) => set({ sort: value as SortKey })} options={SORT_OPTIONS} className="w-40" />
         </div>
 
-        <div className={cx(COLUMNS, "border-b border-border-default pb-1 text-caption font-medium text-text-secondary")}>
-          <span>Цель</span>
-          <span>Спрос</span>
-          <span>Цена на рынке</span>
-          <span>Вложения</span>
-          <span>Прибыль</span>
-          <span>Как крафтить</span>
+        <div className={cx(COLUMNS, "overflow-hidden border-b border-border-default pb-1 text-caption font-medium text-text-secondary [scrollbar-gutter:stable]")}>
+          <SortButton sortKey="name" sort={sort} onSort={onSort}>
+            Цель
+          </SortButton>
+          <SortButton sortKey="demand" sort={sort} onSort={onSort}>
+            Спрос
+          </SortButton>
+          <SortButton sortKey="market" sort={sort} onSort={onSort}>
+            Цена на рынке
+          </SortButton>
+          <SortButton sortKey="cost" sort={sort} onSort={onSort}>
+            Вложения
+          </SortButton>
+          <span className="inline-flex items-center gap-2">
+            <SortButton sortKey="profit" sort={sort} onSort={onSort}>
+              Прибыль
+            </SortButton>
+            <span aria-hidden>·</span>
+            <SortButton sortKey="roi" sort={sort} onSort={onSort}>
+              ROI
+            </SortButton>
+          </span>
+          <SortButton sortKey="chance" sort={sort} onSort={onSort}>
+            Как крафтить · шанс
+          </SortButton>
         </div>
 
-        <div ref={ref} className="min-h-0 flex-1">
+        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
           {!status?.league ? (
             <EmptyState icon={Gem} title="Лига не выбрана">
               Выберите лигу в шапке — цели считаются по её ценам.
@@ -314,11 +376,16 @@ export function ClustersPage() {
               {shown.map((row) => (
                 <TargetRow key={row.key} row={row} onOpen={() => setSelected(row)} />
               ))}
+              {more && <li ref={sentinel} aria-hidden style={{ height: ROW_HEIGHT }} />}
             </ul>
           )}
         </div>
 
-        <Pagination page={page} pageSize={pageSize} total={visible.length} onPageChange={setPage} />
+        {visible.length > 0 && (
+          <p className="text-caption text-text-secondary">
+            {more ? `Показано ${shown.length} из ${visible.length} — прокрутите ниже` : `${visible.length.toLocaleString("ru-RU")} ${targetsWord(visible.length)}`}
+          </p>
+        )}
       </div>
       <TargetCard row={selected && (rows.find((r) => r.key === selected.key) ?? selected)} onClose={() => setSelected(null)} />
       <CurrencyDialog open={currencyOpen} onOpenChange={setCurrencyOpen} />

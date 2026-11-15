@@ -9,7 +9,7 @@ import type { ClustersStatus } from "@/generated/ClustersStatus";
 import type { CraftCurrency } from "@/generated/CraftCurrency";
 import type { CraftPlan } from "@/generated/CraftPlan";
 import { inTauri } from "@/app/window";
-import { NO_FILTERS, type Band, type Filters, type SortKey } from "./model";
+import { DEFAULT_SORT, firstDirectionDesc, NO_FILTERS, type Band, type Filters, type Sort, type SortKey } from "./model";
 
 // Цели и планы считает ядро (src-tauri/src/clusters.rs) для лиги цен; вкладка только показывает.
 
@@ -28,19 +28,29 @@ export const useClustersData = create<{
 export const useClustersView = create<{
   band: Band | null;
   filters: Filters;
-  sort: SortKey;
+  sort: Sort;
   showLosses: boolean;
-  set: (patch: Partial<{ band: Band | null; filters: Filters; sort: SortKey; showLosses: boolean }>) => void;
+  set: (patch: Partial<{ band: Band | null; filters: Filters; sort: Sort; showLosses: boolean }>) => void;
 }>()(
   persist(
     (set) => ({
       band: null,
       filters: NO_FILTERS,
-      sort: "roi",
+      sort: DEFAULT_SORT,
       showLosses: false,
       set: (patch) => set(patch),
     }),
-    { name: "poe-manager.clusters-view", partialize: ({ band, filters, sort, showLosses }) => ({ band, filters, sort, showLosses }) },
+    {
+      name: "poe-manager.clusters-view",
+      version: 1,
+      // До версии 1 сортировка была строкой («roi», «cost»…) из списка над таблицей.
+      migrate: (persisted) => {
+        const p = (persisted ?? {}) as { sort?: unknown };
+        const sort = typeof p.sort === "string" ? { key: p.sort as SortKey, desc: firstDirectionDesc(p.sort as SortKey) } : DEFAULT_SORT;
+        return { ...(persisted as object), sort } as never;
+      },
+      partialize: ({ band, filters, sort, showLosses }) => ({ band, filters, sort, showLosses }),
+    },
   ),
 );
 
