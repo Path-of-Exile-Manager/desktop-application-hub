@@ -9,7 +9,7 @@ use item_parser::{Blight, Influence, Language, ModKind, Rarity};
 use pob_parser::PobModKind;
 use tauri::State;
 
-use super::matcher::{match_mod, ModQuery, ModUnavailable};
+use super::matcher::{fractured_twin, match_mod, ModQuery, ModUnavailable};
 use super::query::{default_bounds, Corrupted, SpecMod, TradeSearchSpec, DEFAULT_TOLERANCE};
 use super::stats::StatIndex;
 use crate::appraise::Appraisal;
@@ -255,7 +255,9 @@ fn spec_mods(stats: &StatIndex, lines: &[Line], language: Language, slot: &str) 
         .enumerate()
         .map(|(index, line)| {
             let query = ModQuery { line: &line.text, kind: line.kind, crafted: line.crafted, fractured: line.fractured, language };
-            let matched = match_mod(stats, &query, slot);
+            let mut matched = match_mod(stats, &query, slot);
+            // Расколотый мод — то, за что платят: по умолчанию ищем именно его fractured-фильтром.
+            let (fractured_stat_id, fracture_only) = if line.fractured { fractured_twin(stats, &mut matched, &line.text, language) } else { (None, false) };
             let duplicate_of = matched.as_ref().and_then(|m| match owner.get(&m.stat_id) {
                 Some(&first) => Some(first),
                 None => {
@@ -276,7 +278,8 @@ fn spec_mods(stats: &StatIndex, lines: &[Line], language: Language, slot: &str) 
                 line: line.text.clone(),
                 kind: line.kind,
                 stat_id: matched.as_ref().map(|m| m.stat_id.clone()),
-                fractured_stat_id: None,
+                use_fractured: fracture_only || fractured_stat_id.is_some(),
+                fractured_stat_id,
                 option: matched.as_ref().and_then(|m| m.option),
                 value,
                 fixed_text,
@@ -284,7 +287,6 @@ fn spec_mods(stats: &StatIndex, lines: &[Line], language: Language, slot: &str) 
                 enabled: line.enabled && unavailable.is_none(),
                 min,
                 max,
-                use_fractured: false,
                 unavailable,
                 duplicate_of,
                 label: line.label,

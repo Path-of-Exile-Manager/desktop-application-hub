@@ -241,6 +241,11 @@ fn parse_mods(s: &Strings, section: &[&str], item: &mut ParsedItem) {
         } else if let Some(m) = current.as_mut() {
             // Строка-подсказка вроде «(Тег — описание)» к свойству не относится.
             if !(line.starts_with('(') && line.ends_with(')')) {
+                // Пометка « (fractured)» одинакова во всех языках: расколотый мод узнаём и без
+                // заголовка «Fractured Prefix Modifier».
+                if m.kind == ModKind::Explicit && line.trim_end().ends_with(FRACTURED_MARK) {
+                    m.kind = ModKind::Fractured;
+                }
                 m.lines.push(strip_marks(line));
             }
         }

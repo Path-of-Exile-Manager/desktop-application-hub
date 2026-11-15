@@ -201,4 +201,24 @@ Added Small Passive Skills grant: 12% increased Fire Damage (enchant)
 { Prefix Modifier "Notable" (Tier: 1) }
 1 Added Passive Skill is Cremator`,
   },
+  {
+    label: "Fractured Sorcerer Boots 30% MS",
+    text: `Item Class: Boots
+Rarity: Rare
+Gale Spur
+Sorcerer Boots
+--------
+Energy Shield: 64 (augmented)
+--------
+Item Level: 84
+--------
+{ Fractured Prefix Modifier "Cheetah's" (Tier: 2) — Speed }
+30% increased Movement Speed (fractured)
+{ Prefix Modifier "Shimmering" (Tier: 6) — Defences, Energy Shield }
++22(18-23) to maximum Energy Shield
+{ Suffix Modifier "of the Lightning" (Tier: 3) — Elemental, Lightning, Resistance }
++38(36-41)% to Lightning Resistance
+--------
+Fractured Item`,
+  },
 ];

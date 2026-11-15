@@ -274,7 +274,9 @@ pub fn build_query(spec: &TradeSearchSpec) -> Result<Value, String> {
         {
             return Err(format!("у «{}» MIN больше MAX", m.line));
         }
+        // Расколотый мод в сумму не уходит: иначе потерялось бы «только fractured».
         if spec.use_pseudo
+            && !m.use_fractured
             && let Some(p) = &m.pseudo
         {
             let add = m.value.unwrap_or(0.0) * p.multiplier;

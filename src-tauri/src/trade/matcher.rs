@@ -306,6 +306,36 @@ pub struct ModRow {
     pub label: Option<crate::item_mods::ModLabel>,
 }
 
+/// Fractured-мод: найденный стат — обычный (`explicit.…`), если он есть на сайте, и его
+/// fractured-двойник для «Fractured». Возвращает двойник и признак «есть только fractured-фильтр».
+pub fn fractured_twin(index: &StatIndex, matched: &mut Option<StatMatch>, line: &str, language: Language) -> (Option<String>, bool) {
+    let mut fracture_only = false;
+    if let Some(found) = matched.as_mut()
+        && let Some(rest) = found.stat_id.strip_prefix("fractured.")
+    {
+        match index.by_id(&format!("explicit.{rest}")).next() {
+            Some(normal) => {
+                found.stat_id = normal.id.clone();
+                found.section = normal.section.clone();
+            }
+            None => fracture_only = true,
+        }
+    }
+    let twin = matched.as_ref().and_then(|found| {
+        let rest = found.stat_id.split_once('.').map_or("", |(_, r)| r);
+        index
+            .by_id(&format!("fractured.{rest}"))
+            .next()
+            .or_else(|| {
+                let exact = exact_key(line, language);
+                let norm = normalize(line, language);
+                pick(index.by_exact(language, &exact), &["fractured"]).or_else(|| pick(index.by_norm(language, &norm), &["fractured"]))
+            })
+            .map(|s| s.id.clone())
+    });
+    (twin, fracture_only)
+}
+
 /// Все моды предмета PoB со статами. Fractured-мод ищется обычным статом (`explicit.…`), а
 /// fractured-двойник — отдельно; второй мод с тем же статом — дубль первого.
 pub fn match_item(index: &StatIndex, item: &PobItem, slot: &str) -> Vec<ModRow> {
@@ -318,34 +348,7 @@ pub fn match_item(index: &StatIndex, item: &PobItem, slot: &str) -> Vec<ModRow> 
         .map(|(i, m)| {
             let query = ModQuery { line: &m.line, kind: m.kind, crafted: m.crafted, fractured: m.fractured, language: Language::En };
             let mut matched = match_mod(index, &query, slot);
-            let mut fracture_only = false;
-            if m.fractured
-                && let Some(found) = matched.as_mut()
-                && let Some(rest) = found.stat_id.strip_prefix("fractured.")
-            {
-                match index.by_id(&format!("explicit.{rest}")).next() {
-                    Some(normal) => {
-                        found.stat_id = normal.id.clone();
-                        found.section = normal.section.clone();
-                    }
-                    None => fracture_only = true,
-                }
-            }
-            let fractured_stat_id = match (&matched, m.fractured) {
-                (Some(found), true) => {
-                    let rest = found.stat_id.split_once('.').map_or("", |(_, r)| r);
-                    index
-                        .by_id(&format!("fractured.{rest}"))
-                        .next()
-                        .or_else(|| {
-                            let exact = exact_key(&m.line, Language::En);
-                            let norm = normalize(&m.line, Language::En);
-                            pick(index.by_exact(Language::En, &exact), &["fractured"]).or_else(|| pick(index.by_norm(Language::En, &norm), &["fractured"]))
-                        })
-                        .map(|s| s.id.clone())
-                }
-                _ => None,
-            };
+            let (fractured_stat_id, fracture_only) = if m.fractured { fractured_twin(index, &mut matched, &m.line, Language::En) } else { (None, false) };
             let duplicate_of = matched.as_ref().and_then(|found| match owner.get(&found.stat_id) {
                 Some(&first) => Some(first),
                 None => {
