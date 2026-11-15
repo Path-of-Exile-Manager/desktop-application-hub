@@ -173,7 +173,7 @@ function TargetRow({ row, onOpen }: { row: ClusterRow; onOpen: () => void }) {
         {best?.profit !== null && best?.profit !== undefined ? (
           <>
             <Amount chaos={best.profit} signed />
-            <p className={cx("font-mono text-caption", (best.roi ?? 0) >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>ROI {formatRoi(best.roi ?? 0)}</p>
+            <p className={cx("font-mono text-caption", (best.roi ?? 0) >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>окупаемость {formatRoi(best.roi ?? 0)}</p>
           </>
         ) : (
           <span className="text-label text-text-secondary">—</span>
@@ -311,7 +311,7 @@ export function ClustersPage() {
         {status && <StatusBanners status={status} />}
 
         <div className="flex flex-wrap items-center gap-2">
-          <SegmentedControl aria-label="Группа по ROI" value={band} onValueChange={(value) => set({ band: value })} options={bandOptions} />
+          <SegmentedControl aria-label="Группа по окупаемости" value={band} onValueChange={(value) => set({ band: value })} options={bandOptions} />
           <span className="grow" />
           <Switch label="Убыточные" checked={showLosses} onCheckedChange={(value) => set({ showLosses: value })} />
         </div>
@@ -350,7 +350,7 @@ export function ClustersPage() {
             </SortButton>
             <span aria-hidden>·</span>
             <SortButton sortKey="roi" sort={sort} onSort={onSort}>
-              ROI
+              Окупаемость
             </SortButton>
           </span>
           <SortButton sortKey="chance" sort={sort} onSort={onSort}>

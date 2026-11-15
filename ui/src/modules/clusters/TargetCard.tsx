@@ -104,7 +104,7 @@ export function TargetCard({ row, onClose }: { row: ClusterRow | null; onClose: 
               <h3 className="text-body font-semibold text-text-primary">Лучший способ: {methodName(best)}</h3>
               {best.profit !== null && (
                 <span className={cx("font-mono text-body font-semibold", best.profit >= 0 ? "text-status-success-fg" : "text-status-danger-fg")}>
-                  {signed(best.profit, text(best.profit))} · ROI {formatRoi(best.roi ?? 0)}
+                  {signed(best.profit, text(best.profit))} · окупаемость {formatRoi(best.roi ?? 0)}
                 </span>
               )}
             </div>
