@@ -19,7 +19,7 @@ use crate::prices::PricesService;
 /// Предложений за один раз: столько сайт отдаёт в одном fetch.
 pub const PAGE: usize = 10;
 
-pub struct LiveTradeService(Mutex<TradeClient>);
+pub struct LiveTradeService(pub(crate) Mutex<TradeClient>);
 
 impl LiveTradeService {
     pub fn new() -> Self {
@@ -95,14 +95,14 @@ pub struct LivePrice {
     pub icon_sha256: Option<String>,
 }
 
-fn describe(error: TradeError) -> String {
+pub(crate) fn describe(error: TradeError) -> String {
     match error {
         TradeError::RateLimited(wait) => format!("сайт торговли просит подождать {wait} с"),
         TradeError::Failed(message) => message,
     }
 }
 
-fn check_limits(client: &TradeClient, policy: &str) -> Result<(), String> {
+pub(crate) fn check_limits(client: &TradeClient, policy: &str) -> Result<(), String> {
     match client.wait_strict(policy) {
         0 => Ok(()),
         wait => Err(format!("лимит запросов сайта торговли — подождите {wait} с")),
@@ -145,7 +145,7 @@ pub async fn trade_live_fetch(app: AppHandle, query_id: String, ids: Vec<String>
     .map_err(|e| e.to_string())?
 }
 
-fn parse_listings(app: &AppHandle, raw: &[Value]) -> Vec<LiveListing> {
+pub(crate) fn parse_listings(app: &AppHandle, raw: &[Value]) -> Vec<LiveListing> {
     let catalog = app.state::<DatasetService>().catalog();
     let prices = app.state::<PricesService>();
     // Цена валюты в chaos: chaos — 1, остальные — по справочнику (`tradeId`) и ценам лиги.

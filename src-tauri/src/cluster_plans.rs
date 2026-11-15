@@ -535,6 +535,45 @@ fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, levels: (
     }))
 }
 
+/// Диапазоны уровней базы от посчитанного в плане и выше: следующий — с первого уровня, где в
+/// пул добавляются моды (шанс цели ниже). По ним ищется база, если в лучшем диапазоне её нет.
+pub fn level_ladder(engine: &Engine, target: &TargetReply, enchant_id: &str, item_level: u32) -> Vec<(u32, Option<u32>)> {
+    let mut ladder = vec![base_levels(engine, target, enchant_id, item_level)];
+    while let Some(next) = ladder.last().and_then(|(_, high)| *high).map(|high| high + 1) {
+        if ladder.len() >= 8 {
+            break;
+        }
+        ladder.push(base_levels(engine, target, enchant_id, next));
+    }
+    ladder
+}
+
+/// Запрос сайта торговли базы с энчантом и уровнями `levels` (для проверки, есть ли такие).
+pub fn base_search(engine: &Engine, target: &TargetReply, enchant_id: &str, levels: (u32, Option<u32>)) -> Option<serde_json::Value> {
+    base_query(engine, target, enchant_id, levels)
+}
+
+/// Планы цели на одной базе с ценой с сайта торговли: шанс — на пуле уровня `item_level`,
+/// вложения и прибыль — с этой ценой базы. Лучший первым.
+pub fn plans_for_base(
+    engine: &Engine,
+    data: &dyn MarketData,
+    own: &HashMap<String, f64>,
+    target: &TargetReply,
+    enchant_id: &str,
+    item_level: u32,
+    base_price: f64,
+) -> Vec<CraftPlan> {
+    let market = market_prices(engine, data, own);
+    let sale = target.market.as_ref().filter(|m| m.status == ClusterMarketStatus::Ok).and_then(|m| m.price_chaos);
+    let offers = [BaseOffer { enchant: enchant_id.to_owned(), item_level, price: base_price }];
+    craft_engine::plan_target(engine, &target.size, &target.notables, &offers, &market, sale, FOSSIL_OFFERS)
+        .unwrap_or_default()
+        .iter()
+        .map(|plan| craft_plan(engine, data, plan, target))
+        .collect()
+}
+
 /// Уровни базы с тем же пулом модов, что посчитан в плане (ступень цен — `item_level`): шанс на
 /// них одинаков, а база выше диапазона уже хуже. Нижняя граница — не ниже требования цели.
 fn base_levels(engine: &Engine, target: &TargetReply, enchant_id: &str, item_level: u32) -> (u32, Option<u32>) {

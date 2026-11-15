@@ -164,6 +164,7 @@ pub fn run() {
             clusters::clusters_refresh,
             clusters::clusters_list,
             clusters::cluster_detail,
+            clusters::cluster_base_check,
             clusters::clusters_set_own_prices,
             clusters::clusters_currency,
             appraise::item_appraise,

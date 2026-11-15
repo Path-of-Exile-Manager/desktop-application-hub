@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { ClusterBaseCheck } from "@/generated/ClusterBaseCheck";
 import type { ClusterDetail } from "@/generated/ClusterDetail";
 import type { ClusterRow } from "@/generated/ClusterRow";
 import type { ClustersStatus } from "@/generated/ClustersStatus";
@@ -13,7 +14,7 @@ import { DEFAULT_SORT, firstDirectionDesc, NO_FILTERS, type Band, type Filters, 
 
 // Цели и планы считает ядро (src-tauri/src/clusters.rs) для лиги цен; вкладка только показывает.
 
-export type { ClusterDetail, ClusterRow, ClustersStatus, CraftCurrency, CraftPlan };
+export type { ClusterBaseCheck, ClusterDetail, ClusterRow, ClustersStatus, CraftCurrency, CraftPlan };
 
 const NO_ROWS: ClusterRow[] = [];
 
@@ -117,6 +118,30 @@ export function refreshClusters() {
 export function clusterDetail(key: string): Promise<ClusterDetail | null> {
   if (inTauri) return invoke<ClusterDetail | null>("cluster_detail", { key });
   return Promise.resolve(useClustersData.getState().demo?.details[key] ?? null);
+}
+
+/** Проверка базы на сайте торговли: сколько живёт результат, прежде чем открытие карточки проверит снова. */
+const BASE_CHECK_TTL_MS = 10 * 60 * 1000;
+
+export type BaseCheckState = { status: "idle" | "loading" | "done" | "error"; result?: ClusterBaseCheck; error?: string };
+
+/** Проверки баз по ключу цели (до перезапуска): карточку можно закрывать и открывать без новых поисков. */
+export const useBaseChecks = create<{ byKey: Record<string, BaseCheckState> }>(() => ({ byKey: {} }));
+
+/**
+ * Есть ли база лучшего плана на сайте торговли: ищет её в диапазоне уровней плана, нет — в
+ * ближайшем выше; найденная пересчитывает шанс, вложения и прибыль (ядро: `cluster_base_check`).
+ */
+export function checkBase(key: string, force = false) {
+  if (!inTauri) return;
+  const current = useBaseChecks.getState().byKey[key];
+  if (!force && current && (current.status === "loading" || (current.result && Date.now() - Number(current.result.checkedAt) < BASE_CHECK_TTL_MS))) return;
+  const set = (state: BaseCheckState) => useBaseChecks.setState((s) => ({ byKey: { ...s.byKey, [key]: state } }));
+  set({ status: "loading", ...(current?.result ? { result: current.result } : {}) });
+  invoke<ClusterBaseCheck>("cluster_base_check", { key }).then(
+    (result) => set({ status: "done", result }),
+    (e) => set({ status: "error", error: String(e), ...(current?.result ? { result: current.result } : {}) }),
+  );
 }
 
 export function craftCurrency(): Promise<CraftCurrency[]> {

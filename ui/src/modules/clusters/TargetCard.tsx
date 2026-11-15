@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Copy, ExternalLink } from "lucide-react";
-import { Button, cx, Dialog, ItemIcon, MarketPrice, toast, usePriceText } from "@/design-system";
+import { Copy, ExternalLink, LoaderCircle, RefreshCw } from "lucide-react";
+import { Button, cx, Dialog, IconButton, ItemIcon, MarketPrice, StatusIcon, toast, usePriceText } from "@/design-system";
 import { iconUrl, searchCatalog } from "@/app/dataset";
 import type { ClusterName } from "@/generated/ClusterName";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
 import { formatRoi, formatShare, levelRange, methodName, methodSteps, nameIn, SIZE_LABEL, type NameLanguage } from "./model";
-import { clusterDetail, tradeUrl, useClustersData, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
+import { checkBase, clusterDetail, tradeUrl, useBaseChecks, useClustersData, type BaseCheckState, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
 
@@ -64,10 +64,50 @@ function Totals({ plan, sale }: { plan: CraftPlan; sale: number | null }) {
 }
 
 /**
+ * Есть ли такая база на трейде сейчас. Не нашлось в лучшем диапазоне уровней — показывает ближайший
+ * выше, где есть, и что шанс там ниже (план над ней уже пересчитан).
+ */
+function Availability({ row, plan, planned, check }: { row: ClusterRow; plan: CraftPlan; planned: CraftPlan; check: BaseCheckState | undefined }) {
+  const text = usePriceText();
+  const result = check?.result;
+  const again = <IconButton icon={RefreshCw} label="Проверить снова" disabled={check?.status === "loading"} onClick={() => checkBase(row.key, true)} className="size-7" iconSize={14} />;
+  let status: "success" | "warning" | "danger" | "info" = "info";
+  let body: ReactNode;
+
+  if (check?.status === "loading" && !result) {
+    body = (
+      <span className="inline-flex items-center gap-2">
+        <LoaderCircle aria-hidden className="size-4 animate-spin" /> Проверяем, есть ли такие базы на трейде…
+      </span>
+    );
+  } else if (!result) {
+    status = check?.status === "error" ? "warning" : "info";
+    body = check?.status === "error" ? `Наличие на трейде не проверено: ${check.error}` : "Наличие на трейде ещё не проверено.";
+  } else if (result.total === 0) {
+    status = "danger";
+    body = `Баз с этим энчантом и ${row.passives} пассивами сейчас нет на трейде ни на каком подходящем уровне — крафт пока не начать.`;
+  } else if (result.plannedRange) {
+    status = "success";
+    body = `На трейде ${result.total.toLocaleString("ru-RU")} шт. уровня ${levelRange(plan)}, от ${text(result.cheapest ?? result.basePrice ?? 0, true)}. Расчёт ниже — по цене ${text(result.basePrice ?? plan.basePrice, true)}.`;
+  } else {
+    status = "warning";
+    body = `Уровня ${levelRange(planned)} на трейде нет. Ближайшие подходящие — ${levelRange(plan)}: ${result.total.toLocaleString("ru-RU")} шт., от ${text(result.cheapest ?? result.basePrice ?? 0, true)}. На них в пуле больше модов — шанс, вложения и прибыль ниже пересчитаны для этой базы.`;
+  }
+
+  return (
+    <div className="flex items-start gap-2 text-label text-text-primary">
+      <StatusIcon status={status} className="mt-0.5" />
+      <p className="min-w-0 flex-1">{body}</p>
+      {result && again}
+    </div>
+  );
+}
+
+/**
  * Какую базу покупать — первое, что нужно для крафта: белый кластерный самоцвет нужного размера,
  * с энчантом, числом пассивов и уровнем предмета. Иконка — из справочника по имени базы.
  */
-function BaseCard({ row, plan, enchants, language, onBuy }: { row: ClusterRow; plan: CraftPlan; enchants: ClusterName[]; language: NameLanguage; onBuy: (() => void) | null }) {
+function BaseCard({ row, plan, planned, check, enchants, language, onBuy }: { row: ClusterRow; plan: CraftPlan; planned: CraftPlan; check: BaseCheckState | undefined; enchants: ClusterName[]; language: NameLanguage; onBuy: (() => void) | null }) {
   const text = usePriceText();
   const [icon, setIcon] = useState<string | null>(null);
   const baseName = nameIn(row.sizeName, language);
@@ -113,6 +153,7 @@ function BaseCard({ row, plan, enchants, language, onBuy }: { row: ClusterRow; p
         {fact("Уровень предмета", levelRange(plan))}
         {fact("Цена базы", `≈ ${text(plan.basePrice, true)}`)}
       </div>
+      <Availability row={row} plan={plan} planned={planned} check={check} />
       {others.length > 0 && (
         <p className="text-caption text-text-secondary">
           Подойдут и другие энчанты (шанс и цена базы будут другими): {others.map((e) => nameIn(e, language)).join(", ")}.
@@ -138,11 +179,21 @@ export function TargetCard({ row, language, onClose }: { row: ClusterRow | null;
     };
   }, [row]);
 
+  // Открыли цель с планом — проверить, есть ли его база на трейде (результат живёт 10 минут).
+  const checkKey = row?.best ? row.key : null;
+  const check = useBaseChecks((s) => (checkKey ? s.byKey[checkKey] : undefined));
+  useEffect(() => {
+    if (checkKey) checkBase(checkKey);
+  }, [checkKey]);
+
   if (!row) return null;
   const names = row.notables.map((n) => n.en).join(" + ");
   const namesRu = row.notables.map((n) => n.ru ?? n.en).join(" + ");
-  const best = detail?.plans[0] ?? row.best;
-  const plans = detail?.plans ?? (row.best ? [row.best] : []);
+  const planned = detail?.plans[0] ?? row.best;
+  // Найденная на трейде база пересчитывает планы: её уровень и настоящая цена.
+  const checked = check?.result?.plans.length ? check.result.plans : null;
+  const best = checked?.[0] ?? planned;
+  const plans = checked ?? detail?.plans ?? (row.best ? [row.best] : []);
   const market = row.market;
 
   return (
@@ -180,10 +231,12 @@ export function TargetCard({ row, language, onClose }: { row: ClusterRow | null;
           )}
         </div>
 
-        {best && (
+        {best && planned && (
           <BaseCard
             row={row}
             plan={best}
+            planned={planned}
+            check={check}
             enchants={detail?.enchants ?? []}
             language={language}
             onBuy={best.tradeBase && league ? () => open(league, best.tradeBase) : null}

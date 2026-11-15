@@ -190,8 +190,8 @@ export function methodName(plan: CraftPlan, language: NameLanguage = "ru"): stri
  * шанс цели падает, поэтому поиск базы на трейде ограничен им же.
  */
 export function levelRange(plan: CraftPlan): string {
-  if (plan.itemLevelMax === null) return `+`;
-  return plan.itemLevelMax === plan.itemLevel ? String(plan.itemLevel) : `–`;
+  if (plan.itemLevelMax === null) return `${plan.itemLevel}+`;
+  return plan.itemLevelMax === plan.itemLevel ? String(plan.itemLevel) : `${plan.itemLevel}–${plan.itemLevelMax}`;
 }
 
 /** Шаги метода словами: что купить и что делать до попадания. `price` — цена в chaos строкой (валюта показа). */

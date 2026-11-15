@@ -23,7 +23,9 @@ use tauri::{AppHandle, Emitter, Listener, Manager, State};
 use ts_rs::TS;
 
 use crate::api::{Api, Call, Reply};
-use crate::cluster_plans::{compute, craft_currency_ids, ClusterDemand, ClusterDetail, ClusterName, ClusterRow, ClustersReply, Computed, CraftCurrency, MarketData};
+use crate::cluster_plans::{base_search, compute, craft_currency_ids, level_ladder, plans_for_base, ClusterDemand, ClusterDetail, ClusterName, ClusterRow, ClustersReply, Computed, CraftCurrency, CraftPlan, MarketData};
+use crate::market::trade_client::encode;
+use crate::trade::live::{check_limits, describe, parse_listings, LiveTradeService};
 use crate::dataset::{self, Catalog, DatasetService};
 use crate::paths::write_atomic;
 use crate::prices::{self, encode_segment, PricesService};
@@ -419,6 +421,102 @@ pub fn clusters_currency(service: State<ClustersService>, dataset: State<Dataset
             CraftCurrency { key: key.to_owned(), own_chaos: own.get(&item_id).copied(), item_id, name, market_chaos }
         })
         .collect()
+}
+
+/// Есть ли база лучшего плана на сайте торговли сейчас и что выходит с её настоящей ценой.
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ClusterBaseCheck {
+    /// Уровни найденных баз (или лучшего диапазона, если не нашлось нигде).
+    pub level_min: u32,
+    pub level_max: Option<u32>,
+    /// Найдено в диапазоне, посчитанном в плане; `false` — в ближайшем выше (шанс ниже).
+    pub planned_range: bool,
+    /// Баз на сайте в этом диапазоне; 0 — не нашлось ни в одном диапазоне.
+    pub total: u32,
+    /// Цена базы для расчёта: нижняя четверть из 10 самых дешёвых, chaos.
+    pub base_price: Option<f64>,
+    /// Самая дешёвая из них, chaos.
+    pub cheapest: Option<f64>,
+    /// Эта выдача на сайте торговли.
+    pub url: Option<String>,
+    /// Планы с этой базой и её ценой, лучший первым; пусто — баз нет.
+    pub plans: Vec<CraftPlan>,
+    pub checked_at: u64,
+}
+
+/// Поиск базы лучшего плана на сайте торговли: сначала в диапазоне уровней плана, нет — в
+/// следующих выше (там в пуле больше модов). Найденная база пересчитывает шанс, вложения и
+/// прибыль. Идёт с IP пользователя теми же лимитами, что живой поиск Price check.
+#[tauri::command]
+pub async fn cluster_base_check(app: AppHandle, key: String) -> Result<ClusterBaseCheck, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let service = app.state::<ClustersService>();
+        let (reply, computed, own) = {
+            let inner = service.inner.lock().unwrap();
+            (inner.reply.clone(), inner.computed.clone(), inner.own.clone())
+        };
+        let reply = reply.ok_or("цели ещё не загружены")?;
+        let target = reply.targets.iter().find(|t| t.key == key).ok_or("цели нет в списке")?;
+        let best = computed.as_ref().and_then(|c| c.details.get(&key)).and_then(|d| d.plans.first().cloned()).ok_or("у цели нет плана")?;
+        let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
+        let engine = match catalog.crafting.clone() {
+            Some(Ok(engine)) => engine,
+            _ => return Err("в наборе данных нет crafting.json".to_owned()),
+        };
+        let prices = app.state::<PricesService>();
+        let data = LiveData { prices: &prices, catalog: &catalog };
+        let ladder = level_ladder(&engine, target, &best.enchant_id, best.item_level);
+        let live = app.state::<LiveTradeService>();
+
+        for (index, levels) in ladder.iter().enumerate() {
+            let Some(payload) = base_search(&engine, target, &best.enchant_id, *levels) else { break };
+            let (found, listings) = {
+                let mut client = live.0.lock().unwrap();
+                check_limits(&client, "trade-search-request-limit")?;
+                let found = client.search(&reply.league, &payload).map_err(describe)?;
+                if found.total == 0 || found.result.is_empty() {
+                    drop(client);
+                    thread::sleep(Duration::from_millis(800));
+                    continue;
+                }
+                check_limits(&client, "trade-fetch-request-limit")?;
+                let raw = client.fetch(&found.result, &found.id).map_err(describe)?;
+                (found, raw)
+            };
+            let mut chaos: Vec<f64> = parse_listings(&app, &listings).iter().filter_map(|l| l.price.as_ref().and_then(|p| p.chaos)).filter(|c| *c > 0.0).collect();
+            chaos.sort_by(f64::total_cmp);
+            let base_price = chaos.get((chaos.len().saturating_sub(1)) / 4).copied();
+            let plans = base_price.map(|price| plans_for_base(&engine, &data, &own, target, &best.enchant_id, levels.0, price)).unwrap_or_default();
+            return Ok(ClusterBaseCheck {
+                level_min: levels.0,
+                level_max: levels.1,
+                planned_range: index == 0,
+                total: found.total,
+                base_price,
+                cheapest: chaos.first().copied(),
+                url: Some(format!("https://www.pathofexile.com/trade/search/{}/{}", encode(&reply.league), found.id)),
+                plans,
+                checked_at: now_ms(),
+            });
+        }
+
+        let first = ladder.first().copied().unwrap_or((best.item_level, None));
+        Ok(ClusterBaseCheck {
+            level_min: first.0,
+            level_max: first.1,
+            planned_range: true,
+            total: 0,
+            base_price: None,
+            cheapest: None,
+            url: None,
+            plans: Vec::new(),
+            checked_at: now_ms(),
+        })
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// Цель целиком: все методы и подходящие энчанты.
