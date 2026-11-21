@@ -20,6 +20,7 @@ mod discord;
 mod economy;
 mod extension;
 mod farm;
+mod farm_log;
 mod game;
 mod hotkeys;
 mod icons;
@@ -104,6 +105,8 @@ pub fn run() {
             farm::start(app.handle(), &app.state::<paths::AppPaths>());
             account::start(app.handle(), &app.state::<paths::AppPaths>());
             sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
+            // After the dataset, prices and sync it writes the boss journal through.
+            farm_log::start(app.handle());
             stash::start(app.handle(), &app.state::<paths::AppPaths>());
             market::start(app.handle());
             updater::start(app.handle(), &app_root);
@@ -178,6 +181,13 @@ pub fn run() {
             farm::farm_boss,
             farm::farm_set_price_override,
             farm::farm_refresh_stats,
+            farm::farm_kill_prices,
+            farm::farm_expect_kills,
+            farm_log::farm_log_configure,
+            farm_log::farm_log_status,
+            farm_log::farm_log_pick_file,
+            farm_log::farm_drop_target,
+            farm_log::farm_add_drop,
             appraise::item_appraise,
             appraise::item_last_appraisal,
             hotkeys::hotkeys_set,

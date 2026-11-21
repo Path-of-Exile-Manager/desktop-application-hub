@@ -2907,10 +2907,12 @@ version = "0.5.2"
 dependencies = [
  "arboard",
  "browser-bridge",
+ "chrono",
  "craft-engine",
  "discord-presence",
  "dotenvy",
  "farm-engine",
+ "game-log",
  "game-window",
  "item-parser",
  "keyring",

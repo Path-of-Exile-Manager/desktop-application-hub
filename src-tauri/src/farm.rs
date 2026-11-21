@@ -410,7 +410,7 @@ pub fn estimate_all(data: &BossData, book: &HashMap<String, FarmPrice>, settings
 
 // ---------- ответы команд ----------
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
 #[ts(export)]
 pub struct FarmText {
     pub en: String,
@@ -1062,6 +1062,31 @@ fn boss_data(catalog: &Catalog) -> Result<Arc<BossData>, String> {
     }
 }
 
+/// Own prices of the league (`farm_price_overrides`); the store did not open — none.
+fn own_prices(app: &AppHandle, league: &str) -> Result<HashMap<String, f64>, String> {
+    match &*app.state::<FarmService>().store.lock().unwrap() {
+        Ok(store) => store.list(league),
+        Err(_) => Ok(HashMap::new()),
+    }
+}
+
+/// Aggregate prices count only for the current price league that has loaded.
+fn prices_ready(app: &AppHandle, league: &str) -> bool {
+    let prices = app.state::<PricesService>();
+    prices.league().as_deref() == Some(league) && prices.version().is_some()
+}
+
+/// Runs `f` with the price inputs of a league: aggregate prices (if it is the current price
+/// league), special quotes, own prices.
+fn with_inputs<T>(app: &AppHandle, catalog: &Catalog, league: &str, quotes: Option<&QuotesReply>, own: &HashMap<String, f64>, f: impl FnOnce(&PriceInputs) -> T) -> T {
+    let prices = app.state::<PricesService>();
+    let no_prices = |_: &str| Vec::new();
+    let league_prices = |item_id: &str| prices.variants(item_id);
+    let variants: &dyn Fn(&str) -> Vec<Price> = if prices_ready(app, league) { &league_prices } else { &no_prices };
+    let kind_of = |item_id: &str| catalog.get(item_id).map(|item| item.kind);
+    f(&PriceInputs { kind_of: &kind_of, variants, quotes, own })
+}
+
 fn prepare(app: &AppHandle, league: &str, settings: &FarmSettings) -> Result<Prepared, String> {
     let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
     let data = boss_data(&catalog)?;
@@ -1073,20 +1098,12 @@ fn prepare(app: &AppHandle, league: &str, settings: &FarmSettings) -> Result<Pre
     });
     let service = app.state::<FarmService>();
     let community = service.stats.lock().unwrap().status(&data.version);
-    let own = match &*service.store.lock().unwrap() {
-        Ok(store) => store.list(league)?,
-        Err(_) => HashMap::new(),
-    };
+    let own = own_prices(app, league)?;
 
     let prices = app.state::<PricesService>();
-    let prices_ready = prices.league().as_deref() == Some(league) && prices.version().is_some();
+    let prices_ready = prices_ready(app, league);
     let prices_updated_at = if prices_ready { prices.status().newest_update } else { None };
-    let no_prices = |_: &str| Vec::new();
-    let league_prices = |item_id: &str| prices.variants(item_id);
-    let variants: &dyn Fn(&str) -> Vec<Price> = if prices_ready { &league_prices } else { &no_prices };
-    let kind_of = |item_id: &str| catalog.get(item_id).map(|item| item.kind);
-    let inputs = PriceInputs { kind_of: &kind_of, variants, quotes: reply.as_deref(), own: &own };
-    let book = price_book(&data, &inputs);
+    let book = with_inputs(app, &catalog, league, reply.as_deref(), &own, |inputs| price_book(&data, inputs));
     let key = cache_key(&catalog.manifest.dataset_id, &data.version, league, &book, settings, stats_revision);
 
     // Замок кэша — только на чтение и запись, не на время расчёта.
@@ -1388,4 +1405,83 @@ pub fn farm_refresh_stats(app: AppHandle) {
         stats.syncing = true;
     }
     refresh_stats_in_background(&app);
+}
+
+// ---------- journal (`bossKills`, shared/docs/boss-farm.md 7.4) ----------
+
+/// Prices of one kill at the moment it is written: the journal keeps them in the record (decision
+/// 12 — actual income at the prices of the moment), so a later price change does not rewrite it.
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FarmKillPrices {
+    pub league: String,
+    /// `version` of `bosses.json`: `dataVersion` of the record.
+    pub data_version: String,
+    /// Σ qty × price of the entry items; `null` — one of them has no price.
+    pub entry_chaos: Option<f64>,
+    /// Price of one piece by drop key of the boss's pools; `null` — no price.
+    #[ts(type = "Record<string, number | null>")]
+    pub drops: BTreeMap<String, Option<f64>>,
+    /// Price of one piece of other catalog items (`extra`), as asked.
+    #[ts(type = "Record<string, number | null>")]
+    pub extra: BTreeMap<String, Option<f64>>,
+}
+
+/// Current prices of a boss's entry and drops in a league (own prices first, like the calculator).
+pub(crate) fn kill_prices(app: &AppHandle, league: &str, boss_id: &str, extra: &[String]) -> Result<FarmKillPrices, String> {
+    let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
+    let data = boss_data(&catalog)?;
+    let boss = data.boss(boss_id).ok_or_else(|| format!("босса «{boss_id}» нет в таблице"))?;
+    let (reply, _) = quotes_for(app, league);
+    let own = own_prices(app, league)?;
+    Ok(with_inputs(app, &catalog, league, reply.as_deref(), &own, |inputs| {
+        let price = |drop_ref: &DropRef| FarmRef::from_drop(drop_ref).and_then(|r| resolve(&r, inputs).chaos);
+        let entry_chaos = boss.entry.iter().try_fold(0.0, |sum, e| price(&e.drop_ref).map(|p| sum + p * e.qty));
+        let drops = boss.pools.iter().flat_map(|p| &p.entries).map(|e| (e.key.clone(), price(&e.drop_ref))).collect();
+        let extra = extra.iter().map(|id| (id.clone(), resolve(&FarmRef::Item { item_id: id.clone(), variant_key: None }, inputs).chaos)).collect();
+        FarmKillPrices { league: league.to_owned(), data_version: data.version.clone(), entry_chaos, drops, extra }
+    }))
+}
+
+/// Prices for a journal record: entry, every drop of the boss and the asked catalog items.
+#[tauri::command]
+pub async fn farm_kill_prices(app: AppHandle, league: String, boss_id: String, extra: Vec<String>) -> Result<FarmKillPrices, String> {
+    tauri::async_runtime::spawn_blocking(move || kill_prices(&app, &league, &boss_id, &extra)).await.map_err(|e| e.to_string())?
+}
+
+/// What K kills of a boss are expected to bring by its current estimate (`farm_engine::expect_kills`).
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FarmKillsExpectation {
+    pub kills: u32,
+    /// K × EV: drops only.
+    pub income: f64,
+    /// K × (EV − entry); `null` — no entry price.
+    pub profit: Option<f64>,
+    /// σ · √K of the drop income.
+    pub sigma: f64,
+}
+
+/// Expected income of the journal's kills, by boss: the same estimate as the calculator (current
+/// prices and the given profile settings), not the prices of the kills' moments.
+#[tauri::command]
+pub async fn farm_expect_kills(app: AppHandle, league: String, settings: FarmSettings, kills: BTreeMap<String, u32>) -> Result<BTreeMap<String, FarmKillsExpectation>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let prepared = prepare(&app, &league, &settings)?;
+        Ok(prepared
+            .data
+            .bosses
+            .iter()
+            .zip(&prepared.computed.estimates)
+            .filter_map(|(boss, estimate)| {
+                let count = *kills.get(&boss.id)?;
+                let e = farm_engine::expect_kills(estimate, count);
+                Some((boss.id.clone(), FarmKillsExpectation { kills: e.kills, income: e.income, profit: e.profit, sigma: e.sigma }))
+            })
+            .collect())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }

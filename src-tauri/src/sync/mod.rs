@@ -470,6 +470,18 @@ pub fn sync_records(service: State<SyncService>, collection: String) -> Result<V
     service.store.lock().unwrap().list(&collection)
 }
 
+/// A record written by the core itself (the boss journal from `Client.txt`): checked and synced
+/// like one from the interface.
+pub fn put_record(app: &AppHandle, collection: &str, record: Value) -> Result<Value, String> {
+    let service = app.state::<SyncService>();
+    sync_put(app.clone(), service, collection.to_owned(), record)
+}
+
+/// A live record of a collection by id.
+pub fn get_record(app: &AppHandle, collection: &str, id: &str) -> Option<Value> {
+    app.state::<SyncService>().store.lock().unwrap().get(collection, id)
+}
+
 /// Создать или изменить запись. Без `id` — получит новый. Возвращает запись, как она сохранена.
 #[tauri::command]
 pub fn sync_put(app: AppHandle, service: State<SyncService>, collection: String, mut record: Value) -> Result<Value, String> {

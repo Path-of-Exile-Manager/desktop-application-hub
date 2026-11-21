@@ -24,6 +24,9 @@ browser-bridge = { path = "../crates/browser-bridge" }
 discord-presence = { path = "../crates/discord-presence" }
 craft-engine = { path = "../crates/craft-engine" }
 farm-engine = { path = "../crates/farm-engine" }
+game-log = { path = "../crates/game-log" }
+# Log times of Client.txt (local) → ISO UTC of the boss journal.
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 pob-parser = { path = "../crates/pob-parser" }
 # HTTP-клиент для связи с сервером (BFF): маленький, синхронный — работает в своём потоке.
 # gzip включён явно: прайс лиги — ~13 МБ JSON, сжатым ~0,7 МБ (Accept-Encoding ставит сам ureq).
@@ -40,7 +43,7 @@ sha2 = "0.10"
 # фокус обратно игре после оверлея (SetForegroundWindow).
 tauri-plugin-global-shortcut = "2"
 arboard = { version = "3", default-features = false }
-windows = { version = "0.62", features = ["Win32_Foundation", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging"] }
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_UI_Controls_Dialogs"] }
 # Аккаунт: refresh-токен — в диспетчере учётных данных Windows, вход — в системном браузере.
 keyring = { version = "3", features = ["windows-native"] }
 tauri-plugin-opener = "2"

@@ -25,10 +25,28 @@ use crate::area::is_safe_area;
 use crate::line::{LogEntry, LogEvent};
 
 /// A boss and the `WorldAreas` ids of its arena (`areaIds` of `bosses.json`).
-#[derive(Debug, Clone)]
+///
+/// A regular fight and its uber version share the arena id (Shaper, Sirus, Maven, Exarch…) and
+/// differ by the area level in `Generating level 85 area …`: the level bounds tell them apart.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BossArena {
     pub boss_id: String,
     pub area_ids: Vec<String>,
+    /// The arena counts for this boss only from this area level (the uber version: 85).
+    pub min_level: Option<u32>,
+    /// …and only up to this level (the regular version next to an uber one: 84).
+    pub max_level: Option<u32>,
+}
+
+impl BossArena {
+    /// An arena of any level.
+    pub fn new(boss_id: impl Into<String>, area_ids: Vec<String>) -> Self {
+        BossArena { boss_id: boss_id.into(), area_ids, min_level: None, max_level: None }
+    }
+
+    fn fits(&self, level: u32) -> bool {
+        self.min_level.is_none_or(|min| level >= min) && self.max_level.is_none_or(|max| level <= max)
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -90,6 +108,8 @@ pub struct RunState {
     pub deaths: u32,
     /// Out of the arena since then; `None` — in the arena.
     pub away_since: Option<NaiveDateTime>,
+    /// Time already spent out of the arena and come back from.
+    pub paused_sec: i64,
 }
 
 #[derive(Debug)]
@@ -106,8 +126,8 @@ struct OpenRun {
 
 #[derive(Debug)]
 pub struct RunTracker {
-    /// Arena area id → boss id.
-    arenas: HashMap<String, String>,
+    /// Arena area id → the bosses fought there, with their level bounds.
+    arenas: HashMap<String, Vec<BossArena>>,
     character: Option<String>,
     options: TrackerOptions,
     run: Option<OpenRun>,
@@ -121,12 +141,14 @@ pub struct RunTracker {
 
 impl RunTracker {
     pub fn new(arenas: impl IntoIterator<Item = BossArena>, options: TrackerOptions) -> Self {
-        let arenas = arenas
-            .into_iter()
-            .flat_map(|arena| arena.area_ids.into_iter().map(move |area| (area, arena.boss_id.clone())))
-            .collect();
+        let mut by_area: HashMap<String, Vec<BossArena>> = HashMap::new();
+        for arena in arenas {
+            for area in &arena.area_ids {
+                by_area.entry(area.clone()).or_default().push(arena.clone());
+            }
+        }
         RunTracker {
-            arenas,
+            arenas: by_area,
             character: None,
             options,
             run: None,
@@ -152,7 +174,13 @@ impl RunTracker {
             started_at: run.started_at,
             deaths: run.deaths,
             away_since: run.away_since,
+            paused_sec: run.paused_sec,
         })
+    }
+
+    /// The boss fought in a generated area of this level, if any.
+    fn boss_of(&self, area_id: &str, level: u32) -> Option<String> {
+        self.arenas.get(area_id)?.iter().find(|arena| arena.fits(level)).map(|arena| arena.boss_id.clone())
     }
 
     /// Feeds one log entry, in log order.
@@ -160,9 +188,9 @@ impl RunTracker {
         let mut events = self.tick(entry.at);
         let at = entry.at;
         match &entry.event {
-            LogEvent::AreaGenerated { area_id, .. } => {
+            LogEvent::AreaGenerated { area_id, level, .. } => {
                 self.generated = Some(area_id.clone());
-                let boss = self.arenas.get(area_id).cloned();
+                let boss = self.boss_of(area_id, *level);
                 let pauses = boss.is_none() && is_safe_area(area_id);
                 match self.run.as_mut() {
                     Some(run) if pauses => {

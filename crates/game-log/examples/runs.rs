@@ -27,7 +27,7 @@ fn arenas() -> Vec<BossArena> {
         ("eater-of-worlds", "MapWorldsPrimordialBoss4"),
     ]
     .into_iter()
-    .map(|(boss, area)| BossArena { boss_id: boss.into(), area_ids: vec![area.into()] })
+    .map(|(boss, area)| BossArena::new(boss, vec![area.into()]))
     .collect()
 }
 
