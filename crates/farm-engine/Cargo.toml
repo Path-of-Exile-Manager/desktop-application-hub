@@ -1,0 +1,10 @@
+[package]
+name = "farm-engine"
+description = "Доход от фарма боссов PoE1: EV за убийство, прибыль в час, разброс и риск"
+version.workspace = true
+edition.workspace = true
+
+# Чистая логика без сети, справочника и Tauri: вход — босс из bosses.json, цены, настройки.
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
