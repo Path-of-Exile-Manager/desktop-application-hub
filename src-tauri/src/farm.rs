@@ -10,9 +10,14 @@
 //! - своя цена пользователя (`farm_set_price_override`) перекрывает обе — `user.db`, таблица
 //!   `farm_price_overrides`, ключ `(лига, ключ ref)`, не синхронизируется.
 //!
+//! Общая статистика дропа (`GET /v1/farm/bosses/stats`, ETag, кэш в памяти): первый раз — запрос
+//! сразу, дальше — в фоне раз в час и при открытии вкладки (`farm_refresh_stats`); берутся строки
+//! с версией текущего `bosses.json`; ошибка — расчёт без статистики (прежний ответ остаётся).
+//!
 //! Расчёт всех боссов — в пуле блокирующих задач, по боссам в нескольких потоках; результат
-//! кэшируется по хэшу (набор, версия таблицы, лига, цены всех `ref` после своих правок, настройки).
-//! Новые особые цены, пришедшие в фоне, и правка своей цены — событие `farm-updated`.
+//! кэшируется по хэшу (набор, версия таблицы, лига, цены всех `ref` после своих правок, настройки,
+//! ревизия статистики). Новые особые цены и статистика, пришедшие в фоне, и правка своей цены —
+//! событие `farm-updated`.
 
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{DefaultHasher, Hash, Hasher};
@@ -40,18 +45,25 @@ use crate::trade::query::{build_query, search_url};
 pub const EVENT: &str = "farm-updated";
 /// Особые цены лиги — не чаще раза в 5 минут (и после ошибки тоже).
 const QUOTES_REFRESH: Duration = Duration::from_secs(5 * 60);
+/// Общая статистика дропа — раз в час; при открытии вкладки — если прошла минута.
+const STATS_REFRESH: Duration = Duration::from_secs(60 * 60);
+const STATS_ON_OPEN: Duration = Duration::from_secs(60);
+/// z для 95 % интервала Уилсона (как у сервера): верх интервала ключа, ни разу не выпавшего.
+const WILSON_Z: f64 = 1.96;
 const TIMEOUT: Duration = Duration::from_secs(20);
 
 // ---------- настройки из интерфейса ----------
 
-/// Профиль пользователя (коллекция `farmProfiles` — шаг F8; пока присылает интерфейс).
+/// Настройки расчёта: выбранный профиль (коллекция `farmProfiles`, её читает и пишет интерфейс)
+/// и переключатель «Шансы сообщества» (настройка интерфейса, в профиле её нет).
 #[derive(Debug, Clone, Default, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase", default)]
 #[ts(export)]
 pub struct FarmSettings {
     /// Общий IIQ для пулов `scalesWithQuantity`, в %.
     pub iiq: f64,
-    /// «Шансы сообщества»: статистика вместо данных у всех ключей (статистика — шаг F12).
+    /// «Шансы сообщества»: статистика вместо данных у всех ключей босса со статистикой; без
+    /// переключателя — только у шансов `null`.
     pub prefer_community: bool,
     pub bosses: BTreeMap<String, FarmBossSettings>,
 }
@@ -80,8 +92,8 @@ pub struct FarmBossSettings {
     pub hidden: Option<bool>,
 }
 
-fn engine_settings(settings: &FarmSettings, boss_id: &str) -> farm_engine::Settings {
-    let own = settings.bosses.get(boss_id);
+fn engine_settings(settings: &FarmSettings, boss: &Boss, stats: Option<&BossStats>) -> farm_engine::Settings {
+    let own = settings.bosses.get(&boss.id);
     let positive = |value: Option<f64>| value.filter(|v| v.is_finite() && *v >= 0.0);
 
     farm_engine::Settings {
@@ -89,10 +101,39 @@ fn engine_settings(settings: &FarmSettings, boss_id: &str) -> farm_engine::Setti
         overhead_sec: positive(own.and_then(|o| o.overhead_sec)),
         iiq: own.and_then(|o| o.iiq).or(Some(settings.iiq)).filter(|v| v.is_finite()).unwrap_or(0.0),
         chances: own.and_then(|o| o.chances.as_ref()).map(|c| c.iter().map(|(k, v)| (k.clone(), *v)).collect()).unwrap_or_default(),
-        // Общая статистика дропа — шаг F12 (`GET /v1/farm/bosses/stats`).
-        community: HashMap::new(),
+        community: community_rates(boss, stats),
         prefer_community: settings.prefer_community,
     }
+}
+
+/// Шансы сообщества по ключам дропа босса, в % (ожидаемое число штук за убийство). Ключа, ни разу не
+/// выпавшего за засчитанные убийства, в ответе нет — его шанс 0.
+fn community_rates(boss: &Boss, stats: Option<&BossStats>) -> HashMap<String, f64> {
+    let Some(stats) = stats else { return HashMap::new() };
+    boss.pools
+        .iter()
+        .flat_map(|pool| pool.entries.iter())
+        .map(|entry| (entry.key.clone(), stats.drops.get(&entry.key).map_or(0.0, |d| d.rate)))
+        .filter(|(_, rate)| rate.is_finite())
+        .collect()
+}
+
+/// Статистика босса для этой версии таблицы.
+fn boss_stats<'a>(stats: Option<&'a StatsReply>, version: &str, boss_id: &str) -> Option<&'a BossStats> {
+    stats?.bosses.iter().find(|b| b.boss_id == boss_id && b.data_version == version)
+}
+
+/// Статистика сообщества строки дропа. Ключ без выпадений: 0 %, верх интервала — z² / (n + z²).
+fn community_drop(stats: &BossStats, key: &str) -> FarmCommunityDrop {
+    let (rate, low, high) = match stats.drops.get(key) {
+        Some(d) => (d.rate, d.low, d.high),
+        None => {
+            let n = f64::from(stats.kills);
+            let z2 = WILSON_Z * WILSON_Z;
+            (0.0, 0.0, z2 / (n + z2) * 100.0)
+        }
+    };
+    FarmCommunityDrop { rate, low, high, kills: stats.kills, contributors: stats.contributors }
 }
 
 // ---------- ссылка на цену ----------
@@ -228,6 +269,34 @@ pub struct QuoteState {
     pub fetched_at: Option<String>,
 }
 
+/// Ответ `GET /v1/farm/bosses/stats`: все версии таблицы, прошедшие порог (убийств ≥ 30,
+/// участников ≥ 3).
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct StatsReply {
+    #[serde(default)]
+    pub bosses: Vec<BossStats>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BossStats {
+    pub boss_id: String,
+    pub data_version: String,
+    pub kills: u32,
+    pub contributors: u32,
+    /// Ключ дропа → статистика; ни разу не выпавших ключей нет.
+    #[serde(default)]
+    pub drops: HashMap<String, DropStats>,
+}
+
+/// В % ожидаемого числа штук за убийство — те же единицы, что `chance` таблицы.
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct DropStats {
+    pub rate: f64,
+    pub low: f64,
+    pub high: f64,
+}
+
 /// Откуда берутся цены для одного расчёта.
 pub struct PriceInputs<'a> {
     /// Вид предмета справочника (камни оцениваются уровнем 1).
@@ -313,7 +382,7 @@ fn book_price<'a>(book: &'a HashMap<String, FarmPrice>, drop_ref: &DropRef) -> O
 }
 
 /// Все боссы таблицы — по боссам в нескольких потоках; Монте-Карло 20 000 прогонов, seed постоянный.
-pub fn estimate_all(data: &BossData, book: &HashMap<String, FarmPrice>, settings: &FarmSettings) -> Vec<BossEstimate> {
+pub fn estimate_all(data: &BossData, book: &HashMap<String, FarmPrice>, settings: &FarmSettings, stats: Option<&StatsReply>) -> Vec<BossEstimate> {
     let price = |drop_ref: &DropRef| book_price(book, drop_ref).and_then(|p| p.chaos);
     let threads = thread::available_parallelism().map_or(1, |n| n.get()).clamp(1, 8);
     let chunk = data.bosses.len().div_ceil(threads).max(1);
@@ -324,7 +393,15 @@ pub fn estimate_all(data: &BossData, book: &HashMap<String, FarmPrice>, settings
             .chunks(chunk)
             .map(|bosses| {
                 let price = &price;
-                scope.spawn(move || bosses.iter().map(|boss| farm_engine::estimate(boss, price, &engine_settings(settings, &boss.id), MonteCarlo::default())).collect::<Vec<_>>())
+                scope.spawn(move || {
+                    bosses
+                        .iter()
+                        .map(|boss| {
+                            let settings = engine_settings(settings, boss, boss_stats(stats, &data.version, &boss.id));
+                            farm_engine::estimate(boss, price, &settings, MonteCarlo::default())
+                        })
+                        .collect::<Vec<_>>()
+                })
             })
             .collect();
         handles.into_iter().flat_map(|handle| handle.join().expect("farm estimate thread")).collect()
@@ -454,6 +531,44 @@ pub struct FarmBossRow {
     pub summary: FarmSummary,
     /// Самая старая принятая особая цена, использованная в расчёте босса (ISO).
     pub oldest_quote_at: Option<String>,
+    /// Общая статистика дропа этой версии таблицы; `null` — нет (мало убийств или участников).
+    pub community: Option<FarmBossCommunity>,
+}
+
+/// Сколько убийств и людей за статистикой босса.
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FarmBossCommunity {
+    pub kills: u32,
+    pub contributors: u32,
+}
+
+/// Статистика сообщества строки дропа: в % ожидаемого числа штук за убийство (как `chance`
+/// `independent`), с 95 % интервалом.
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FarmCommunityDrop {
+    pub rate: f64,
+    pub low: f64,
+    pub high: f64,
+    pub kills: u32,
+    pub contributors: u32,
+}
+
+/// Общая статистика дропа с сервера.
+#[derive(Debug, Clone, Default, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FarmCommunityStatus {
+    /// Боссов со статистикой для версии таблицы.
+    pub bosses: u32,
+    /// Конец последнего запроса, мс с 1970-01-01.
+    pub checked_at: Option<u64>,
+    pub syncing: bool,
+    /// Ошибка последнего запроса; расчёт идёт с прежней статистикой или без неё.
+    pub error: Option<String>,
 }
 
 /// Особые цены лиги с сервера.
@@ -485,6 +600,7 @@ pub struct FarmTable {
     /// Самая свежая сводная цена лиги (ISO).
     pub prices_updated_at: Option<String>,
     pub quotes: FarmQuotesStatus,
+    pub community: FarmCommunityStatus,
     /// Самая старая принятая особая цена в расчёте (ISO).
     pub oldest_quote_at: Option<String>,
     /// Своих цен в лиге.
@@ -552,6 +668,8 @@ pub struct FarmDropLine {
     pub data_chance: Option<f64>,
     /// Свой шанс (вес) из настроек.
     pub own_chance: Option<f64>,
+    /// Общая статистика дропа; `null` — у босса её нет.
+    pub community: Option<FarmCommunityDrop>,
     /// Шанс, что выпадет хотя бы одна штука.
     pub probability: Option<f64>,
     /// Ожидаемое число штук за убийство.
@@ -632,7 +750,8 @@ pub struct FarmBossDetail {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct FarmUpdated {
-    pub league: String,
+    /// `null` — пришла общая статистика (она одна на все лиги).
+    pub league: Option<String>,
 }
 
 // ---------- свои цены: user.db ----------
@@ -736,6 +855,30 @@ impl LeagueQuotes {
     }
 }
 
+/// Общая статистика дропа: один ответ на все лиги и версии таблицы.
+#[derive(Default)]
+struct CommunityStats {
+    reply: Option<Arc<StatsReply>>,
+    /// Растёт с каждым новым ответом: ключ кэша расчёта.
+    revision: u64,
+    etag: Option<String>,
+    attempted: Option<Instant>,
+    checked_at: Option<u64>,
+    syncing: bool,
+    error: Option<String>,
+}
+
+impl CommunityStats {
+    fn status(&self, version: &str) -> FarmCommunityStatus {
+        FarmCommunityStatus {
+            bosses: self.reply.as_ref().map_or(0, |r| r.bosses.iter().filter(|b| b.data_version == version).count() as u32),
+            checked_at: self.checked_at,
+            syncing: self.syncing,
+            error: self.error.clone(),
+        }
+    }
+}
+
 /// Посчитанная таблица одной лиги.
 struct Computed {
     key: u64,
@@ -747,6 +890,7 @@ struct Computed {
 
 pub struct FarmService {
     quotes: Mutex<HashMap<String, LeagueQuotes>>,
+    stats: Mutex<CommunityStats>,
     store: Mutex<Result<OverrideStore, String>>,
     computed: Mutex<Option<Arc<Computed>>>,
     /// Один расчёт за раз: два одинаковых запроса не считают дважды.
@@ -756,6 +900,7 @@ pub struct FarmService {
 pub fn start(app: &AppHandle, paths: &AppPaths) {
     app.manage(FarmService {
         quotes: Mutex::new(HashMap::new()),
+        stats: Mutex::new(CommunityStats::default()),
         store: Mutex::new(OverrideStore::open(&paths.file("user.db"))),
         computed: Mutex::new(None),
         computing: Mutex::new(()),
@@ -784,7 +929,7 @@ fn quotes_for(app: &AppHandle, league: &str) -> (Option<Arc<QuotesReply>>, FarmQ
         let league = league.to_owned();
         let _ = thread::Builder::new().name("farm-quotes".into()).spawn(move || {
             if fetch_quotes(&app, &league) {
-                let _ = app.emit(EVENT, FarmUpdated { league });
+                let _ = app.emit(EVENT, FarmUpdated { league: Some(league) });
             }
         });
     }
@@ -827,12 +972,83 @@ fn fetch_quotes(app: &AppHandle, league: &str) -> bool {
     }
 }
 
+/// Общая статистика: первый раз — запрос сразу, дальше — в фоне, если прошёл час.
+/// Возвращает ответ и его ревизию.
+fn stats_for(app: &AppHandle) -> (Option<Arc<StatsReply>>, u64) {
+    let service = app.state::<FarmService>();
+    let (first, stale) = {
+        let mut stats = service.stats.lock().unwrap();
+        let first = stats.attempted.is_none();
+        let stale = !stats.syncing && stats.attempted.is_some_and(|at| at.elapsed() >= STATS_REFRESH);
+        if first || stale {
+            stats.attempted = Some(Instant::now());
+            stats.syncing = true;
+        }
+        (first, stale)
+    };
+
+    if first {
+        fetch_stats(app);
+    } else if stale {
+        refresh_stats_in_background(app);
+    }
+
+    let stats = service.stats.lock().unwrap();
+    (stats.reply.clone(), stats.revision)
+}
+
+/// Запрос в фоне; пришли новые данные — `farm-updated` без лиги (статистика общая).
+fn refresh_stats_in_background(app: &AppHandle) {
+    let app = app.clone();
+    let _ = thread::Builder::new().name("farm-stats".into()).spawn(move || {
+        if fetch_stats(&app) {
+            let _ = app.emit(EVENT, FarmUpdated { league: None });
+        }
+    });
+}
+
+/// Запрос `GET /v1/farm/bosses/stats`; `true` — пришла новая статистика. Ошибка — прежний ответ
+/// остаётся (статистика меняется раз в час), текст ошибки — в статусе.
+fn fetch_stats(app: &AppHandle) -> bool {
+    let service = app.state::<FarmService>();
+    let etag = service.stats.lock().unwrap().etag.clone();
+    let api = app.state::<Arc<Api>>().inner().clone();
+    let mut call = Call::get("/v1/farm/bosses/stats").timeout(TIMEOUT);
+    if let Some(etag) = etag {
+        call = call.if_none_match(etag);
+    }
+    let result = api.send::<StatsReply>(call);
+
+    let mut stats = service.stats.lock().unwrap();
+    stats.syncing = false;
+    stats.checked_at = Some(now_ms());
+    match result {
+        Ok(Reply::Fresh { value, meta }) => {
+            stats.reply = Some(Arc::new(value));
+            stats.revision += 1;
+            stats.etag = meta.etag;
+            stats.error = None;
+            true
+        }
+        Ok(Reply::NotModified { .. }) => {
+            stats.error = None;
+            false
+        }
+        Err(e) => {
+            stats.error = Some(if e.status == Some(404) { "сервер не отдаёт статистику дропа (404)".to_owned() } else { e.message });
+            false
+        }
+    }
+}
+
 /// Всё для ответа команды: данные, цены, посчитанная таблица.
 struct Prepared {
     catalog: Arc<Catalog>,
     data: Arc<BossData>,
     computed: Arc<Computed>,
     quotes: FarmQuotesStatus,
+    stats: Option<Arc<StatsReply>>,
+    community: FarmCommunityStatus,
     prices_ready: bool,
     prices_updated_at: Option<String>,
     own_prices: u32,
@@ -849,8 +1065,14 @@ fn boss_data(catalog: &Catalog) -> Result<Arc<BossData>, String> {
 fn prepare(app: &AppHandle, league: &str, settings: &FarmSettings) -> Result<Prepared, String> {
     let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
     let data = boss_data(&catalog)?;
-    let (reply, quotes) = quotes_for(app, league);
+    // Первые запросы особых цен лиги и статистики идут параллельно.
+    let ((stats, stats_revision), (reply, quotes)) = thread::scope(|scope| {
+        let stats = scope.spawn(|| stats_for(app));
+        let quotes = quotes_for(app, league);
+        (stats.join().expect("farm stats thread"), quotes)
+    });
     let service = app.state::<FarmService>();
+    let community = service.stats.lock().unwrap().status(&data.version);
     let own = match &*service.store.lock().unwrap() {
         Ok(store) => store.list(league)?,
         Err(_) => HashMap::new(),
@@ -865,7 +1087,7 @@ fn prepare(app: &AppHandle, league: &str, settings: &FarmSettings) -> Result<Pre
     let kind_of = |item_id: &str| catalog.get(item_id).map(|item| item.kind);
     let inputs = PriceInputs { kind_of: &kind_of, variants, quotes: reply.as_deref(), own: &own };
     let book = price_book(&data, &inputs);
-    let key = cache_key(&catalog.manifest.dataset_id, &data.version, league, &book, settings);
+    let key = cache_key(&catalog.manifest.dataset_id, &data.version, league, &book, settings, stats_revision);
 
     // Замок кэша — только на чтение и запись, не на время расчёта.
     let cached = || service.computed.lock().unwrap().as_ref().filter(|c| c.key == key).cloned();
@@ -879,7 +1101,7 @@ fn prepare(app: &AppHandle, league: &str, settings: &FarmSettings) -> Result<Pre
                 Some(computed) => computed,
                 None => {
                     let started = Instant::now();
-                    let estimates = estimate_all(&data, &book, settings);
+                    let estimates = estimate_all(&data, &book, settings, stats.as_deref());
                     let computed = Arc::new(Computed { key, book, estimates, computed_at: now_ms(), compute_ms: started.elapsed().as_millis() as u64 });
                     *service.computed.lock().unwrap() = Some(computed.clone());
                     computed
@@ -888,12 +1110,12 @@ fn prepare(app: &AppHandle, league: &str, settings: &FarmSettings) -> Result<Pre
         }
     };
 
-    Ok(Prepared { catalog, data, computed, quotes, prices_ready, prices_updated_at, own_prices: own.len() as u32 })
+    Ok(Prepared { catalog, data, computed, quotes, stats, community, prices_ready, prices_updated_at, own_prices: own.len() as u32 })
 }
 
-fn cache_key(dataset_id: &str, version: &str, league: &str, book: &HashMap<String, FarmPrice>, settings: &FarmSettings) -> u64 {
+fn cache_key(dataset_id: &str, version: &str, league: &str, book: &HashMap<String, FarmPrice>, settings: &FarmSettings, stats_revision: u64) -> u64 {
     let mut hasher = DefaultHasher::new();
-    (dataset_id, version, league).hash(&mut hasher);
+    (dataset_id, version, league, stats_revision).hash(&mut hasher);
     let mut keys: Vec<&String> = book.keys().collect();
     keys.sort();
     for key in keys {
@@ -916,7 +1138,7 @@ fn oldest_quote(boss: &Boss, book: &HashMap<String, FarmPrice>) -> Option<String
         .min()
 }
 
-fn boss_row(catalog: &Catalog, boss: &Boss, estimate: &BossEstimate, book: &HashMap<String, FarmPrice>, settings: &FarmSettings) -> FarmBossRow {
+fn boss_row(catalog: &Catalog, boss: &Boss, estimate: &BossEstimate, book: &HashMap<String, FarmPrice>, settings: &FarmSettings, stats: Option<&BossStats>) -> FarmBossRow {
     FarmBossRow {
         id: boss.id.clone(),
         group: boss.group.into(),
@@ -927,6 +1149,7 @@ fn boss_row(catalog: &Catalog, boss: &Boss, estimate: &BossEstimate, book: &Hash
         patch_tag: boss.patch.as_ref().map(|p| p.tag.clone()),
         summary: estimate.into(),
         oldest_quote_at: oldest_quote(boss, book),
+        community: stats.map(|s| FarmBossCommunity { kills: s.kills, contributors: s.contributors }),
     }
 }
 
@@ -979,7 +1202,8 @@ fn detail(prepared: &Prepared, league: &str, boss_id: &str, settings: &FarmSetti
     let boss = &data.bosses[index];
     let estimate = &computed.estimates[index];
     let book = &computed.book;
-    let engine = engine_settings(settings, boss_id);
+    let stats = boss_stats(prepared.stats.as_deref(), &data.version, boss_id);
+    let engine = engine_settings(settings, boss, stats);
 
     let entry = boss
         .entry
@@ -1035,6 +1259,7 @@ fn detail(prepared: &Prepared, league: &str, boss_id: &str, settings: &FarmSetti
                         data_weight: entry.weight,
                         data_chance: entry.chance,
                         own_chance: engine.chances.get(&entry.key).copied(),
+                        community: stats.map(|s| community_drop(s, &entry.key)),
                         probability: line.probability,
                         expected: line.expected,
                         price: price_of(book, &entry.drop_ref),
@@ -1058,7 +1283,7 @@ fn detail(prepared: &Prepared, league: &str, boss_id: &str, settings: &FarmSetti
         prices_ready: prepared.prices_ready,
         prices_updated_at: prepared.prices_updated_at.clone(),
         quotes: prepared.quotes.clone(),
-        boss: boss_row(catalog, boss, estimate, book, settings),
+        boss: boss_row(catalog, boss, estimate, book, settings, stats),
         areas,
         default_ttk_sec: boss.defaults.map(|d| d.ttk_sec),
         default_overhead_sec: boss.defaults.map(|d| d.overhead_sec),
@@ -1088,7 +1313,12 @@ pub async fn farm_bosses(app: AppHandle, league: String, settings: FarmSettings)
     tauri::async_runtime::spawn_blocking(move || {
         let prepared = prepare(&app, &league, &settings)?;
         let Prepared { catalog, data, computed, .. } = &prepared;
-        let bosses: Vec<FarmBossRow> = data.bosses.iter().zip(&computed.estimates).map(|(boss, estimate)| boss_row(catalog, boss, estimate, &computed.book, &settings)).collect();
+        let bosses: Vec<FarmBossRow> = data
+            .bosses
+            .iter()
+            .zip(&computed.estimates)
+            .map(|(boss, estimate)| boss_row(catalog, boss, estimate, &computed.book, &settings, boss_stats(prepared.stats.as_deref(), &data.version, &boss.id)))
+            .collect();
         let oldest_quote_at = bosses.iter().filter_map(|b| b.oldest_quote_at.clone()).min();
 
         Ok(FarmTable {
@@ -1098,6 +1328,7 @@ pub async fn farm_bosses(app: AppHandle, league: String, settings: FarmSettings)
             prices_ready: prepared.prices_ready,
             prices_updated_at: prepared.prices_updated_at.clone(),
             quotes: prepared.quotes.clone(),
+            community: prepared.community.clone(),
             oldest_quote_at,
             own_prices: prepared.own_prices,
             bosses,
@@ -1136,9 +1367,25 @@ pub async fn farm_set_price_override(app: AppHandle, league: String, drop_ref: F
             Ok(store) => store.set(&league, &drop_ref.key(), chaos)?,
             Err(e) => return Err(e.clone()),
         }
-        let _ = app.emit(EVENT, FarmUpdated { league });
+        let _ = app.emit(EVENT, FarmUpdated { league: Some(league) });
         Ok(())
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+/// Вкладку открыли: перечитать общую статистику в фоне (ETag — обычно 304), если с прошлого
+/// запроса прошла минута. Новая статистика — `farm-updated` без лиги. Первый запрос делает расчёт.
+#[tauri::command]
+pub fn farm_refresh_stats(app: AppHandle) {
+    let service = app.state::<FarmService>();
+    {
+        let mut stats = service.stats.lock().unwrap();
+        if stats.syncing || stats.attempted.is_none_or(|at| at.elapsed() < STATS_ON_OPEN) {
+            return;
+        }
+        stats.attempted = Some(Instant::now());
+        stats.syncing = true;
+    }
+    refresh_stats_in_background(&app);
 }

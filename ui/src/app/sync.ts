@@ -11,7 +11,7 @@ import { inTauri } from "./window";
 
 export type { SyncChoice, SyncStatus };
 
-export type SyncCollection = "folders" | "bookmarks" | "history" | "pins" | "watchlist" | "settings" | "mapRegexPresets" | "pobBuildGroups" | "pobBuilds";
+export type SyncCollection = "folders" | "bookmarks" | "history" | "pins" | "watchlist" | "settings" | "mapRegexPresets" | "pobBuildGroups" | "pobBuilds" | "farmProfiles" | "bossKills";
 
 export const useSync = create<{ status: SyncStatus | null }>(() => ({ status: null }));
 

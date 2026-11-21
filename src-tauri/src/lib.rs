@@ -177,6 +177,7 @@ pub fn run() {
             farm::farm_bosses,
             farm::farm_boss,
             farm::farm_set_price_override,
+            farm::farm_refresh_stats,
             appraise::item_appraise,
             appraise::item_last_appraisal,
             hotkeys::hotkeys_set,

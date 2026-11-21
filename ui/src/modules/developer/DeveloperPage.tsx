@@ -514,7 +514,7 @@ function ApiProbe() {
 
 const SOURCE_NAME: Record<string, string> = { NINJA: "poe.ninja", WATCH: "poe.watch", TFT: "TFT" };
 
-const SYNC_COLLECTIONS: SyncCollection[] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets", "pobBuildGroups", "pobBuilds"];
+const SYNC_COLLECTIONS: SyncCollection[] = ["folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets", "pobBuildGroups", "pobBuilds", "farmProfiles", "bossKills"];
 
 /** Синхронизация: user.db, состояние движка, записи коллекций, отвергнутые сервером, тестовые записи. */
 function SyncProbe() {

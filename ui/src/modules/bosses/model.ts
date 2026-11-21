@@ -132,6 +132,15 @@ export function formatPercent(fraction: number): string {
   return `${p.toFixed(digits).replace(/\.0+$/, "")} %`;
 }
 
+/**
+ * Статистика сообщества строки дропа: «1.9 % (0.88–4.1) · 312 уб. · 14 чел.». `rate`, `low`, `high` —
+ * уже в % (ожидаемое число штук за убийство).
+ */
+export function formatCommunity(c: { rate: number; low: number; high: number; kills: number; contributors: number }, withRate = true): string {
+  const bare = (percent: number) => formatPercent(percent / 100).replace(/ %$/, "");
+  return [withRate ? `${formatPercent(c.rate / 100)} (${bare(c.low)}–${bare(c.high)})` : `${bare(c.low)}–${bare(c.high)} %`, `${c.kills} уб.`, `${c.contributors} чел.`].join(" · ");
+}
+
 /** Обычное число: `24`, `2.5`, `0.35`. */
 export function formatNumber(value: number): string {
   const abs = Math.abs(value);

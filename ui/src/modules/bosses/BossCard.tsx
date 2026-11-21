@@ -7,6 +7,7 @@ import { inTauri } from "@/app/window";
 import type { FarmBossSettings } from "@/generated/FarmBossSettings";
 import type { FarmSummary } from "@/generated/FarmSummary";
 import {
+  formatCommunity,
   formatDuration,
   formatNumber,
   formatPercent,
@@ -23,7 +24,7 @@ import {
   type NameLanguage,
 } from "./model";
 import { Amount, DropIcon, EditableValue } from "./parts";
-import { useFarmSettings, type BossNumberField } from "./store";
+import { DRAFT_ID, farmEdits, useActiveProfile, type BossNumberField } from "./store";
 import { setOwnPrice, useBossDetail, useBossesData, type FarmBossDetail, type FarmDropLine, type FarmEntryLine, type FarmPool, type FarmPrice, type FarmRef } from "./useBosses";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -110,10 +111,14 @@ function PriceCell({ line, league, name }: { line: { price: FarmPrice; ref: Farm
   );
 }
 
-/** Шанс дропа: из данных, свой (правка на месте) или «?» с полем ввода. */
+/**
+ * Шанс дропа: из данных, свой (правка на месте), сообщества или «?» с полем ввода. Под ним — общая
+ * статистика дропа, если она у босса есть.
+ */
 function ChanceCell({ drop, pool, bossId, multiplier, name }: { drop: FarmDropLine; pool: FarmPool; bossId: string; multiplier: number; name: string }) {
   const oneOf = pool.kind === "one-of";
   const dataValue = oneOf ? drop.dataWeight : drop.dataChance;
+  const community = drop.community;
   const shown =
     drop.probability === null ? "?" : !oneOf && drop.expected !== null && drop.expected >= 1 ? `${formatNumber(drop.expected)} шт.` : formatPercent(drop.probability);
   const scaled = !oneOf && pool.scalesWithQuantity && Math.abs(multiplier - 1) > 1e-9 ? ` × ${formatNumber(multiplier)}` : "";
@@ -121,7 +126,9 @@ function ChanceCell({ drop, pool, bossId, multiplier, name }: { drop: FarmDropLi
     drop.chanceSource === "user"
       ? `свой: ${oneOf ? `вес ${formatNumber(drop.ownChance ?? 0)}` : `${formatNumber(drop.ownChance ?? 0)} %${scaled}`}`
       : drop.chanceSource === "community"
-        ? "сообщество"
+        ? community
+          ? `сообщество: ${formatCommunity(community, false)}`
+          : "сообщество"
         : dataValue === null
           ? "не опубликован — впишите свой"
           : oneOf
@@ -136,14 +143,42 @@ function ChanceCell({ drop, pool, bossId, multiplier, name }: { drop: FarmDropLi
         placeholder={dataValue === null ? (oneOf ? "вес" : "%") : formatNumber(dataValue)}
         label={oneOf ? `Свой вес в пуле: ${name}` : `Свой шанс, %: ${name}`}
         parse={parseAmount}
-        onCommit={(value) => useFarmSettings.getState().setChance(bossId, drop.key, value)}
+        onCommit={(value) => farmEdits.setChance(bossId, drop.key, value)}
         canReset={drop.ownChance !== null}
         alwaysOpen={unknown}
         inputClassName="w-16"
       />
-      <p className={cx("truncate text-caption", drop.chanceSource === "user" ? "text-text-accent" : dataValue === null ? "text-status-warning-fg" : "text-text-secondary")}>{caption}</p>
+      <Tooltip content={communityHint(drop, oneOf)}>
+        <p
+          className={cx(
+            "text-caption",
+            drop.chanceSource !== "community" && "truncate",
+            drop.chanceSource === "user" ? "text-text-accent" : drop.chanceSource === "community" ? "text-text-primary" : dataValue === null ? "text-status-warning-fg" : "text-text-secondary",
+          )}
+        >
+          {caption}
+        </p>
+      </Tooltip>
+      {community && drop.chanceSource !== "community" && (
+        <Tooltip content={communityHint(drop, oneOf)}>
+          <p className="text-caption text-text-secondary">сообщество: {formatCommunity(community)}</p>
+        </Tooltip>
+      )}
     </div>
   );
+}
+
+/** Подсказка к статистике сообщества: откуда числа и когда они в расчёте. */
+function communityHint(drop: FarmDropLine, oneOf: boolean): string | undefined {
+  const c = drop.community;
+  if (!c) return undefined;
+  const used =
+    drop.chanceSource === "community"
+      ? "В расчёте — шанс сообщества."
+      : drop.chanceSource === "user"
+        ? "В расчёте — ваш шанс."
+        : "В расчёте — шанс таблицы; шансы сообщества включаются переключателем в шапке вкладки.";
+  return `Общая статистика дропа: ${c.kills} ${plural(c.kills, "убийство", "убийства", "убийств")} у ${c.contributors} ${plural(c.contributors, "игрока", "игроков", "игроков")} с записанным дропом; ${formatPercent(c.rate / 100)} ${oneOf ? "убийств" : "— штук за убийство"}, 95 % интервал ${formatCommunity(c, false).split(" · ")[0]}. ${used}`;
 }
 
 function SectionTitle({ title, aside }: { title: ReactNode; aside?: ReactNode }) {
@@ -294,7 +329,7 @@ function ProfileField({
         placeholder={fallback.replace(/^[^0-9]*/, "")}
         label={`${label}: своё значение`}
         parse={parse}
-        onCommit={(value) => useFarmSettings.getState().setBossNumber(bossId, field, value)}
+        onCommit={(value) => farmEdits.setBossNumber(bossId, field, value)}
         canReset={own !== undefined}
         inputClassName="w-20"
       />
@@ -306,8 +341,9 @@ const parseSeconds = (text: string) => (text.trim() === "" ? null : (parseDurati
 
 function ProfileSection({ detail, summary }: { detail: FarmBossDetail; summary: FarmSummary }) {
   const bossId = detail.boss.id;
-  const own = useFarmSettings((s) => s.settings.bosses[bossId] ?? NO_BOSS_SETTINGS);
-  const globalIiq = useFarmSettings((s) => s.settings.iiq);
+  const profile = useActiveProfile();
+  const own = profile.bosses[bossId] ?? NO_BOSS_SETTINGS;
+  const globalIiq = profile.iiq;
   const scales = detail.pools.some((p) => p.scalesWithQuantity);
   const steps = detail.quantitySteps;
   const activeStep = steps ? ([...steps].reverse().find((s) => s.iiq <= detail.iiq) ?? steps[0]) : null;
@@ -316,8 +352,10 @@ function ProfileSection({ detail, summary }: { detail: FarmBossDetail; summary: 
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-surface p-4">
       <div className="flex flex-col gap-0.5">
-        <h3 className="text-body font-semibold text-text-primary">Профиль «Мой»</h3>
-        <p className="text-caption text-text-secondary">Свои значения хранятся на этом компьютере; пусто — по умолчанию.</p>
+        <h3 className="truncate text-body font-semibold text-text-primary">Профиль «{profile.name}»</h3>
+        <p className="text-caption text-text-secondary">
+          {profile.id === DRAFT_ID ? "Профиль сохранится при первой правке" : "Синхронизируется с аккаунтом"}; пусто — по умолчанию.
+        </p>
       </div>
       <ProfileField
         label="Бой (TTK)"
@@ -359,7 +397,7 @@ function ProfileSection({ detail, summary }: { detail: FarmBossDetail; summary: 
         </p>
       )}
       {touched && (
-        <Button variant="ghost" icon={RotateCcw} onClick={() => useFarmSettings.getState().resetBoss(bossId)} className="self-start">
+        <Button variant="ghost" icon={RotateCcw} onClick={() => farmEdits.resetBoss(bossId)} className="self-start">
           Сбросить босса к умолчанию
         </Button>
       )}
@@ -506,7 +544,7 @@ export function BossCard({ bossId, language, onClose }: { bossId: string; langua
       className="w-312"
       footer={
         <>
-          <Button variant="ghost" icon={boss.hidden ? Eye : EyeOff} onClick={() => useFarmSettings.getState().setHidden(boss.id, !boss.hidden)}>
+          <Button variant="ghost" icon={boss.hidden ? Eye : EyeOff} onClick={() => farmEdits.setHidden(boss.id, !boss.hidden)}>
             {boss.hidden ? "Вернуть в список" : "Скрыть босса"}
           </Button>
           <Button variant="primary" onClick={onClose}>

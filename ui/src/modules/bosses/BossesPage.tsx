@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, CloudDownload, LoaderCircle, Monitor, RefreshCw, Skull, TriangleAlert, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, CloudDownload, LoaderCircle, Monitor, RefreshCw, Skull, TriangleAlert, Users, type LucideIcon } from "lucide-react";
 import { Badge, Banner, Button, cx, EmptyState, Input, Page, SegmentedControl, Select, Switch, Tooltip } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
@@ -28,7 +28,8 @@ import {
 } from "./model";
 import { Amount, DropIcon } from "./parts";
 import { BossCard } from "./BossCard";
-import { useBossesView, useFarmSettings } from "./store";
+import { ProfilePicker } from "./profiles";
+import { farmEdits, useActiveProfile, useBossesView, useProfilesSync } from "./store";
 import { refreshBosses, useBossesData, useBossesSync, type BossesInfoState, type FarmBossRow, type FarmTable } from "./useBosses";
 
 const COLUMNS =
@@ -120,6 +121,15 @@ function BossRow({ row, language, ownTtk, onOpen }: { row: FarmBossRow; language
               </Badge>
             )}
             {row.hidden && <Badge tone="muted">скрыт</Badge>}
+            {row.community && (
+              <Tooltip
+                content={`Есть статистика дропа сообщества: ${row.community.kills} ${plural(row.community.kills, "убийство", "убийства", "убийств")}, ${row.community.contributors} ${plural(row.community.contributors, "игрок", "игрока", "игроков")} — в карточке у каждого дропа`}
+              >
+                <span className="inline-flex shrink-0 text-text-secondary">
+                  <Users aria-label="Есть статистика сообщества" className="size-3.5" />
+                </span>
+              </Tooltip>
+            )}
           </div>
           <p className="truncate text-caption text-text-secondary">{GROUP_LABEL[row.group]}</p>
         </div>
@@ -259,8 +269,8 @@ function Subtitle({ table, computing }: { table: FarmTable | null; computing: bo
 
 /** Общий IIQ профиля: применяется к дополнительному дропу всех боссов, где нет своей IIQ. */
 function IiqInput() {
-  const iiq = useFarmSettings((s) => s.settings.iiq);
-  const setIiq = useFarmSettings((s) => s.setIiq);
+  const iiq = useActiveProfile().iiq;
+  const setIiq = farmEdits.setIiq;
   const [text, setText] = useState(String(iiq));
   useEffect(() => setText(String(iiq)), [iiq]);
   const parsed = parseAmount(text);
@@ -287,18 +297,43 @@ function IiqInput() {
 }
 
 /**
+ * «Шансы сообщества»: общая статистика дропа вместо шансов таблицы у всех дропов боссов, где она есть.
+ * Без переключателя статистика заменяет только неопубликованные шансы («?»). Настройка этого компьютера.
+ */
+function CommunitySwitch({ table, checked, onChange }: { table: FarmTable | null; checked: boolean; onChange: (value: boolean) => void }) {
+  const status = table?.community;
+  const count = status?.bosses ?? 0;
+  const hint = [
+    "Шансы по журналам дропа пользователей вместо шансов таблицы — у боссов, где набралось ≥ 30 убийств от ≥ 3 человек.",
+    "Без переключателя статистика заменяет только неопубликованные шансы («?»).",
+    status ? (count > 0 ? `Сейчас статистика есть у ${count} ${plural(count, "босса", "боссов", "боссов")}.` : "Для этой версии таблицы статистики пока нет.") : null,
+    status?.error ? `Статистика не получена: ${status.error}` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <Tooltip content={hint}>
+      <span className="inline-flex">
+        <Switch label={count > 0 ? `Шансы сообщества · ${count}` : "Шансы сообщества"} checked={checked} onCheckedChange={onChange} />
+      </span>
+    </Tooltip>
+  );
+}
+
+/**
  * «Фарм → Боссы» (план — shared/docs/boss-farm.md, 7.5): доход за убийство, прибыль в час и риск по
  * живым ценам лиги; клик по строке — карточка босса с дропом, ценами и настройками профиля.
  */
 export function BossesPage() {
+  useProfilesSync();
   useBossesSync();
   const league = useCurrentLeague();
   const info = useBossesData((d) => d.info);
   const storedTable = useBossesData((d) => d.table);
   const computing = useBossesData((d) => d.computing);
   const error = useBossesData((d) => d.error);
-  const { group, showHidden, sort, language, set } = useBossesView();
-  const bossSettings = useFarmSettings((s) => s.settings.bosses);
+  const { group, showHidden, sort, language, preferCommunity, set } = useBossesView();
+  const bossSettings = useActiveProfile().bosses;
   const [selected, setSelected] = useState<string | null>(null);
 
   // В приложении таблица другой лиги (лигу только что сменили) не показывается; в демо лига своя.
@@ -336,6 +371,7 @@ export function BossesPage() {
       actions={
         ready && (
           <>
+            <ProfilePicker />
             <SegmentedControl<NameLanguage>
               aria-label="Язык имён боссов и дропа"
               value={language}
@@ -366,6 +402,7 @@ export function BossesPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Select aria-label="Группа боссов" value={group} onValueChange={(value) => set({ group: value as GroupFilter })} options={groupOptions} className="w-56" />
             <IiqInput />
+            <CommunitySwitch table={table} checked={preferCommunity} onChange={(value) => set({ preferCommunity: value })} />
             <Switch label={hiddenCount > 0 ? `Показать скрытые · ${hiddenCount}` : "Показать скрытые"} checked={showHidden} onCheckedChange={(value) => set({ showHidden: value })} />
             <span className="grow" />
             <span className="text-label text-text-secondary">Сортировка</span>

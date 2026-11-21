@@ -1,6 +1,8 @@
 import type { FarmBossDetail } from "@/generated/FarmBossDetail";
 import type { FarmBossGroup } from "@/generated/FarmBossGroup";
 import type { FarmBossRow } from "@/generated/FarmBossRow";
+import type { FarmChanceSource } from "@/generated/FarmChanceSource";
+import type { FarmCommunityDrop } from "@/generated/FarmCommunityDrop";
 import type { FarmDropLine } from "@/generated/FarmDropLine";
 import type { FarmEntryLine } from "@/generated/FarmEntryLine";
 import type { FarmPrice } from "@/generated/FarmPrice";
@@ -269,6 +271,41 @@ const BOSSES: Boss[] = [
 
 const QUOTES: FarmQuotesStatus = { tracked: true, priced: 1, checkedAt: null, syncing: false, error: null };
 
+/** Общая статистика дропа (как `GET /v1/farm/bosses/stats`): rate/low/high — в %. */
+const STATS: Record<string, { kills: number; contributors: number; drops: Record<string, { rate: number; low: number; high: number }> }> = {
+  "uber-shaper": {
+    kills: 312,
+    contributors: 14,
+    drops: {
+      "echoes-of-creation": { rate: 32.6923, low: 27.7, high: 38.1 },
+      "entropic-devastation": { rate: 28.8462, low: 24.1, high: 34.1 },
+      starforge: { rate: 17.3077, low: 13.5, high: 21.9 },
+      "the-tempest-rising": { rate: 21.1538, low: 17, high: 26 },
+      "unid-sublime-vision": { rate: 1.9231, low: 0.8843, high: 4.1314 },
+      "orb-of-dominance": { rate: 11.2179, low: 8.2, high: 15.2 },
+      "cosmic-fragment": { rate: 4.4872, low: 2.7, high: 7.4 },
+      "royal-visage": { rate: 0.9615, low: 0.3271, high: 2.7834 },
+    },
+  },
+  "coven-queen": {
+    kills: 64,
+    contributors: 5,
+    drops: {
+      "covens-crown": { rate: 12.5, low: 6.5, high: 22.8 },
+      "witchs-veil": { rate: 54.6875, low: 42.6, high: 66.3 },
+    },
+  },
+};
+
+/** Строка статистики дропа: ключа без выпадений нет в ответе — 0 %, верх — z² / (n + z²). */
+function communityDrop(bossId: string, key: string): FarmCommunityDrop | null {
+  const stats = STATS[bossId];
+  if (!stats) return null;
+  const d = stats.drops[key];
+  const z2 = 1.96 * 1.96;
+  return { rate: d?.rate ?? 0, low: d?.low ?? 0, high: d?.high ?? (z2 / (stats.kills + z2)) * 100, kills: stats.kills, contributors: stats.contributors };
+}
+
 /** Нормальная функция распределения (приближение Абрамовица — Стиган). */
 function normalCdf(x: number): number {
   const t = 1 / (1 + 0.2316419 * Math.abs(x));
@@ -327,25 +364,37 @@ function compute(settings: FarmSettings, own: Record<string, number>): { table: 
     const unknownChance: string[] = [];
     const lines: { key: string; probability: number | null; value: number }[] = [];
     const pools = boss.pools.map((pool) => {
-      const weights = pool.drops.map((d) => chances[d.key] ?? d.weight ?? null);
-      const total = weights.reduce<number>((sum, w) => sum + (w ?? 0), 0);
+      // Источник шанса — как в farm-engine: свой → сообщество (у «?» или по переключателю) → данные.
+      const sources = pool.drops.map((d): { source: FarmChanceSource; weight?: number; absolute?: number } => {
+        const data = pool.kind === "one-of" ? (d.weight ?? null) : (d.chance ?? null);
+        const community = communityDrop(boss.id, d.key);
+        if (chances[d.key] !== undefined) return { source: "user", weight: chances[d.key] };
+        if (community && (settings.preferCommunity || data === null)) return { source: "community", absolute: community.rate / 100 };
+        if (data !== null) return { source: "data", weight: data };
+        return { source: "unknown" };
+      });
+      const total = sources.reduce((sum, s) => sum + (s.weight ?? 0), 0);
+      const absolute = sources.reduce((sum, s) => sum + (s.absolute ?? 0), 0);
+      const absoluteScale = absolute > 1 || (total <= 0 && absolute > 0) ? 1 / absolute : 1;
+      const remainder = Math.max(0, 1 - absolute * absoluteScale);
       let poolMean = 0;
       let poolSquare = 0;
       const drops: FarmDropLine[] = pool.drops.map((d, i) => {
         const r = ref(d);
         const p = price(d, r, own, minutesAgo);
         const ownChance = chances[d.key] ?? null;
+        const share = sources[i];
         let probability: number | null = null;
         let expected: number | null = null;
         if (pool.kind === "one-of") {
-          const w = weights[i];
-          if (w !== null && total > 0) probability = expected = w / total;
-        } else {
-          const chance = ownChance ?? d.chance ?? null;
-          if (chance !== null) {
-            expected = (chance / 100) * (pool.scales ? mult : 1);
-            probability = Math.min(1, expected);
-          }
+          if (share.absolute !== undefined) probability = expected = Math.min(1, share.absolute) * absoluteScale;
+          else if (share.weight !== undefined) probability = expected = total > 0 ? (share.weight / total) * remainder : 0;
+        } else if (share.absolute !== undefined) {
+          expected = share.absolute;
+          probability = Math.min(1, expected);
+        } else if (share.weight !== undefined) {
+          expected = (share.weight / 100) * (pool.scales ? mult : 1);
+          probability = Math.min(1, expected);
         }
         const unit = d.none ? 0 : (p.chaos ?? 0);
         const value = (expected ?? 0) * unit;
@@ -367,10 +416,11 @@ function compute(settings: FarmSettings, own: Record<string, number>): { table: 
           name: { en: d.en, ru: d.ru ?? null },
           iconItemId: null,
           iconSha256: null,
-          chanceSource: ownChance !== null ? "user" : probability === null ? "unknown" : "data",
+          chanceSource: share.source,
           dataWeight: pool.kind === "one-of" ? (d.weight ?? null) : null,
           dataChance: pool.kind === "independent" ? (d.chance ?? null) : null,
           ownChance,
+          community: communityDrop(boss.id, d.key),
           probability,
           expected,
           price: p,
@@ -427,6 +477,7 @@ function compute(settings: FarmSettings, own: Record<string, number>): { table: 
       patchTag: boss.patch?.tag ?? null,
       summary,
       oldestQuoteAt,
+      community: STATS[boss.id] ? { kills: STATS[boss.id].kills, contributors: STATS[boss.id].contributors } : null,
     };
     rows.push(row);
     details[boss.id] = {
@@ -459,6 +510,7 @@ function compute(settings: FarmSettings, own: Record<string, number>): { table: 
     pricesReady: true,
     pricesUpdatedAt: minutesAgo(4),
     quotes: QUOTES,
+    community: { bosses: Object.keys(STATS).length, checkedAt: now, syncing: false, error: null },
     oldestQuoteAt: minutesAgo(22),
     ownPrices: Object.keys(own).length,
     bosses: rows,

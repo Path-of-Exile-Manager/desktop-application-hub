@@ -13,8 +13,8 @@ use crate::account::parse_iso_ms;
 
 /// Коллекции в порядке отправки: папки раньше закладок.
 /// Группы билдов — раньше билдов (как папки раньше закладок).
-pub const COLLECTIONS: [&str; 9] = [
-    "folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets", "pobBuildGroups", "pobBuilds",
+pub const COLLECTIONS: [&str; 11] = [
+    "folders", "bookmarks", "history", "pins", "watchlist", "settings", "mapRegexPresets", "pobBuildGroups", "pobBuilds", "farmProfiles", "bossKills",
 ];
 
 const MAX_JSON_BYTES: usize = 64 * 1024;
@@ -298,6 +298,171 @@ fn check_pob_build(r: &PobBuild) -> Result<(), String> {
     json_size_max("билд", r, MAX_POB_BUILD_BYTES)
 }
 
+/// Настройки одного босса в профиле фарма; нет поля — значение профиля или данных.
+/// Незнакомые поля отбрасываются, как на сервере.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct FarmProfileBoss {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    ttk_sec: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    overhead_sec: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    iiq: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    chances: Option<BTreeMap<String, f64>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    hidden: Option<bool>,
+}
+
+/// Профиль фарма боссов (`packages/domain/src/sync/farm-profile.ts`): TTK, накладные, IIQ и свои
+/// шансы по боссам. Id боссов и ключи дропа — только по формату: босс, убранный из таблицы, остаётся.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct FarmProfile {
+    id: String,
+    name: String,
+    iiq: u32,
+    bosses: BTreeMap<String, FarmProfileBoss>,
+}
+
+const FARM_IIQ_MAX: u32 = 1000;
+const FARM_SECONDS_MAX: u32 = 36_000;
+const FARM_CHANCE_MAX: f64 = 100_000.0;
+const FARM_MAX_BOSSES: usize = 200;
+const FARM_MAX_CHANCES: usize = 100;
+
+/// Id босса или ключ дропа `bosses.json`: kebab-case, до 100 символов.
+fn boss_table_key(key: &str) -> bool {
+    key.len() <= 100 && key.split('-').all(|part| !part.is_empty() && part.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit()))
+}
+
+fn check_farm_profile(r: &FarmProfile) -> Result<(), String> {
+    record_id("id", &r.id)?;
+    text("name", &r.name, 40)?;
+    if r.iiq > FARM_IIQ_MAX {
+        return Err("iiq: целое 0–1000".into());
+    }
+    let seconds = |v: Option<u32>| v.is_none_or(|v| (1..=FARM_SECONDS_MAX).contains(&v));
+    let boss_ok = |boss: &FarmProfileBoss| {
+        seconds(boss.ttk_sec)
+            && seconds(boss.overhead_sec)
+            && boss.iiq.is_none_or(|v| v <= FARM_IIQ_MAX)
+            && boss.chances.as_ref().is_none_or(|chances| {
+                chances.len() <= FARM_MAX_CHANCES && chances.iter().all(|(k, v)| boss_table_key(k) && v.is_finite() && (0.0..=FARM_CHANCE_MAX).contains(v))
+            })
+    };
+    if r.bosses.len() > FARM_MAX_BOSSES || !r.bosses.iter().all(|(id, boss)| boss_table_key(id) && boss_ok(boss)) {
+        return Err("bosses: до 200 боссов; TTK и накладные — целые 1–36000 с, IIQ — 0–1000, шансы — 0–100000, до 100 ключей".into());
+    }
+    json_size("профиль", r)
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum BossKillSource {
+    Log,
+    Manual,
+}
+
+#[derive(Serialize, Deserialize)]
+struct BossKillDrop {
+    key: String,
+    qty: u32,
+    #[serde(default)]
+    chaos: Option<f64>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BossKillExtra {
+    item_id: String,
+    qty: u32,
+    #[serde(default)]
+    chaos: Option<f64>,
+}
+
+/// Убийство из журнала фарма (`packages/domain/src/sync/boss-kill.ts`). `chaos` — цена штуки на
+/// момент убийства; без записанного дропа списки пусты.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BossKill {
+    id: String,
+    boss_id: String,
+    league: String,
+    data_version: String,
+    at: String,
+    #[serde(default)]
+    duration_sec: Option<u32>,
+    #[serde(default)]
+    overhead_sec: Option<u32>,
+    #[serde(default)]
+    paused_sec: Option<u32>,
+    deaths: u32,
+    source: BossKillSource,
+    killed: bool,
+    drops_recorded: bool,
+    drops: Vec<BossKillDrop>,
+    extra: Vec<BossKillExtra>,
+    #[serde(default)]
+    entry_chaos: Option<f64>,
+}
+
+const KILL_SECONDS_MAX: u32 = 86_400;
+const KILL_QTY_MAX: u32 = 999;
+const KILL_MAX_DROPS: usize = 100;
+const KILL_MAX_CHAOS: f64 = 1_000_000_000.0;
+
+fn chaos_ok(chaos: Option<f64>) -> bool {
+    chaos.is_none_or(|c| c.is_finite() && (0.0..=KILL_MAX_CHAOS).contains(&c))
+}
+
+/// Ключ справочника: `base:…` или `unique:…`, до 300 символов (по формату, без справочника).
+fn item_key(key: &str) -> bool {
+    key.len() <= 300 && ["base:", "unique:"].iter().any(|prefix| key.len() > prefix.len() && key.starts_with(prefix))
+}
+
+fn check_boss_kill(r: &BossKill) -> Result<(), String> {
+    record_id("id", &r.id)?;
+    if !boss_table_key(&r.boss_id) {
+        return Err("bossId: kebab-case".into());
+    }
+    text("league", &r.league, 100)?;
+    let version = r.data_version.as_bytes();
+    let version_ok = (1..=40).contains(&version.len())
+        && version[0].is_ascii_alphanumeric()
+        && version.iter().all(|b| b.is_ascii_alphanumeric() || b".+_-".contains(b));
+    if !version_ok {
+        return Err("dataVersion: 1–40 символов из 0-9 A-Z a-z . + _ -".into());
+    }
+    date("at", &r.at)?;
+    if ![r.duration_sec, r.overhead_sec, r.paused_sec].iter().all(|v| v.is_none_or(|v| v <= KILL_SECONDS_MAX)) {
+        return Err("durationSec, overheadSec, pausedSec: целые 0–86400 или null".into());
+    }
+    if r.deaths > 100 {
+        return Err("deaths: 0–100".into());
+    }
+    let mut keys = BTreeSet::new();
+    let drops_ok = r.drops.len() <= KILL_MAX_DROPS
+        && r.drops.iter().all(|d| boss_table_key(&d.key) && keys.insert(d.key.as_str()) && (1..=KILL_QTY_MAX).contains(&d.qty) && chaos_ok(d.chaos));
+    if !drops_ok {
+        return Err("drops: до 100 разных ключей дропа, 1–999 шт., цена от 0 или null".into());
+    }
+    let mut items = BTreeSet::new();
+    let extra_ok = r.extra.len() <= KILL_MAX_DROPS
+        && r.extra.iter().all(|e| item_key(&e.item_id) && items.insert(e.item_id.as_str()) && (1..=KILL_QTY_MAX).contains(&e.qty) && chaos_ok(e.chaos));
+    if !extra_ok {
+        return Err("extra: до 100 разных предметов справочника, 1–999 шт., цена от 0 или null".into());
+    }
+    if !r.drops_recorded && (!r.drops.is_empty() || !r.extra.is_empty()) {
+        return Err("drops: дроп не записан — списки пусты".into());
+    }
+    if !chaos_ok(r.entry_chaos) {
+        return Err("entryChaos: от 0 или null".into());
+    }
+    json_size("убийство", r)
+}
+
 fn record_id(field: &str, id: &str) -> Result<(), String> {
     if (1..=100).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-') {
         Ok(())
@@ -439,6 +604,16 @@ pub fn check(collection: &str, value: Value) -> Result<Value, String> {
             record_id("id", &r.id)?;
             text("name", &r.name, 100)?;
             sort_key(&r.sort_key)?;
+            serde_json::to_value(r)
+        }
+        "farmProfiles" => {
+            let r: FarmProfile = parse(value)?;
+            check_farm_profile(&r)?;
+            serde_json::to_value(r)
+        }
+        "bossKills" => {
+            let r: BossKill = parse(value)?;
+            check_boss_kill(&r)?;
             serde_json::to_value(r)
         }
         other => return Err(format!("нет коллекции «{other}»")),

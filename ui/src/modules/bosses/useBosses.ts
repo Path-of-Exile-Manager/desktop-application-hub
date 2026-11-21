@@ -19,13 +19,14 @@ import { useDataset } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
 import { usePrices } from "@/app/prices";
 import { inTauri } from "@/app/window";
-import { useFarmSettings } from "./store";
+import type { FarmCommunityDrop } from "@/generated/FarmCommunityDrop";
+import { currentFarmSettings, useFarmSettings } from "./store";
 
 // Данные вкладки «Фарм → Боссы». Таблицу и карточку считает ядро (src-tauri/src/farm.rs): команды
-// `farm_bosses` / `farm_boss` с настройками профиля, пересчёт — по событию `farm-updated` (новые
-// особые цены, своя цена) и при смене настроек, лиги или цен лиги.
+// `farm_bosses` / `farm_boss` с настройками выбранного профиля, пересчёт — по событию `farm-updated`
+// (новые особые цены, своя цена, новая общая статистика) и при смене настроек, лиги или цен лиги.
 
-export type { BossesInfo, FarmBossDetail, FarmBossRow, FarmDropLine, FarmEntryLine, FarmPool, FarmPrice, FarmRef, FarmTable };
+export type { BossesInfo, FarmBossDetail, FarmBossRow, FarmCommunityDrop, FarmDropLine, FarmEntryLine, FarmPool, FarmPrice, FarmRef, FarmTable };
 
 /** Таблица боссов в наборе данных (`catalog_bosses`). */
 export type BossesInfoState =
@@ -75,7 +76,7 @@ export function useBossesSync() {
   const datasetReady = useDataset((s) => s.status?.state === "ready");
   const datasetId = useDataset((s) => s.status?.datasetId ?? null);
   const league = useCurrentLeague()?.id ?? null;
-  const settings = useFarmSettings((s) => s.settings);
+  const settings = useFarmSettings();
   // Сводные цены лиги пришли или обновились — пересчитать (строка: селектор без нового объекта).
   const pricesKey = usePrices((s) => (s.status ? `${s.status.league}|${s.status.state}|${s.status.newestUpdate}|${s.status.count}` : ""));
   const infoReady = useBossesData((s) => s.info.status === "ready");
@@ -104,12 +105,14 @@ export function useBossesSync() {
     };
   }, [datasetReady, datasetId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Новые особые цены или своя цена — пересчитать.
+  // Новые особые цены, своя цена или общая статистика (без лиги) — пересчитать. Открыли вкладку —
+  // перечитать статистику (ядро спрашивает не чаще раза в минуту, обычно 304).
   useEffect(() => {
     if (!inTauri) return;
+    invoke<void>("farm_refresh_stats").catch(() => undefined);
     let unlisten: (() => void) | undefined;
     let disposed = false;
-    listen<FarmUpdated>("farm-updated", (e) => e.payload.league === leagueRef.current && refreshBosses()).then((fn) => {
+    listen<FarmUpdated>("farm-updated", (e) => (e.payload.league === null || e.payload.league === leagueRef.current) && refreshBosses()).then((fn) => {
       if (disposed) fn();
       else unlisten = fn;
     });
@@ -158,7 +161,7 @@ export function useBossDetail(bossId: string | null): { detail: FarmBossDetail |
   useEffect(() => {
     if (!inTauri || !bossId || !table) return;
     let cancelled = false;
-    invoke<FarmBossDetail>("farm_boss", { league: table.league, bossId, settings: useFarmSettings.getState().settings }).then(
+    invoke<FarmBossDetail>("farm_boss", { league: table.league, bossId, settings: currentFarmSettings() }).then(
       (detail) => {
         if (cancelled) return;
         setState({ bossId, detail, error: null });
