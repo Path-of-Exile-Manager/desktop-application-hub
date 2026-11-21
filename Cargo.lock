@@ -1260,6 +1260,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-log"
+version = "0.5.2"
+dependencies = [
+ "chrono",
+ "game-window",
+ "serde",
+]
+
+[[package]]
 name = "game-window"
 version = "0.5.2"
 dependencies = [

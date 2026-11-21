@@ -1,7 +1,9 @@
 //! Реализация на WinAPI (крейт `windows` от Microsoft).
 
-use std::ffi::c_void;
+use std::ffi::{c_void, OsString};
 use std::mem::size_of;
+use std::os::windows::ffi::OsStringExt;
+use std::path::PathBuf;
 
 use windows::Win32::Foundation::{CloseHandle, HANDLE, HWND, LPARAM, POINT, RECT};
 use windows::Win32::Graphics::Gdi::{ClientToScreen, GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST};
@@ -115,11 +117,23 @@ impl Drop for ProcessHandle {
 }
 
 fn exe_name(process: HANDLE) -> Option<String> {
+    let path = image_path(process)?;
+    path.file_name().map(|name| name.to_string_lossy().into_owned())
+}
+
+/// Full path of the executable of a process: `C:\…\Path of Exile\PathOfExile_x64Steam.exe`.
+/// `None` — the process is gone or not readable (usually an elevated process while we are not).
+/// The game writes its log next to it, in `logs\Client.txt`.
+pub fn exe_path(pid: u32) -> Option<PathBuf> {
+    let process = ProcessHandle::open(pid)?;
+    image_path(process.0)
+}
+
+fn image_path(process: HANDLE) -> Option<PathBuf> {
     let mut buf = [0u16; 1024];
     let mut len = buf.len() as u32;
     unsafe { QueryFullProcessImageNameW(process, PROCESS_NAME_WIN32, PWSTR(buf.as_mut_ptr()), &mut len) }.ok()?;
-    let path = String::from_utf16_lossy(&buf[..len as usize]);
-    path.rsplit('\\').next().map(str::to_owned)
+    Some(PathBuf::from(OsString::from_wide(&buf[..len as usize])))
 }
 
 /// Запущен ли процесс с правами администратора. `None` — нет доступа к токену процесса.

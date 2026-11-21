@@ -1,0 +1,13 @@
+[package]
+name = "game-log"
+description = "Path of Exile Client.txt: log path, tailing, line parsing and boss arena runs"
+version.workspace = true
+edition.workspace = true
+
+# Pure logic and file reading: no Tauri, no network. The desktop core wires it to settings and events.
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["std", "clock", "serde"] }
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+game-window = { path = "../game-window" }

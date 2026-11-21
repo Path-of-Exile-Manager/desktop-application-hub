@@ -11,7 +11,7 @@ use serde::Serialize;
 #[cfg(windows)]
 mod win;
 #[cfg(windows)]
-pub use win::{detect, fake};
+pub use win::{detect, exe_path, fake};
 
 /// Класс окна клиента Path of Exile.
 pub const WINDOW_CLASS: &str = "POEWindowClass";

@@ -1,0 +1,33 @@
+2026/11/22 20:00:00 3600000 1186a0e5 [INFO Client 7740] Connecting to instance server at 185.12.40.17:6112
+2026/11/22 20:00:01 3601015 2caa1679 [DEBUG Client 7740] Generating level 1 area "HideoutOasis" with seed 1
+2026/11/22 20:00:02 3601870 1d8e6f02 [DEBUG Client 7740] [SCENE] Set Source [Desert Hideout]
+2026/11/22 20:00:03 3603002 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
+2026/11/22 20:00:40 3640117 9a1b77c4 [INFO Client 7740] #Kirra_Witch: anyone selling fragments of the phoenix?
+2026/11/22 20:01:10 3670231 2caa1679 [DEBUG Client 7740] Generating level 83 area "MapWorldsShapersRealm" with seed 2041887311
+2026/11/22 20:01:11 3671088 1d8e6f02 [DEBUG Client 7740] [SCENE] Set Source [The Shaper's Realm]
+2026/11/22 20:01:12 3672440 cff945b9 [INFO Client 7740] : You have entered The Shaper's Realm.
+2026/11/22 20:02:30 3750902 ad21e7f3 [INFO Client 7740] : Kirra_Witch has been slain.
+2026/11/22 20:02:35 3755310 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
+2026/11/22 20:02:50 3770004 cff945b9 [INFO Client 7740] : You have entered The Shaper's Realm.
+2026/11/22 20:04:20 3860511 9a1b77c4 [INFO Client 7740] %Kirra_Witch: Kirra_Witch has been slain.
+2026/11/22 20:04:25 3865032 5f0c11aa [INFO Client 7740] : Kirra_Witch (Necromancer) is now level 95
+2026/11/22 20:04:40 3880113 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
+2026/11/22 20:05:30 3930020 2caa1679 [DEBUG Client 7740] Generating level 83 area "MapWorldsShapersRealm" with seed 977142208
+2026/11/22 20:05:32 3932411 cff945b9 [INFO Client 7740] : You have entered The Shaper's Realm.
+2026/11/22 20:05:40 3940006 7b2c90de [INFO Client 7740] : Bob_Slayer has joined the area.
+2026/11/22 20:06:12 3972318 ad21e7f3 [INFO Client 7740] : Bob_Slayer has been slain.
+2026/11/22 20:07:15 4035577 2caa1679 [DEBUG Client 7740] Generating level 1 area "HideoutOasis" with seed 1
+2026/11/22 20:07:17 4037020 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
+2026/11/22 20:08:00 4080440 2caa1679 [DEBUG Client 7740] Generating level 79 area "MapWorldsCemetery" with seed 3188270114
+2026/11/22 20:08:02 4082003 cff945b9 [INFO Client 7740] : You have entered Cemetery.
+2026/11/22 20:14:55 4495031 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
+2026/11/22 20:15:00 4500210 2caa1679 [DEBUG Client 7740] Generating level 85 area "MapWorldsPrimordialBoss3" with seed 640099213
+2026/11/22 20:15:02 4502117 cff945b9 [INFO Client 7740] : You have entered Absence of Patience and Wisdom.
+2026/11/22 20:15:08 4508045 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
+2026/11/22 20:15:20 4520336 2caa1679 [DEBUG Client 7740] Generating level 80 area "MapWorldsStrand" with seed 2876610451
+2026/11/22 20:15:22 4522001 cff945b9 [INFO Client 7740] : You have entered Strand.
+2026/11/22 20:29:40 5380002 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
+2026/11/22 20:30:00 5400380 2caa1679 [DEBUG Client 7740] Generating level 83 area "MapWorldsShapersRealm" with seed 1514733610
+2026/11/22 20:30:02 5402116 cff945b9 [INFO Client 7740] : You have entered The Shaper's Realm.
+2026/11/22 20:31:40 5500772 2caa1679 [DEBUG Client 7740] Generating level 1 area "HideoutOasis" with seed 1
+2026/11/22 20:31:42 5502034 cff945b9 [INFO Client 7740] : You have entered Desert Hideout.
