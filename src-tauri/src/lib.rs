@@ -23,6 +23,7 @@ mod game;
 mod hotkeys;
 mod icons;
 mod item_mods;
+mod kingsmarch;
 mod leagues;
 mod market;
 mod overlay;
@@ -151,6 +152,7 @@ pub fn run() {
             trade::query::trade_query,
             economy::economy_overview,
             economy::economy_rows,
+            kingsmarch::kingsmarch_dust,
             trade::item_search::trade_variant_spec,
             trade::live::trade_live_search,
             trade::live::trade_live_fetch,

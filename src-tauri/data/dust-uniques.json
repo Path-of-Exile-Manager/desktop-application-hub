@@ -1,0 +1,8918 @@
+{
+ "source": "https://raw.githubusercontent.com/deronek/poe-disenchant-tool/main/data/dust/poe-dust.js",
+ "fetchedAt": "2026-11-21",
+ "items": [
+  {
+   "name": "Original Sin",
+   "baseType": "Amethyst Ring",
+   "dust": 2822225,
+   "dustQ20": 3951115,
+   "gold": 47280,
+   "slots": 1
+  },
+  {
+   "name": "Headhunter",
+   "baseType": "Leather Belt",
+   "dust": 2227900,
+   "dustQ20": 3119060,
+   "gold": 42520,
+   "slots": 2
+  },
+  {
+   "name": "Mageblood",
+   "baseType": "Heavy Belt",
+   "dust": 2227900,
+   "dustQ20": 3119060,
+   "gold": 42520,
+   "slots": 2
+  },
+  {
+   "name": "Defiance of Destiny",
+   "baseType": "Paua Amulet",
+   "dust": 2227900,
+   "dustQ20": 3119060,
+   "gold": 42520,
+   "slots": 1
+  },
+  {
+   "name": "Reefbane",
+   "baseType": "Fishing Rod",
+   "dust": 2128100,
+   "dustQ20": 2979340,
+   "gold": 41640,
+   "slots": 4
+  },
+  {
+   "name": "Replica Shroud of the Lightless",
+   "baseType": "Carnal Armour",
+   "dust": 1979450,
+   "dustQ20": 2771230,
+   "gold": 40300,
+   "slots": 6
+  },
+  {
+   "name": "Stasis Prison",
+   "baseType": "Carnal Armour",
+   "dust": 1979450,
+   "dustQ20": 2771230,
+   "gold": 40300,
+   "slots": 6
+  },
+  {
+   "name": "The Squire",
+   "baseType": "Elegant Round Shield",
+   "dust": 1921800,
+   "dustQ20": 2690520,
+   "gold": 39780,
+   "slots": 6
+  },
+  {
+   "name": "Rakiata's Dance",
+   "baseType": "Engraved Greatsword",
+   "dust": 1921800,
+   "dustQ20": 2690520,
+   "gold": 39780,
+   "slots": 8
+  },
+  {
+   "name": "Angler's Plait",
+   "baseType": "Unset Ring",
+   "dust": 1835725,
+   "dustQ20": 2570015,
+   "gold": 38960,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Starforge",
+   "baseType": "Infernal Sword",
+   "dust": 2638088,
+   "dustQ20": 3341578,
+   "gold": 57330,
+   "slots": 8
+  },
+  {
+   "name": "Voidforge",
+   "baseType": "Infernal Sword",
+   "dust": 3517450,
+   "dustQ20": 4220940,
+   "gold": 76440,
+   "slots": 8
+  },
+  {
+   "name": "Replica Kongor's Undying Rage",
+   "baseType": "Terror Maul",
+   "dust": 1758725,
+   "dustQ20": 2462215,
+   "gold": 38220,
+   "slots": 8
+  },
+  {
+   "name": "Echoforge",
+   "baseType": "Infernal Sword",
+   "dust": 1758725,
+   "dustQ20": 2462215,
+   "gold": 38220,
+   "slots": 8
+  },
+  {
+   "name": "Lioneye's Glare",
+   "baseType": "Imperial Bow",
+   "dust": 1707500,
+   "dustQ20": 2390500,
+   "gold": 37720,
+   "slots": 8
+  },
+  {
+   "name": "Divinarius",
+   "baseType": "Imperial Skean",
+   "dust": 1707500,
+   "dustQ20": 2390500,
+   "gold": 37720,
+   "slots": 3
+  },
+  {
+   "name": "Essentia Sanguis",
+   "baseType": "Vaal Claw",
+   "dust": 1707500,
+   "dustQ20": 2390500,
+   "gold": 37720,
+   "slots": 4
+  },
+  {
+   "name": "Kingmaker",
+   "baseType": "Despot Axe",
+   "dust": 1707500,
+   "dustQ20": 2390500,
+   "gold": 37720,
+   "slots": 8
+  },
+  {
+   "name": "Soul Taker",
+   "baseType": "Siege Axe",
+   "dust": 1657775,
+   "dustQ20": 2320885,
+   "gold": 37220,
+   "slots": 6
+  },
+  {
+   "name": "Voltaxic Rift",
+   "baseType": "Spine Bow",
+   "dust": 1609475,
+   "dustQ20": 2253265,
+   "gold": 36720,
+   "slots": 8
+  },
+  {
+   "name": "Atziri's Disfavour",
+   "baseType": "Vaal Axe",
+   "dust": 1609475,
+   "dustQ20": 2253265,
+   "gold": 36720,
+   "slots": 8
+  },
+  {
+   "name": "Replica Duskdawn",
+   "baseType": "Maelström Staff",
+   "dust": 1609475,
+   "dustQ20": 2253265,
+   "gold": 36720,
+   "slots": 8
+  },
+  {
+   "name": "Bloodseeker",
+   "baseType": "Hellion's Paw",
+   "dust": 1517100,
+   "dustQ20": 2123940,
+   "gold": 35760,
+   "slots": 4
+  },
+  {
+   "name": "The Saviour",
+   "baseType": "Legion Sword",
+   "dust": 1517100,
+   "dustQ20": 2123940,
+   "gold": 35760,
+   "slots": 6
+  },
+  {
+   "name": "Replica Tukohama's Fortress",
+   "baseType": "Ebony Tower Shield",
+   "dust": 1472900,
+   "dustQ20": 2062060,
+   "gold": 35280,
+   "slots": 8
+  },
+  {
+   "name": "Kalandra's Touch",
+   "baseType": "Ring",
+   "dust": 1430000,
+   "dustQ20": 2002000,
+   "gold": 34820,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Bino's Kitchen Knife",
+   "baseType": "Slaughter Knife",
+   "dust": 1347925,
+   "dustQ20": 1887095,
+   "gold": 33900,
+   "slots": 3
+  },
+  {
+   "name": "Marohi Erqi",
+   "baseType": "Karui Maul",
+   "dust": 1308650,
+   "dustQ20": 1832110,
+   "gold": 33460,
+   "slots": 8
+  },
+  {
+   "name": "The Winds of Fate",
+   "baseType": "Foul Staff",
+   "dust": 1233525,
+   "dustQ20": 1726935,
+   "gold": 32580,
+   "slots": 8
+  },
+  {
+   "name": "Hateforge",
+   "baseType": "Ancient Gauntlets",
+   "dust": 973750,
+   "dustQ20": 1363250,
+   "gold": 29300,
+   "slots": 4
+  },
+  {
+   "name": "Uul-Netol's Vow",
+   "baseType": "Unset Amulet",
+   "dust": 917875,
+   "dustQ20": 1285025,
+   "gold": 28520,
+   "slots": 1
+  },
+  {
+   "name": "Soul Ascension",
+   "baseType": "Carnal Mitts",
+   "dust": 1191150,
+   "dustQ20": 1508790,
+   "gold": 40080,
+   "slots": 4
+  },
+  {
+   "name": "Nimis",
+   "baseType": "Topaz Ring",
+   "dust": 794100,
+   "dustQ20": 1111740,
+   "gold": 26720,
+   "slots": 1
+  },
+  {
+   "name": "Replica Headhunter",
+   "baseType": "Leather Belt",
+   "dust": 791750,
+   "dustQ20": 1108450,
+   "gold": 26680,
+   "slots": 2
+  },
+  {
+   "name": "Yoke of Suffering",
+   "baseType": "Onyx Amulet",
+   "dust": 590900,
+   "dustQ20": 827260,
+   "gold": 23400,
+   "slots": 1
+  },
+  {
+   "name": "Manastorm",
+   "baseType": "Lacewood Spirit Shield",
+   "dust": 525000,
+   "dustQ20": 735000,
+   "gold": 22180,
+   "slots": 4
+  },
+  {
+   "name": "Replica Bated Breath",
+   "baseType": "Chain Belt",
+   "dust": 515000,
+   "dustQ20": 721000,
+   "gold": 22000,
+   "slots": 2
+  },
+  {
+   "name": "Stranglegasp",
+   "baseType": "Onyx Amulet",
+   "dust": 508200,
+   "dustQ20": 711480,
+   "gold": 21860,
+   "slots": 1
+  },
+  {
+   "name": "Replica Farrul's Fur",
+   "baseType": "Triumphant Lamellar",
+   "dust": 466450,
+   "dustQ20": 653030,
+   "gold": 21040,
+   "slots": 6
+  },
+  {
+   "name": "Kitava's Feast",
+   "baseType": "Void Axe",
+   "dust": 452875,
+   "dustQ20": 634025,
+   "gold": 20760,
+   "slots": 8
+  },
+  {
+   "name": "Replica Nebulis",
+   "baseType": "Void Sceptre",
+   "dust": 452875,
+   "dustQ20": 634025,
+   "gold": 20760,
+   "slots": 6
+  },
+  {
+   "name": "Malachai's Mark",
+   "baseType": "Murder Mitts",
+   "dust": 439675,
+   "dustQ20": 615545,
+   "gold": 20480,
+   "slots": 4
+  },
+  {
+   "name": "Replica Windripper",
+   "baseType": "Imperial Bow",
+   "dust": 426875,
+   "dustQ20": 597625,
+   "gold": 20220,
+   "slots": 8
+  },
+  {
+   "name": "Tidebreaker",
+   "baseType": "Imperial Maul",
+   "dust": 414450,
+   "dustQ20": 580230,
+   "gold": 19940,
+   "slots": 8
+  },
+  {
+   "name": "Replica Eternity Shroud",
+   "baseType": "Blood Raiment",
+   "dust": 828900,
+   "dustQ20": 994680,
+   "gold": 39880,
+   "slots": 6
+  },
+  {
+   "name": "Annihilation's Approach",
+   "baseType": "Dragonscale Boots",
+   "dust": 414450,
+   "dustQ20": 580230,
+   "gold": 19940,
+   "slots": 4
+  },
+  {
+   "name": "Eternal Damnation",
+   "baseType": "Agate Amulet",
+   "dust": 414450,
+   "dustQ20": 580230,
+   "gold": 19940,
+   "slots": 1
+  },
+  {
+   "name": "Duskdawn",
+   "baseType": "Maelström Staff",
+   "dust": 402375,
+   "dustQ20": 563325,
+   "gold": 19680,
+   "slots": 8
+  },
+  {
+   "name": "The Brine Crown",
+   "baseType": "Prophet Crown",
+   "dust": 390650,
+   "dustQ20": 546910,
+   "gold": 19420,
+   "slots": 4
+  },
+  {
+   "name": "Replica Atziri's Acuity",
+   "baseType": "Vaal Gauntlets",
+   "dust": 390650,
+   "dustQ20": 546910,
+   "gold": 19420,
+   "slots": 4
+  },
+  {
+   "name": "Garukhan's Flight",
+   "baseType": "Stealth Boots",
+   "dust": 379275,
+   "dustQ20": 530985,
+   "gold": 19160,
+   "slots": 4
+  },
+  {
+   "name": "Tukohama's Fortress",
+   "baseType": "Ebony Tower Shield",
+   "dust": 368225,
+   "dustQ20": 515515,
+   "gold": 18920,
+   "slots": 8
+  },
+  {
+   "name": "Entropic Devastation",
+   "baseType": "Assassin's Mitts",
+   "dust": 505462,
+   "dustQ20": 640253,
+   "gold": 27270,
+   "slots": 4
+  },
+  {
+   "name": "Cloak of Tawm'r Isley",
+   "baseType": "Savant's Robe",
+   "dust": 317625,
+   "dustQ20": 444675,
+   "gold": 17700,
+   "slots": 6
+  },
+  {
+   "name": "Arakaali's Fang",
+   "baseType": "Fiend Dagger",
+   "dust": 290675,
+   "dustQ20": 406945,
+   "gold": 17000,
+   "slots": 3
+  },
+  {
+   "name": "Martyr of Innocence",
+   "baseType": "Highborn Staff",
+   "dust": 282225,
+   "dustQ20": 395115,
+   "gold": 16780,
+   "slots": 8
+  },
+  {
+   "name": "Song of the Sirens",
+   "baseType": "Fishing Rod",
+   "dust": 279875,
+   "dustQ20": 391825,
+   "gold": 16720,
+   "slots": 4
+  },
+  {
+   "name": "Replica Alberon's Warpath",
+   "baseType": "Soldier Boots",
+   "dust": 258275,
+   "dustQ20": 361585,
+   "gold": 16120,
+   "slots": 4
+  },
+  {
+   "name": "Replica Maloney's Mechanism",
+   "baseType": "Ornate Quiver",
+   "dust": 229475,
+   "dustQ20": 321265,
+   "gold": 15280,
+   "slots": 6
+  },
+  {
+   "name": "Replica Trypanon",
+   "baseType": "Great Mallet",
+   "dust": 197950,
+   "dustQ20": 277130,
+   "gold": 14300,
+   "slots": 8
+  },
+  {
+   "name": "Gruthkul's Pelt",
+   "baseType": "Wyrmscale Doublet",
+   "dust": 186575,
+   "dustQ20": 261205,
+   "gold": 13920,
+   "slots": 6
+  },
+  {
+   "name": "Dialla's Malefaction",
+   "baseType": "Sage's Robe",
+   "dust": 181150,
+   "dustQ20": 253610,
+   "gold": 13740,
+   "slots": 6
+  },
+  {
+   "name": "Ralakesh's Impatience",
+   "baseType": "Riveted Boots",
+   "dust": 175875,
+   "dustQ20": 246225,
+   "gold": 13560,
+   "slots": 4
+  },
+  {
+   "name": "Skyforth",
+   "baseType": "Sorcerer Boots",
+   "dust": 174425,
+   "dustQ20": 244195,
+   "gold": 13520,
+   "slots": 4
+  },
+  {
+   "name": "Wraithlord",
+   "baseType": "Bone Circlet",
+   "dust": 165775,
+   "dustQ20": 232085,
+   "gold": 13200,
+   "slots": 4
+  },
+  {
+   "name": "Eyes of the Greatwolf",
+   "baseType": "Greatwolf Talisman",
+   "dust": 685000,
+   "dustQ20": 959000,
+   "gold": 25000,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "The Dark Seer",
+   "baseType": "Shadow Sceptre",
+   "dust": 156250,
+   "dustQ20": 218750,
+   "gold": 12860,
+   "slots": 6
+  },
+  {
+   "name": "Ryslatha's Coil",
+   "baseType": "Studded Belt",
+   "dust": 156250,
+   "dustQ20": 218750,
+   "gold": 12860,
+   "slots": 2
+  },
+  {
+   "name": "Shade of Solaris",
+   "baseType": "Sage Wand",
+   "dust": 147275,
+   "dustQ20": 206185,
+   "gold": 12520,
+   "slots": 3
+  },
+  {
+   "name": "Void Battery",
+   "baseType": "Prophecy Wand",
+   "dust": 141825,
+   "dustQ20": 198555,
+   "gold": 12300,
+   "slots": 3
+  },
+  {
+   "name": "Rigwald's Quills",
+   "baseType": "Two-Point Arrow Quiver",
+   "dust": 141825,
+   "dustQ20": 198555,
+   "gold": 12300,
+   "slots": 6
+  },
+  {
+   "name": "The Brass Dome",
+   "baseType": "Gladiator Plate",
+   "dust": 141825,
+   "dustQ20": 198555,
+   "gold": 12300,
+   "slots": 6
+  },
+  {
+   "name": "Light of Lunaris",
+   "baseType": "Jingling Spirit Shield",
+   "dust": 138825,
+   "dustQ20": 194355,
+   "gold": 12200,
+   "slots": 4
+  },
+  {
+   "name": "Seven-League Step",
+   "baseType": "Rawhide Boots",
+   "dust": 133675,
+   "dustQ20": 187145,
+   "gold": 11980,
+   "slots": 4
+  },
+  {
+   "name": "Warrior's Legacy",
+   "baseType": "Ruby Ring",
+   "dust": 133675,
+   "dustQ20": 187145,
+   "gold": 11980,
+   "slots": 1
+  },
+  {
+   "name": "Astral Projector",
+   "baseType": "Topaz Ring",
+   "dust": 133675,
+   "dustQ20": 187145,
+   "gold": 11980,
+   "slots": 1
+  },
+  {
+   "name": "Aegis Aurora",
+   "baseType": "Champion Kite Shield",
+   "dust": 126000,
+   "dustQ20": 176400,
+   "gold": 11680,
+   "slots": 6
+  },
+  {
+   "name": "Atziri's Splendour",
+   "baseType": "Sacrificial Garb",
+   "dust": 122325,
+   "dustQ20": 171255,
+   "gold": 11520,
+   "slots": 6
+  },
+  {
+   "name": "Shroud of the Lightless",
+   "baseType": "Carnal Armour",
+   "dust": 118775,
+   "dustQ20": 166285,
+   "gold": 11360,
+   "slots": 6
+  },
+  {
+   "name": "Voll's Devotion",
+   "baseType": "Agate Amulet",
+   "dust": 115300,
+   "dustQ20": 161420,
+   "gold": 11220,
+   "slots": 1
+  },
+  {
+   "name": "Shavronne's Revelation",
+   "baseType": "Moonstone Ring",
+   "dust": 115300,
+   "dustQ20": 161420,
+   "gold": 11220,
+   "slots": 1
+  },
+  {
+   "name": "Windripper",
+   "baseType": "Imperial Bow",
+   "dust": 115300,
+   "dustQ20": 161420,
+   "gold": 11220,
+   "slots": 8
+  },
+  {
+   "name": "Magna Eclipsis",
+   "baseType": "Pinnacle Tower Shield",
+   "dust": 115300,
+   "dustQ20": 161420,
+   "gold": 11220,
+   "slots": 8
+  },
+  {
+   "name": "Doryani's Fist",
+   "baseType": "Vaal Gauntlets",
+   "dust": 111950,
+   "dustQ20": 156730,
+   "gold": 11060,
+   "slots": 4
+  },
+  {
+   "name": "Indigon",
+   "baseType": "Hubris Circlet",
+   "dust": 223900,
+   "dustQ20": 268680,
+   "gold": 22120,
+   "slots": 4
+  },
+  {
+   "name": "Farrul's Fur",
+   "baseType": "Triumphant Lamellar",
+   "dust": 111950,
+   "dustQ20": 156730,
+   "gold": 11060,
+   "slots": 6
+  },
+  {
+   "name": "Farrul's Chase",
+   "baseType": "Slink Boots",
+   "dust": 111950,
+   "dustQ20": 156730,
+   "gold": 11060,
+   "slots": 4
+  },
+  {
+   "name": "Kaom's Heart",
+   "baseType": "Glorious Plate",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Rathpith Globe",
+   "baseType": "Titanium Spirit Shield",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 4
+  },
+  {
+   "name": "Prism Guardian",
+   "baseType": "Archon Kite Shield",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Broken Faith",
+   "baseType": "Archon Kite Shield",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Cospri's Malice",
+   "baseType": "Jewelled Foil",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 4
+  },
+  {
+   "name": "Inpulsa's Broken Heart",
+   "baseType": "Sadist Garb",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Hand of Wisdom and Action",
+   "baseType": "Imperial Claw",
+   "dust": 3500,
+   "dustQ20": 4900,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "The Red Trail",
+   "baseType": "Titan Greaves",
+   "dust": 3500,
+   "dustQ20": 4900,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Doryani's Delusion",
+   "baseType": "Sorcerer Boots",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 4
+  },
+  {
+   "name": "The Queen's Hunger",
+   "baseType": "Vaal Regalia",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Maloney's Mechanism",
+   "baseType": "Ornate Quiver",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Badge of the Brotherhood",
+   "baseType": "Turquoise Amulet",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 1
+  },
+  {
+   "name": "The Immortal Will",
+   "baseType": "Archon Kite Shield",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Replica Kaom's Heart",
+   "baseType": "Glorious Plate",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Replica Red Trail",
+   "baseType": "Titan Greaves",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 4
+  },
+  {
+   "name": "Viridi's Veil",
+   "baseType": "Praetor Crown",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 4
+  },
+  {
+   "name": "Doppelgänger Guise",
+   "baseType": "Sadist Garb",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 6
+  },
+  {
+   "name": "Thunderfist",
+   "baseType": "Murder Mitts",
+   "dust": 105525,
+   "dustQ20": 147735,
+   "gold": 10780,
+   "slots": 4
+  },
+  {
+   "name": "Steppan Eard",
+   "baseType": "Sorcerer Boots",
+   "dust": 105525,
+   "dustQ20": 147735,
+   "gold": 10780,
+   "slots": 4
+  },
+  {
+   "name": "Heretic's Veil",
+   "baseType": "Deicide Mask",
+   "dust": 105525,
+   "dustQ20": 147735,
+   "gold": 10780,
+   "slots": 4
+  },
+  {
+   "name": "Machina Mitts",
+   "baseType": "Murder Mitts",
+   "dust": 105525,
+   "dustQ20": 147735,
+   "gold": 10780,
+   "slots": 4
+  },
+  {
+   "name": "Sporeguard",
+   "baseType": "Saint's Hauberk",
+   "dust": 105525,
+   "dustQ20": 147735,
+   "gold": 10780,
+   "slots": 6
+  },
+  {
+   "name": "Doryani's Prototype",
+   "baseType": "Saint's Hauberk",
+   "dust": 105525,
+   "dustQ20": 147735,
+   "gold": 10780,
+   "slots": 6
+  },
+  {
+   "name": "Paradoxica",
+   "baseType": "Vaal Rapier",
+   "dust": 102450,
+   "dustQ20": 143430,
+   "gold": 10640,
+   "slots": 4
+  },
+  {
+   "name": "The Yielding Mortality",
+   "baseType": "Imperial Staff",
+   "dust": 102450,
+   "dustQ20": 143430,
+   "gold": 10640,
+   "slots": 8
+  },
+  {
+   "name": "Replica Paradoxica",
+   "baseType": "Vaal Rapier",
+   "dust": 102450,
+   "dustQ20": 143430,
+   "gold": 10640,
+   "slots": 4
+  },
+  {
+   "name": "Replica Allure",
+   "baseType": "Vaal Claw",
+   "dust": 102450,
+   "dustQ20": 143430,
+   "gold": 10640,
+   "slots": 4
+  },
+  {
+   "name": "Hyrri's Ire",
+   "baseType": "Zodiac Leather",
+   "dust": 99475,
+   "dustQ20": 139265,
+   "gold": 10500,
+   "slots": 6
+  },
+  {
+   "name": "The Formless Inferno",
+   "baseType": "Royal Burgonet",
+   "dust": 17400,
+   "dustQ20": 24360,
+   "gold": 4780,
+   "slots": 4
+  },
+  {
+   "name": "The Perfect Form",
+   "baseType": "Zodiac Leather",
+   "dust": 17400,
+   "dustQ20": 24360,
+   "gold": 4780,
+   "slots": 6
+  },
+  {
+   "name": "Doedre's Skin",
+   "baseType": "Widowsilk Robe",
+   "dust": 99475,
+   "dustQ20": 139265,
+   "gold": 10500,
+   "slots": 6
+  },
+  {
+   "name": "The Eternity Shroud",
+   "baseType": "Blood Raiment",
+   "dust": 198950,
+   "dustQ20": 238740,
+   "gold": 21000,
+   "slots": 6
+  },
+  {
+   "name": "Replica Perfect Form",
+   "baseType": "Zodiac Leather",
+   "dust": 99475,
+   "dustQ20": 139265,
+   "gold": 10500,
+   "slots": 6
+  },
+  {
+   "name": "Replica Hyrri's Ire",
+   "baseType": "Zodiac Leather",
+   "dust": 99475,
+   "dustQ20": 139265,
+   "gold": 10500,
+   "slots": 6
+  },
+  {
+   "name": "Varunastra",
+   "baseType": "Vaal Blade",
+   "dust": 1609475,
+   "dustQ20": 2253265,
+   "gold": 36720,
+   "slots": 6
+  },
+  {
+   "name": "Uul-Netol's Embrace",
+   "baseType": "Vaal Axe",
+   "dust": 16900,
+   "dustQ20": 23660,
+   "gold": 4720,
+   "slots": 8
+  },
+  {
+   "name": "The Surrender",
+   "baseType": "Ezomyte Tower Shield",
+   "dust": 96575,
+   "dustQ20": 135205,
+   "gold": 10360,
+   "slots": 8
+  },
+  {
+   "name": "Disintegrator",
+   "baseType": "Maelström Staff",
+   "dust": 193150,
+   "dustQ20": 231780,
+   "gold": 20720,
+   "slots": 8
+  },
+  {
+   "name": "Loreweave",
+   "baseType": "Elegant Ringmail",
+   "dust": 96575,
+   "dustQ20": 135205,
+   "gold": 10360,
+   "slots": 6
+  },
+  {
+   "name": "Replica Loreweave",
+   "baseType": "Elegant Ringmail",
+   "dust": 96575,
+   "dustQ20": 135205,
+   "gold": 10360,
+   "slots": 6
+  },
+  {
+   "name": "Yaomac's Accord",
+   "baseType": "Vaal Sceptre",
+   "dust": 96575,
+   "dustQ20": 135205,
+   "gold": 10360,
+   "slots": 6
+  },
+  {
+   "name": "Replica Stampede",
+   "baseType": "Assassin's Boots",
+   "dust": 93750,
+   "dustQ20": 131250,
+   "gold": 10220,
+   "slots": 4
+  },
+  {
+   "name": "Shavronne's Wrappings",
+   "baseType": "Occultist's Vestment",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 6
+  },
+  {
+   "name": "Darkscorn",
+   "baseType": "Assassin Bow",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 8
+  },
+  {
+   "name": "Kintsugi",
+   "baseType": "Exquisite Leather",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 6
+  },
+  {
+   "name": "Tulfall",
+   "baseType": "Opal Wand",
+   "dust": 2925,
+   "dustQ20": 4095,
+   "gold": 2140,
+   "slots": 3
+  },
+  {
+   "name": "Esh's Visage",
+   "baseType": "Vaal Spirit Shield",
+   "dust": 15925,
+   "dustQ20": 22295,
+   "gold": 4600,
+   "slots": 4
+  },
+  {
+   "name": "Arborix",
+   "baseType": "Assassin Bow",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 8
+  },
+  {
+   "name": "Apep's Supremacy",
+   "baseType": "Vaal Spirit Shield",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 4
+  },
+  {
+   "name": "The Surging Thoughts",
+   "baseType": "Legion Sword",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 6
+  },
+  {
+   "name": "The Admiral",
+   "baseType": "Varnished Coat",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 6
+  },
+  {
+   "name": "Replica Cold Iron Point",
+   "baseType": "Ezomyte Dagger",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 3
+  },
+  {
+   "name": "Replica Tulfall",
+   "baseType": "Opal Wand",
+   "dust": 91025,
+   "dustQ20": 127435,
+   "gold": 10080,
+   "slots": 3
+  },
+  {
+   "name": "Abberath's Hooves",
+   "baseType": "Goathide Boots",
+   "dust": 86525,
+   "dustQ20": 121135,
+   "gold": 9860,
+   "slots": 4
+  },
+  {
+   "name": "Mjölner",
+   "baseType": "Gavel",
+   "dust": 85800,
+   "dustQ20": 120120,
+   "gold": 9820,
+   "slots": 6
+  },
+  {
+   "name": "Replica Abyssus",
+   "baseType": "Ezomyte Burgonet",
+   "dust": 85800,
+   "dustQ20": 120120,
+   "gold": 9820,
+   "slots": 4
+  },
+  {
+   "name": "Replica Mistwall",
+   "baseType": "Lacquered Buckler",
+   "dust": 85800,
+   "dustQ20": 120120,
+   "gold": 9820,
+   "slots": 4
+  },
+  {
+   "name": "The Iron Fortress",
+   "baseType": "Crusader Plate",
+   "dust": 83300,
+   "dustQ20": 116620,
+   "gold": 9680,
+   "slots": 6
+  },
+  {
+   "name": "Iron Heart",
+   "baseType": "Crusader Plate",
+   "dust": 83300,
+   "dustQ20": 116620,
+   "gold": 9680,
+   "slots": 6
+  },
+  {
+   "name": "Farrul's Pounce",
+   "baseType": "Hydrascale Gauntlets",
+   "dust": 83300,
+   "dustQ20": 116620,
+   "gold": 9680,
+   "slots": 4
+  },
+  {
+   "name": "Fleshcrafter",
+   "baseType": "Necromancer Silks",
+   "dust": 83300,
+   "dustQ20": 116620,
+   "gold": 9680,
+   "slots": 6
+  },
+  {
+   "name": "Gravebind",
+   "baseType": "Hydrascale Gauntlets",
+   "dust": 83300,
+   "dustQ20": 116620,
+   "gold": 9680,
+   "slots": 4
+  },
+  {
+   "name": "Xoph's Nurture",
+   "baseType": "Citadel Bow",
+   "dust": 2600,
+   "dustQ20": 3640,
+   "gold": 2040,
+   "slots": 8
+  },
+  {
+   "name": "Crown of the Tyrant",
+   "baseType": "Magistrate Crown",
+   "dust": 80875,
+   "dustQ20": 113225,
+   "gold": 9560,
+   "slots": 4
+  },
+  {
+   "name": "Crest of Desire",
+   "baseType": "Fluted Bascinet",
+   "dust": 80875,
+   "dustQ20": 113225,
+   "gold": 9560,
+   "slots": 4
+  },
+  {
+   "name": "Farrul's Bite",
+   "baseType": "Harlequin Mask",
+   "dust": 78525,
+   "dustQ20": 109935,
+   "gold": 9440,
+   "slots": 4
+  },
+  {
+   "name": "Offering to the Serpent",
+   "baseType": "Legion Gloves",
+   "dust": 78525,
+   "dustQ20": 109935,
+   "gold": 9440,
+   "slots": 4
+  },
+  {
+   "name": "Garb of the Ephemeral",
+   "baseType": "Savant's Robe",
+   "dust": 76225,
+   "dustQ20": 106715,
+   "gold": 9300,
+   "slots": 6
+  },
+  {
+   "name": "Maata's Teaching",
+   "baseType": "Karui Sceptre",
+   "dust": 76225,
+   "dustQ20": 106715,
+   "gold": 9300,
+   "slots": 6
+  },
+  {
+   "name": "Corpsewalker",
+   "baseType": "Carnal Boots",
+   "dust": 74000,
+   "dustQ20": 103600,
+   "gold": 9180,
+   "slots": 4
+  },
+  {
+   "name": "The Fourth Vow",
+   "baseType": "Devout Chainmail",
+   "dust": 74000,
+   "dustQ20": 103600,
+   "gold": 9180,
+   "slots": 6
+  },
+  {
+   "name": "The Devouring Diadem",
+   "baseType": "Necromancer Circlet",
+   "dust": 71850,
+   "dustQ20": 100590,
+   "gold": 9060,
+   "slots": 4
+  },
+  {
+   "name": "Qotra's Regulator",
+   "baseType": "Sovereign Spiked Shield",
+   "dust": 71850,
+   "dustQ20": 100590,
+   "gold": 9060,
+   "slots": 4
+  },
+  {
+   "name": "Atziri's Reflection",
+   "baseType": "Golden Buckler",
+   "dust": 71850,
+   "dustQ20": 100590,
+   "gold": 9060,
+   "slots": 4
+  },
+  {
+   "name": "Sandstorm Visage",
+   "baseType": "Necromancer Circlet",
+   "dust": 71850,
+   "dustQ20": 100590,
+   "gold": 9060,
+   "slots": 4
+  },
+  {
+   "name": "Utula's Hunger",
+   "baseType": "Majestic Plate",
+   "dust": 69775,
+   "dustQ20": 97685,
+   "gold": 8940,
+   "slots": 6
+  },
+  {
+   "name": "Cloak of Defiance",
+   "baseType": "Lacquered Garb",
+   "dust": 67725,
+   "dustQ20": 94815,
+   "gold": 8820,
+   "slots": 6
+  },
+  {
+   "name": "Skin of the Lords",
+   "baseType": "Simple Robe",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 6,
+   "noQuality": true
+  },
+  {
+   "name": "Zerphi's Heart",
+   "baseType": "Paua Amulet",
+   "dust": 66300,
+   "dustQ20": 92820,
+   "gold": 8740,
+   "slots": 1
+  },
+  {
+   "name": "Replica Frostbreath",
+   "baseType": "Ornate Mace",
+   "dust": 63850,
+   "dustQ20": 89390,
+   "gold": 8600,
+   "slots": 6
+  },
+  {
+   "name": "The Covenant",
+   "baseType": "Spidersilk Robe",
+   "dust": 61975,
+   "dustQ20": 86765,
+   "gold": 8480,
+   "slots": 6
+  },
+  {
+   "name": "Anathema",
+   "baseType": "Moonstone Ring",
+   "dust": 61975,
+   "dustQ20": 86765,
+   "gold": 8480,
+   "slots": 1
+  },
+  {
+   "name": "Replica Covenant",
+   "baseType": "Spidersilk Robe",
+   "dust": 61975,
+   "dustQ20": 86765,
+   "gold": 8480,
+   "slots": 6
+  },
+  {
+   "name": "Winds of Change",
+   "baseType": "Ancient Gauntlets",
+   "dust": 58425,
+   "dustQ20": 81795,
+   "gold": 8260,
+   "slots": 4
+  },
+  {
+   "name": "Death Rush",
+   "baseType": "Amethyst Ring",
+   "dust": 56725,
+   "dustQ20": 79415,
+   "gold": 8140,
+   "slots": 1
+  },
+  {
+   "name": "Emperor's Vigilance",
+   "baseType": "Steel Kite Shield",
+   "dust": 56725,
+   "dustQ20": 79415,
+   "gold": 8140,
+   "slots": 6
+  },
+  {
+   "name": "Mahuxotl's Machination",
+   "baseType": "Steel Kite Shield",
+   "dust": 56725,
+   "dustQ20": 79415,
+   "gold": 8140,
+   "slots": 6
+  },
+  {
+   "name": "The Pariah",
+   "baseType": "Unset Ring",
+   "dust": 55075,
+   "dustQ20": 77105,
+   "gold": 8039,
+   "slots": 1
+  },
+  {
+   "name": "Abhorrent Interrogation",
+   "baseType": "Ambush Mitts",
+   "dust": 55075,
+   "dustQ20": 77105,
+   "gold": 8039,
+   "slots": 4
+  },
+  {
+   "name": "The Tempest's Liberation",
+   "baseType": "Callous Mask",
+   "dust": 55075,
+   "dustQ20": 77105,
+   "gold": 8039,
+   "slots": 4
+  },
+  {
+   "name": "Perfidy",
+   "baseType": "Glorious Plate",
+   "dust": 54800,
+   "dustQ20": 76720,
+   "gold": 8020,
+   "slots": 6
+  },
+  {
+   "name": "Hand of the Fervent",
+   "baseType": "Zealot Gloves",
+   "dust": 51900,
+   "dustQ20": 72660,
+   "gold": 7840,
+   "slots": 4
+  },
+  {
+   "name": "Impresence",
+   "baseType": "Onyx Amulet",
+   "dust": 77475,
+   "dustQ20": 98135,
+   "gold": 11730,
+   "slots": 1
+  },
+  {
+   "name": "Assailum",
+   "baseType": "Sinner Tricorne",
+   "dust": 51650,
+   "dustQ20": 72310,
+   "gold": 7820,
+   "slots": 4
+  },
+  {
+   "name": "Mark of the Elder",
+   "baseType": "Steel Ring",
+   "dust": 73050,
+   "dustQ20": 92530,
+   "gold": 11400,
+   "slots": 1
+  },
+  {
+   "name": "Mark of the Shaper",
+   "baseType": "Opal Ring",
+   "dust": 73050,
+   "dustQ20": 92530,
+   "gold": 11400,
+   "slots": 1
+  },
+  {
+   "name": "Polaric Devastation",
+   "baseType": "Opal Ring",
+   "dust": 48700,
+   "dustQ20": 68180,
+   "gold": 7600,
+   "slots": 1
+  },
+  {
+   "name": "Replica Soul Strike",
+   "baseType": "Spike-Point Arrow Quiver",
+   "dust": 47500,
+   "dustQ20": 66500,
+   "gold": 7520,
+   "slots": 6
+  },
+  {
+   "name": "Replica Midnight Bargain",
+   "baseType": "Engraved Wand",
+   "dust": 47500,
+   "dustQ20": 66500,
+   "gold": 7520,
+   "slots": 3
+  },
+  {
+   "name": "Brain Rattler",
+   "baseType": "Meatgrinder",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 8
+  },
+  {
+   "name": "Razor of the Seventh Sun",
+   "baseType": "Midnight Blade",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 6
+  },
+  {
+   "name": "Snakepit",
+   "baseType": "Sapphire Ring",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 1
+  },
+  {
+   "name": "The Scourge",
+   "baseType": "Terror Claw",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 4
+  },
+  {
+   "name": "Memory Vault",
+   "baseType": "Praetor Crown",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 4
+  },
+  {
+   "name": "Grelwood Shank",
+   "baseType": "Eternal Sword",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 6
+  },
+  {
+   "name": "Beltimber Blade",
+   "baseType": "Eternal Sword",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 6
+  },
+  {
+   "name": "Vulconus",
+   "baseType": "Demon Dagger",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 3
+  },
+  {
+   "name": "Augyre",
+   "baseType": "Void Sceptre",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 6
+  },
+  {
+   "name": "Gloomfang",
+   "baseType": "Blue Pearl Amulet",
+   "dust": 47275,
+   "dustQ20": 66185,
+   "gold": 7500,
+   "slots": 1
+  },
+  {
+   "name": "The Gull",
+   "baseType": "Raven Mask",
+   "dust": 44775,
+   "dustQ20": 62685,
+   "gold": 7320,
+   "slots": 4
+  },
+  {
+   "name": "Severed in Sleep",
+   "baseType": "Cutlass",
+   "dust": 1450,
+   "dustQ20": 2030,
+   "gold": 1560,
+   "slots": 3
+  },
+  {
+   "name": "United in Dream",
+   "baseType": "Cutlass",
+   "dust": 7825,
+   "dustQ20": 10955,
+   "gold": 3340,
+   "slots": 3
+  },
+  {
+   "name": "Blackflame",
+   "baseType": "Amethyst Ring",
+   "dust": 44775,
+   "dustQ20": 62685,
+   "gold": 7320,
+   "slots": 1
+  },
+  {
+   "name": "Maligaro's Virtuosity",
+   "baseType": "Deerskin Gloves",
+   "dust": 44550,
+   "dustQ20": 62370,
+   "gold": 7320,
+   "slots": 4
+  },
+  {
+   "name": "Asenath's Gentle Touch",
+   "baseType": "Silk Gloves",
+   "dust": 44550,
+   "dustQ20": 62370,
+   "gold": 7320,
+   "slots": 4
+  },
+  {
+   "name": "Perandus Signet",
+   "baseType": "Paua Ring",
+   "dust": 44550,
+   "dustQ20": 62370,
+   "gold": 7320,
+   "slots": 1
+  },
+  {
+   "name": "Nebuloch",
+   "baseType": "Nightmare Mace",
+   "dust": 66825,
+   "dustQ20": 84645,
+   "gold": 10980,
+   "slots": 6
+  },
+  {
+   "name": "Hopeshredder",
+   "baseType": "Ranger Bow",
+   "dust": 66825,
+   "dustQ20": 84645,
+   "gold": 10980,
+   "slots": 8
+  },
+  {
+   "name": "Shimmeron",
+   "baseType": "Tornado Wand",
+   "dust": 66825,
+   "dustQ20": 84645,
+   "gold": 10980,
+   "slots": 3
+  },
+  {
+   "name": "Beacon of Madness",
+   "baseType": "Two-Toned Boots",
+   "dust": 44550,
+   "dustQ20": 62370,
+   "gold": 7320,
+   "slots": 4
+  },
+  {
+   "name": "Sunblast",
+   "baseType": "Cloth Belt",
+   "dust": 43475,
+   "dustQ20": 60865,
+   "gold": 7240,
+   "slots": 2
+  },
+  {
+   "name": "Doon Cuebiyari",
+   "baseType": "Vaal Sceptre",
+   "dust": 43250,
+   "dustQ20": 60550,
+   "gold": 7220,
+   "slots": 6
+  },
+  {
+   "name": "Death's Door",
+   "baseType": "Crusader Boots",
+   "dust": 43250,
+   "dustQ20": 60550,
+   "gold": 7220,
+   "slots": 4
+  },
+  {
+   "name": "Auxium",
+   "baseType": "Crystal Belt",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 2
+  },
+  {
+   "name": "Flamesight",
+   "baseType": "Solaris Circlet",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 4
+  },
+  {
+   "name": "Galesight",
+   "baseType": "Solaris Circlet",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 4
+  },
+  {
+   "name": "Thundersight",
+   "baseType": "Solaris Circlet",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 4
+  },
+  {
+   "name": "The Ivory Tower",
+   "baseType": "Saint's Hauberk",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 6
+  },
+  {
+   "name": "Leash of Oblation",
+   "baseType": "Leather Belt",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 2
+  },
+  {
+   "name": "Mistwall",
+   "baseType": "Lacquered Buckler",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 4
+  },
+  {
+   "name": "Maw of Mischief",
+   "baseType": "Bone Helmet",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 4
+  },
+  {
+   "name": "The Burden of Truth",
+   "baseType": "Crystal Belt",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 2
+  },
+  {
+   "name": "Shadowstitch",
+   "baseType": "Sacrificial Garb",
+   "dust": 40775,
+   "dustQ20": 57085,
+   "gold": 7020,
+   "slots": 6,
+   "noQuality": true
+  },
+  {
+   "name": "Hegemony's Era",
+   "baseType": "Judgement Staff",
+   "dust": 39600,
+   "dustQ20": 55440,
+   "gold": 6940,
+   "slots": 8
+  },
+  {
+   "name": "Replica Restless Ward",
+   "baseType": "Carnal Armour",
+   "dust": 39600,
+   "dustQ20": 55440,
+   "gold": 6940,
+   "slots": 6
+  },
+  {
+   "name": "Lioneye's Remorse",
+   "baseType": "Pinnacle Tower Shield",
+   "dust": 38425,
+   "dustQ20": 53795,
+   "gold": 6840,
+   "slots": 8
+  },
+  {
+   "name": "Incandescent Heart",
+   "baseType": "Saintly Chainmail",
+   "dust": 38425,
+   "dustQ20": 53795,
+   "gold": 6840,
+   "slots": 6
+  },
+  {
+   "name": "The Hungry Loop",
+   "baseType": "Unset Ring",
+   "dust": 38425,
+   "dustQ20": 53795,
+   "gold": 6840,
+   "slots": 1
+  },
+  {
+   "name": "Chains of Command",
+   "baseType": "Saintly Chainmail",
+   "dust": 38425,
+   "dustQ20": 53795,
+   "gold": 6840,
+   "slots": 6
+  },
+  {
+   "name": "Black Zenith",
+   "baseType": "Fingerless Silk Gloves",
+   "dust": 38425,
+   "dustQ20": 53795,
+   "gold": 6840,
+   "slots": 4
+  },
+  {
+   "name": "Crown of Eyes",
+   "baseType": "Hubris Circlet",
+   "dust": 37325,
+   "dustQ20": 52255,
+   "gold": 6760,
+   "slots": 4
+  },
+  {
+   "name": "Ylfeban's Trickery",
+   "baseType": "Hubris Circlet",
+   "dust": 37325,
+   "dustQ20": 52255,
+   "gold": 6760,
+   "slots": 4
+  },
+  {
+   "name": "Voidwalker",
+   "baseType": "Murder Boots",
+   "dust": 55988,
+   "dustQ20": 70918,
+   "gold": 10140,
+   "slots": 4
+  },
+  {
+   "name": "Bubonic Trail",
+   "baseType": "Murder Boots",
+   "dust": 37325,
+   "dustQ20": 52255,
+   "gold": 6760,
+   "slots": 4
+  },
+  {
+   "name": "Craiceann's Pincers",
+   "baseType": "Titan Gauntlets",
+   "dust": 37325,
+   "dustQ20": 52255,
+   "gold": 6760,
+   "slots": 4
+  },
+  {
+   "name": "Usurper's Penance",
+   "baseType": "Eternal Burgonet",
+   "dust": 37325,
+   "dustQ20": 52255,
+   "gold": 6760,
+   "slots": 4
+  },
+  {
+   "name": "Replica Voidwalker",
+   "baseType": "Murder Boots",
+   "dust": 55988,
+   "dustQ20": 70918,
+   "gold": 10140,
+   "slots": 4
+  },
+  {
+   "name": "Vorana's March",
+   "baseType": "Runic Sabatons",
+   "dust": 37325,
+   "dustQ20": 52255,
+   "gold": 6760,
+   "slots": 4
+  },
+  {
+   "name": "Kaom's Spirit",
+   "baseType": "Titan Gauntlets",
+   "dust": 37325,
+   "dustQ20": 52255,
+   "gold": 6760,
+   "slots": 4
+  },
+  {
+   "name": "The Shattered Divinity",
+   "baseType": "Blunt Arrow Quiver",
+   "dust": 36400,
+   "dustQ20": 50960,
+   "gold": 6680,
+   "slots": 6
+  },
+  {
+   "name": "Mon'tregul's Grasp",
+   "baseType": "Void Sceptre",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 6
+  },
+  {
+   "name": "Pledge of Hands",
+   "baseType": "Judgement Staff",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 8
+  },
+  {
+   "name": "Kaom's Roots",
+   "baseType": "Titan Greaves",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 4
+  },
+  {
+   "name": "Voll's Vision",
+   "baseType": "Praetor Crown",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 4
+  },
+  {
+   "name": "Malachai's Vision",
+   "baseType": "Praetor Crown",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 4,
+   "noQuality": true
+  },
+  {
+   "name": "Cospri's Will",
+   "baseType": "Assassin's Garb",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 6
+  },
+  {
+   "name": "Tinkerskin",
+   "baseType": "Sadist Garb",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 6
+  },
+  {
+   "name": "Hand of Thought and Motion",
+   "baseType": "Imperial Claw",
+   "dust": 5100,
+   "dustQ20": 7140,
+   "gold": 2760,
+   "slots": 4
+  },
+  {
+   "name": "The Infinite Pursuit",
+   "baseType": "Titan Greaves",
+   "dust": 5100,
+   "dustQ20": 7140,
+   "gold": 2760,
+   "slots": 4
+  },
+  {
+   "name": "The Unshattered Will",
+   "baseType": "Archon Kite Shield",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 6
+  },
+  {
+   "name": "Invictus Solaris",
+   "baseType": "Archon Kite Shield",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 6
+  },
+  {
+   "name": "Cyclopean Coil",
+   "baseType": "Leather Belt",
+   "dust": 54338,
+   "dustQ20": 68828,
+   "gold": 9990,
+   "slots": 2
+  },
+  {
+   "name": "Blasphemer's Grasp",
+   "baseType": "Assassin's Mitts",
+   "dust": 54338,
+   "dustQ20": 68828,
+   "gold": 9990,
+   "slots": 4
+  },
+  {
+   "name": "The Grey Spire",
+   "baseType": "Judgement Staff",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 8
+  },
+  {
+   "name": "Bitterbind Point",
+   "baseType": "Titanium Spirit Shield",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 4
+  },
+  {
+   "name": "Nebulis",
+   "baseType": "Void Sceptre",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 6
+  },
+  {
+   "name": "Atziri's Rule",
+   "baseType": "Judgement Staff",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 8
+  },
+  {
+   "name": "Cadigan's Crown",
+   "baseType": "Runic Crown",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 4
+  },
+  {
+   "name": "The Taming",
+   "baseType": "Prismatic Ring",
+   "dust": 35350,
+   "dustQ20": 49490,
+   "gold": 6580,
+   "slots": 1
+  },
+  {
+   "name": "The Bringer of Rain",
+   "baseType": "Nightmare Bascinet",
+   "dust": 35175,
+   "dustQ20": 49245,
+   "gold": 6580,
+   "slots": 4
+  },
+  {
+   "name": "Replica Oro's Sacrifice",
+   "baseType": "Infernal Sword",
+   "dust": 35175,
+   "dustQ20": 49245,
+   "gold": 6580,
+   "slots": 8
+  },
+  {
+   "name": "Dawnbreaker",
+   "baseType": "Colossal Tower Shield",
+   "dust": 35175,
+   "dustQ20": 49245,
+   "gold": 6580,
+   "slots": 8
+  },
+  {
+   "name": "Dreamfeather",
+   "baseType": "Eternal Sword",
+   "dust": 34150,
+   "dustQ20": 47810,
+   "gold": 6480,
+   "slots": 6
+  },
+  {
+   "name": "Repentance",
+   "baseType": "Crusader Gloves",
+   "dust": 34150,
+   "dustQ20": 47810,
+   "gold": 6480,
+   "slots": 4
+  },
+  {
+   "name": "Shaper's Touch",
+   "baseType": "Crusader Gloves",
+   "dust": 51225,
+   "dustQ20": 64885,
+   "gold": 9720,
+   "slots": 4
+  },
+  {
+   "name": "The Enmity Divine",
+   "baseType": "Imperial Staff",
+   "dust": 34150,
+   "dustQ20": 47810,
+   "gold": 6480,
+   "slots": 8
+  },
+  {
+   "name": "Vix Lunaris",
+   "baseType": "Cardinal Round Shield",
+   "dust": 34150,
+   "dustQ20": 47810,
+   "gold": 6480,
+   "slots": 6
+  },
+  {
+   "name": "Voidfletcher",
+   "baseType": "Primal Arrow Quiver",
+   "dust": 68300,
+   "dustQ20": 81960,
+   "gold": 12960,
+   "slots": 6
+  },
+  {
+   "name": "Hands of the High Templar",
+   "baseType": "Crusader Gloves",
+   "dust": 34150,
+   "dustQ20": 47810,
+   "gold": 6480,
+   "slots": 4
+  },
+  {
+   "name": "Font of Thunder",
+   "baseType": "Mirrored Spiked Shield",
+   "dust": 34150,
+   "dustQ20": 47810,
+   "gold": 6480,
+   "slots": 4
+  },
+  {
+   "name": "Replica Dreamfeather",
+   "baseType": "Eternal Sword",
+   "dust": 34150,
+   "dustQ20": 47810,
+   "gold": 6480,
+   "slots": 6
+  },
+  {
+   "name": "The Goddess Scorned",
+   "baseType": "Elegant Sword",
+   "dust": 33325,
+   "dustQ20": 46655,
+   "gold": 6420,
+   "slots": 6
+  },
+  {
+   "name": "Rime Gaze",
+   "baseType": "Mind Cage",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 4
+  },
+  {
+   "name": "Infernal Mantle",
+   "baseType": "Widowsilk Robe",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 6
+  },
+  {
+   "name": "Ming's Heart",
+   "baseType": "Amethyst Ring",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 1
+  },
+  {
+   "name": "Jack, the Axe",
+   "baseType": "Vaal Hatchet",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 6
+  },
+  {
+   "name": "Doomsower",
+   "baseType": "Lion Sword",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 8
+  },
+  {
+   "name": "Scold's Bridle",
+   "baseType": "Mind Cage",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 4
+  },
+  {
+   "name": "The Formless Flame",
+   "baseType": "Royal Burgonet",
+   "dust": 6100,
+   "dustQ20": 8540,
+   "gold": 2980,
+   "slots": 4
+  },
+  {
+   "name": "The Snowblind Grace",
+   "baseType": "Zodiac Leather",
+   "dust": 6100,
+   "dustQ20": 8540,
+   "gold": 2980,
+   "slots": 6
+  },
+  {
+   "name": "Saqawal's Nest",
+   "baseType": "Blood Raiment",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 6
+  },
+  {
+   "name": "Fenumus' Shroud",
+   "baseType": "Widowsilk Robe",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 6
+  },
+  {
+   "name": "Hale Negator",
+   "baseType": "Mind Cage",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 4
+  },
+  {
+   "name": "Echoes of Creation",
+   "baseType": "Royal Burgonet",
+   "dust": 49725,
+   "dustQ20": 62985,
+   "gold": 9600,
+   "slots": 4
+  },
+  {
+   "name": "Taryn's Shiver",
+   "baseType": "Maelström Staff",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 8
+  },
+  {
+   "name": "Alpha's Howl",
+   "baseType": "Sinner Tricorne",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 4
+  },
+  {
+   "name": "Rebuke of the Vaal",
+   "baseType": "Vaal Blade",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 6
+  },
+  {
+   "name": "Hezmana's Bloodlust",
+   "baseType": "Vaal Axe",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 8
+  },
+  {
+   "name": "Reach of the Council",
+   "baseType": "Spine Bow",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 8
+  },
+  {
+   "name": "Uul-Netol's Kiss",
+   "baseType": "Vaal Axe",
+   "dust": 5925,
+   "dustQ20": 8295,
+   "gold": 2940,
+   "slots": 8
+  },
+  {
+   "name": "The Anticipation",
+   "baseType": "Ezomyte Tower Shield",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 8
+  },
+  {
+   "name": "Replica Alpha's Howl",
+   "baseType": "Sinner Tricorne",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 4
+  },
+  {
+   "name": "Daresso's Defiance",
+   "baseType": "Full Dragonscale",
+   "dust": 31250,
+   "dustQ20": 43750,
+   "gold": 6240,
+   "slots": 6
+  },
+  {
+   "name": "Atziri's Acuity",
+   "baseType": "Vaal Gauntlets",
+   "dust": 31250,
+   "dustQ20": 43750,
+   "gold": 6240,
+   "slots": 4
+  },
+  {
+   "name": "Fenumus' Spinnerets",
+   "baseType": "Assassin's Boots",
+   "dust": 31250,
+   "dustQ20": 43750,
+   "gold": 6240,
+   "slots": 4
+  },
+  {
+   "name": "Crown of the Inward Eye",
+   "baseType": "Prophet Crown",
+   "dust": 31250,
+   "dustQ20": 43750,
+   "gold": 6240,
+   "slots": 4
+  },
+  {
+   "name": "Astramentis",
+   "baseType": "Onyx Amulet",
+   "dust": 30500,
+   "dustQ20": 42700,
+   "gold": 6160,
+   "slots": 1
+  },
+  {
+   "name": "Presence of Chayula",
+   "baseType": "Onyx Amulet",
+   "dust": 30500,
+   "dustQ20": 42700,
+   "gold": 6160,
+   "slots": 1
+  },
+  {
+   "name": "Aul's Uprising",
+   "baseType": "Onyx Amulet",
+   "dust": 30500,
+   "dustQ20": 42700,
+   "gold": 6160,
+   "slots": 1
+  },
+  {
+   "name": "Solstice Vigil",
+   "baseType": "Onyx Amulet",
+   "dust": 45750,
+   "dustQ20": 57950,
+   "gold": 9240,
+   "slots": 1
+  },
+  {
+   "name": "Leadership's Price",
+   "baseType": "Onyx Amulet",
+   "dust": 30500,
+   "dustQ20": 42700,
+   "gold": 6160,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Crystallised Omniscience",
+   "baseType": "Onyx Amulet",
+   "dust": 30500,
+   "dustQ20": 42700,
+   "gold": 6160,
+   "slots": 1
+  },
+  {
+   "name": "Ashes of the Stars",
+   "baseType": "Onyx Amulet",
+   "dust": 30500,
+   "dustQ20": 42700,
+   "gold": 6160,
+   "slots": 1
+  },
+  {
+   "name": "Stormfire",
+   "baseType": "Opal Ring",
+   "dust": 30425,
+   "dustQ20": 42595,
+   "gold": 6160,
+   "slots": 1
+  },
+  {
+   "name": "The Searing Touch",
+   "baseType": "Lathi",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 8
+  },
+  {
+   "name": "Carcass Jack",
+   "baseType": "Varnished Coat",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 6
+  },
+  {
+   "name": "Death's Oath",
+   "baseType": "Astral Plate",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 6
+  },
+  {
+   "name": "The Vertex",
+   "baseType": "Vaal Mask",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 4
+  },
+  {
+   "name": "Tulborn",
+   "baseType": "Opal Wand",
+   "dust": 4275,
+   "dustQ20": 5985,
+   "gold": 2540,
+   "slots": 3
+  },
+  {
+   "name": "Esh's Mirror",
+   "baseType": "Vaal Spirit Shield",
+   "dust": 5600,
+   "dustQ20": 7840,
+   "gold": 2880,
+   "slots": 4
+  },
+  {
+   "name": "Yriel's Fostering",
+   "baseType": "Exquisite Leather",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 6
+  },
+  {
+   "name": "The Rippling Thoughts",
+   "baseType": "Legion Sword",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 6
+  },
+  {
+   "name": "Perepiteia",
+   "baseType": "Ezomyte Spiked Shield",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 4
+  },
+  {
+   "name": "Fractal Thoughts",
+   "baseType": "Vaal Mask",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 4
+  },
+  {
+   "name": "Cold Iron Point",
+   "baseType": "Ezomyte Dagger",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 3
+  },
+  {
+   "name": "Law of the Wilds",
+   "baseType": "Hellion's Paw",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 4
+  },
+  {
+   "name": "Blunderbore",
+   "baseType": "Astral Plate",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 6
+  },
+  {
+   "name": "Replica Wings of Entropy",
+   "baseType": "Ezomyte Axe",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 8
+  },
+  {
+   "name": "Glimpse of Chaos",
+   "baseType": "Vaal Mask",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 4,
+   "noQuality": true
+  },
+  {
+   "name": "Dawnstrider",
+   "baseType": "Vaal Greaves",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 4
+  },
+  {
+   "name": "Rigwald's Savagery",
+   "baseType": "Royal Axe",
+   "dust": 29550,
+   "dustQ20": 41370,
+   "gold": 6080,
+   "slots": 6
+  },
+  {
+   "name": "Rigwald's Command",
+   "baseType": "Midnight Blade",
+   "dust": 29550,
+   "dustQ20": 41370,
+   "gold": 6080,
+   "slots": 6
+  },
+  {
+   "name": "Slivertongue",
+   "baseType": "Harbinger Bow",
+   "dust": 29550,
+   "dustQ20": 41370,
+   "gold": 6080,
+   "slots": 8
+  },
+  {
+   "name": "Obscurantis",
+   "baseType": "Lion Pelt",
+   "dust": 29550,
+   "dustQ20": 41370,
+   "gold": 6080,
+   "slots": 4
+  },
+  {
+   "name": "Inya's Epiphany",
+   "baseType": "Arcanist Slippers",
+   "dust": 29450,
+   "dustQ20": 41230,
+   "gold": 6060,
+   "slots": 4
+  },
+  {
+   "name": "Replica Inya's Epiphany",
+   "baseType": "Arcanist Slippers",
+   "dust": 29450,
+   "dustQ20": 41230,
+   "gold": 6060,
+   "slots": 4
+  },
+  {
+   "name": "Abyssus",
+   "baseType": "Ezomyte Burgonet",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 4
+  },
+  {
+   "name": "Lightning Coil",
+   "baseType": "Desert Brigandine",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 6
+  },
+  {
+   "name": "Null's Inclination",
+   "baseType": "Ranger Bow",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 8
+  },
+  {
+   "name": "Dyadian Dawn",
+   "baseType": "Heavy Belt",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 2
+  },
+  {
+   "name": "Rigwald's Curse",
+   "baseType": "Wereclaw Talisman",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Grip of the Council",
+   "baseType": "Arcanist Gloves",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 4
+  },
+  {
+   "name": "Saqawal's Flock",
+   "baseType": "Silken Hood",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 4
+  },
+  {
+   "name": "The Iron Mass",
+   "baseType": "Gladius",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 6
+  },
+  {
+   "name": "The Hidden Blade",
+   "baseType": "Ambusher",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 3
+  },
+  {
+   "name": "The Fulcrum",
+   "baseType": "Ezomyte Staff",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 8
+  },
+  {
+   "name": "Replica Grip of the Council",
+   "baseType": "Arcanist Gloves",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 4
+  },
+  {
+   "name": "Cameria's Avarice",
+   "baseType": "Gavel",
+   "dust": 28600,
+   "dustQ20": 40040,
+   "gold": 5980,
+   "slots": 6
+  },
+  {
+   "name": "Contract: The Twins",
+   "baseType": "Vengeful Contract",
+   "dust": 28225,
+   "dustQ20": 39515,
+   "gold": 5960,
+   "slots": 1
+  },
+  {
+   "name": "Algor Mortis",
+   "baseType": "Carnal Mitts",
+   "dust": 27850,
+   "dustQ20": 38990,
+   "gold": 5920,
+   "slots": 4
+  },
+  {
+   "name": "Saffell's Frame",
+   "baseType": "Branded Kite Shield",
+   "dust": 27775,
+   "dustQ20": 38885,
+   "gold": 5920,
+   "slots": 6
+  },
+  {
+   "name": "Queen of the Forest",
+   "baseType": "Destiny Leather",
+   "dust": 27775,
+   "dustQ20": 38885,
+   "gold": 5920,
+   "slots": 6
+  },
+  {
+   "name": "Saqawal's Talons",
+   "baseType": "Hydrascale Boots",
+   "dust": 27775,
+   "dustQ20": 38885,
+   "gold": 5920,
+   "slots": 4
+  },
+  {
+   "name": "Breathstealer",
+   "baseType": "Hydrascale Gauntlets",
+   "dust": 27775,
+   "dustQ20": 38885,
+   "gold": 5920,
+   "slots": 4
+  },
+  {
+   "name": "Expedition's End",
+   "baseType": "Sentinel Jacket",
+   "dust": 27775,
+   "dustQ20": 38885,
+   "gold": 5920,
+   "slots": 6
+  },
+  {
+   "name": "Wilma's Requital",
+   "baseType": "Solaris Circlet",
+   "dust": 27775,
+   "dustQ20": 38885,
+   "gold": 5920,
+   "slots": 4
+  },
+  {
+   "name": "Gamblesprint",
+   "baseType": "Hydrascale Boots",
+   "dust": 27775,
+   "dustQ20": 38885,
+   "gold": 5920,
+   "slots": 4
+  },
+  {
+   "name": "Contract: Death to Darnaw",
+   "baseType": "Naval Contract",
+   "dust": 27400,
+   "dustQ20": 38360,
+   "gold": 5880,
+   "slots": 1
+  },
+  {
+   "name": "Unyielding Flame",
+   "baseType": "Archon Kite Shield",
+   "dust": 27050,
+   "dustQ20": 37870,
+   "gold": 5840,
+   "slots": 6
+  },
+  {
+   "name": "Xoph's Inception",
+   "baseType": "Citadel Bow",
+   "dust": 3775,
+   "dustQ20": 5285,
+   "gold": 2400,
+   "slots": 8
+  },
+  {
+   "name": "Craiceann's Chitin",
+   "baseType": "Magistrate Crown",
+   "dust": 26950,
+   "dustQ20": 37730,
+   "gold": 5840,
+   "slots": 4
+  },
+  {
+   "name": "Mask of the Stitched Demon",
+   "baseType": "Magistrate Crown",
+   "dust": 26950,
+   "dustQ20": 37730,
+   "gold": 5840,
+   "slots": 4
+  },
+  {
+   "name": "Storm's Gift",
+   "baseType": "Assassin's Mitts",
+   "dust": 26950,
+   "dustQ20": 37730,
+   "gold": 5840,
+   "slots": 4
+  },
+  {
+   "name": "Mask of the Tribunal",
+   "baseType": "Magistrate Crown",
+   "dust": 26950,
+   "dustQ20": 37730,
+   "gold": 5840,
+   "slots": 4
+  },
+  {
+   "name": "Contract: Heart of Glory",
+   "baseType": "Familial Contract",
+   "dust": 26600,
+   "dustQ20": 37240,
+   "gold": 5800,
+   "slots": 1
+  },
+  {
+   "name": "The Magnate",
+   "baseType": "Studded Belt",
+   "dust": 26300,
+   "dustQ20": 36820,
+   "gold": 5760,
+   "slots": 2
+  },
+  {
+   "name": "The Torrent's Reclamation",
+   "baseType": "Cloth Belt",
+   "dust": 26300,
+   "dustQ20": 36820,
+   "gold": 5760,
+   "slots": 2
+  },
+  {
+   "name": "Replica Soul Tether",
+   "baseType": "Cloth Belt",
+   "dust": 26300,
+   "dustQ20": 36820,
+   "gold": 5760,
+   "slots": 2
+  },
+  {
+   "name": "Replica Ungil's Gauche",
+   "baseType": "Boot Knife",
+   "dust": 26300,
+   "dustQ20": 36820,
+   "gold": 5760,
+   "slots": 3
+  },
+  {
+   "name": "Replica Badge of the Brotherhood",
+   "baseType": "Turquoise Amulet",
+   "dust": 26300,
+   "dustQ20": 36820,
+   "gold": 5760,
+   "slots": 1
+  },
+  {
+   "name": "Perseverance",
+   "baseType": "Vanguard Belt",
+   "dust": 26250,
+   "dustQ20": 36750,
+   "gold": 5760,
+   "slots": 2
+  },
+  {
+   "name": "The Black Cane",
+   "baseType": "Royal Sceptre",
+   "dust": 26250,
+   "dustQ20": 36750,
+   "gold": 5760,
+   "slots": 6
+  },
+  {
+   "name": "Willowgift",
+   "baseType": "Jade Amulet",
+   "dust": 26250,
+   "dustQ20": 36750,
+   "gold": 5760,
+   "slots": 1
+  },
+  {
+   "name": "Eye of Malice",
+   "baseType": "Callous Mask",
+   "dust": 26250,
+   "dustQ20": 36750,
+   "gold": 5760,
+   "slots": 4
+  },
+  {
+   "name": "Ancient Skull",
+   "baseType": "Bone Helmet",
+   "dust": 26250,
+   "dustQ20": 36750,
+   "gold": 5760,
+   "slots": 4
+  },
+  {
+   "name": "Mind of the Council",
+   "baseType": "Harlequin Mask",
+   "dust": 26175,
+   "dustQ20": 36645,
+   "gold": 5760,
+   "slots": 4
+  },
+  {
+   "name": "The Crimson Storm",
+   "baseType": "Steelwood Bow",
+   "dust": 26175,
+   "dustQ20": 36645,
+   "gold": 5760,
+   "slots": 8
+  },
+  {
+   "name": "Kaom's Binding",
+   "baseType": "Heavy Belt",
+   "dust": 26175,
+   "dustQ20": 36645,
+   "gold": 5760,
+   "slots": 2
+  },
+  {
+   "name": "Contract: Breaking the Unbreakable",
+   "baseType": "Preventative Contract",
+   "dust": 25825,
+   "dustQ20": 36155,
+   "gold": 5720,
+   "slots": 1
+  },
+  {
+   "name": "Contract: The Slaver King",
+   "baseType": "Vigilante Contract",
+   "dust": 25825,
+   "dustQ20": 36155,
+   "gold": 5720,
+   "slots": 1
+  },
+  {
+   "name": "The Rat Cage",
+   "baseType": "Sharkskin Tunic",
+   "dust": 25400,
+   "dustQ20": 35560,
+   "gold": 5680,
+   "slots": 6
+  },
+  {
+   "name": "Craiceann's Carapace",
+   "baseType": "Golden Plate",
+   "dust": 25400,
+   "dustQ20": 35560,
+   "gold": 5680,
+   "slots": 6
+  },
+  {
+   "name": "Fate of the Vaal",
+   "baseType": "Gemstone Sword",
+   "dust": 25400,
+   "dustQ20": 35560,
+   "gold": 5680,
+   "slots": 3
+  },
+  {
+   "name": "Replica Dragonfang's Flight",
+   "baseType": "Onyx Amulet",
+   "dust": 25400,
+   "dustQ20": 35560,
+   "gold": 5680,
+   "slots": 1
+  },
+  {
+   "name": "Lioneye's Vision",
+   "baseType": "Crusader Plate",
+   "dust": 24750,
+   "dustQ20": 34650,
+   "gold": 5620,
+   "slots": 6
+  },
+  {
+   "name": "Brinerot Mark",
+   "baseType": "Unset Ring",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 1
+  },
+  {
+   "name": "Redblade Band",
+   "baseType": "Unset Ring",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 1
+  },
+  {
+   "name": "Mutewind Seal",
+   "baseType": "Unset Ring",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 1
+  },
+  {
+   "name": "Ngamahu's Flame",
+   "baseType": "Abyssal Axe",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 8
+  },
+  {
+   "name": "Omeyocan",
+   "baseType": "Carnal Boots",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 4
+  },
+  {
+   "name": "Tavukai",
+   "baseType": "Coral Amulet",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 1
+  },
+  {
+   "name": "Replica Three-step Assault",
+   "baseType": "Shagreen Boots",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 4
+  },
+  {
+   "name": "Temptation Step",
+   "baseType": "Shagreen Boots",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 4
+  },
+  {
+   "name": "Great Old One's Tentacles",
+   "baseType": "Eelskin Gloves",
+   "dust": 24025,
+   "dustQ20": 33635,
+   "gold": 5540,
+   "slots": 4
+  },
+  {
+   "name": "Ceaseless Feast",
+   "baseType": "Spiked Gloves",
+   "dust": 24025,
+   "dustQ20": 33635,
+   "gold": 5540,
+   "slots": 4
+  },
+  {
+   "name": "Inextricable Fate",
+   "baseType": "Fugitive Boots",
+   "dust": 24025,
+   "dustQ20": 33635,
+   "gold": 5540,
+   "slots": 4
+  },
+  {
+   "name": "Chitus' Apex",
+   "baseType": "Necromancer Circlet",
+   "dust": 23950,
+   "dustQ20": 33530,
+   "gold": 5520,
+   "slots": 4
+  },
+  {
+   "name": "Daresso's Courage",
+   "baseType": "Baroque Round Shield",
+   "dust": 23950,
+   "dustQ20": 33530,
+   "gold": 5520,
+   "slots": 6
+  },
+  {
+   "name": "Craiceann's Tracks",
+   "baseType": "Goliath Greaves",
+   "dust": 23950,
+   "dustQ20": 33530,
+   "gold": 5520,
+   "slots": 4
+  },
+  {
+   "name": "Fenumus' Toxins",
+   "baseType": "Necromancer Circlet",
+   "dust": 23950,
+   "dustQ20": 33530,
+   "gold": 5520,
+   "slots": 4
+  },
+  {
+   "name": "Eye of Innocence",
+   "baseType": "Citrine Amulet",
+   "dust": 23625,
+   "dustQ20": 33075,
+   "gold": 5500,
+   "slots": 1
+  },
+  {
+   "name": "Leper's Alms",
+   "baseType": "Mirrored Spiked Shield",
+   "dust": 23625,
+   "dustQ20": 33075,
+   "gold": 5500,
+   "slots": 4
+  },
+  {
+   "name": "Atziri's Foible",
+   "baseType": "Paua Amulet",
+   "dust": 23375,
+   "dustQ20": 32725,
+   "gold": 5460,
+   "slots": 1
+  },
+  {
+   "name": "Ahkeli's Meadow",
+   "baseType": "Ruby Ring",
+   "dust": 23375,
+   "dustQ20": 32725,
+   "gold": 5460,
+   "slots": 1
+  },
+  {
+   "name": "Replica Emberwake",
+   "baseType": "Ruby Ring",
+   "dust": 23375,
+   "dustQ20": 32725,
+   "gold": 5460,
+   "slots": 1
+  },
+  {
+   "name": "Dyadus",
+   "baseType": "Infernal Axe",
+   "dust": 23325,
+   "dustQ20": 32655,
+   "gold": 5460,
+   "slots": 6
+  },
+  {
+   "name": "Atziri's Step",
+   "baseType": "Slink Boots",
+   "dust": 23325,
+   "dustQ20": 32655,
+   "gold": 5460,
+   "slots": 4
+  },
+  {
+   "name": "Cherrubim's Maleficence",
+   "baseType": "Triumphant Lamellar",
+   "dust": 23325,
+   "dustQ20": 32655,
+   "gold": 5460,
+   "slots": 6
+  },
+  {
+   "name": "Eber's Unification",
+   "baseType": "Hubris Circlet",
+   "dust": 23325,
+   "dustQ20": 32655,
+   "gold": 5460,
+   "slots": 4
+  },
+  {
+   "name": "Medved's Challenge",
+   "baseType": "Runic Gauntlets",
+   "dust": 23325,
+   "dustQ20": 32655,
+   "gold": 5460,
+   "slots": 4
+  },
+  {
+   "name": "Rainbowstride",
+   "baseType": "Conjurer Boots",
+   "dust": 23250,
+   "dustQ20": 32550,
+   "gold": 5460,
+   "slots": 4
+  },
+  {
+   "name": "Apep's Rage",
+   "baseType": "Omen Wand",
+   "dust": 23250,
+   "dustQ20": 32550,
+   "gold": 5460,
+   "slots": 3
+  },
+  {
+   "name": "Lightpoacher",
+   "baseType": "Great Crown",
+   "dust": 23250,
+   "dustQ20": 32550,
+   "gold": 5460,
+   "slots": 4
+  },
+  {
+   "name": "Forbidden Shako",
+   "baseType": "Great Crown",
+   "dust": 23250,
+   "dustQ20": 32550,
+   "gold": 5460,
+   "slots": 4
+  },
+  {
+   "name": "Replica Infractem",
+   "baseType": "Decimation Bow",
+   "dust": 23250,
+   "dustQ20": 32550,
+   "gold": 5460,
+   "slots": 8
+  },
+  {
+   "name": "The Beast Fur Shawl",
+   "baseType": "Vaal Regalia",
+   "dust": 22650,
+   "dustQ20": 31710,
+   "gold": 5400,
+   "slots": 6
+  },
+  {
+   "name": "Touch of Anguish",
+   "baseType": "Imperial Claw",
+   "dust": 22650,
+   "dustQ20": 31710,
+   "gold": 5400,
+   "slots": 4
+  },
+  {
+   "name": "Ahn's Contempt",
+   "baseType": "Praetor Crown",
+   "dust": 22650,
+   "dustQ20": 31710,
+   "gold": 5400,
+   "slots": 4
+  },
+  {
+   "name": "Ahn's Might",
+   "baseType": "Midnight Blade",
+   "dust": 22650,
+   "dustQ20": 31710,
+   "gold": 5400,
+   "slots": 6
+  },
+  {
+   "name": "Gorgon's Gaze",
+   "baseType": "Regicide Mask",
+   "dust": 22575,
+   "dustQ20": 31605,
+   "gold": 5380,
+   "slots": 4
+  },
+  {
+   "name": "Profane Proxy",
+   "baseType": "Unset Ring",
+   "dust": 22575,
+   "dustQ20": 31605,
+   "gold": 5380,
+   "slots": 1
+  },
+  {
+   "name": "Witchhunter's Judgment",
+   "baseType": "Highborn Staff",
+   "dust": 22575,
+   "dustQ20": 31605,
+   "gold": 5380,
+   "slots": 8
+  },
+  {
+   "name": "Akoya's Gaze",
+   "baseType": "Regicide Mask",
+   "dust": 22575,
+   "dustQ20": 31605,
+   "gold": 5380,
+   "slots": 4
+  },
+  {
+   "name": "The Ephemeral Bond",
+   "baseType": "Lapis Amulet",
+   "dust": 22275,
+   "dustQ20": 31185,
+   "gold": 5360,
+   "slots": 1
+  },
+  {
+   "name": "Kongor's Undying Rage",
+   "baseType": "Terror Maul",
+   "dust": 21975,
+   "dustQ20": 30765,
+   "gold": 5320,
+   "slots": 8
+  },
+  {
+   "name": "Ahn's Heritage",
+   "baseType": "Colossal Tower Shield",
+   "dust": 21975,
+   "dustQ20": 30765,
+   "gold": 5320,
+   "slots": 8
+  },
+  {
+   "name": "Saqawal's Winds",
+   "baseType": "Soldier Gloves",
+   "dust": 21925,
+   "dustQ20": 30695,
+   "gold": 5320,
+   "slots": 4
+  },
+  {
+   "name": "Legacy of Fury",
+   "baseType": "Wyrmscale Boots",
+   "dust": 21925,
+   "dustQ20": 30695,
+   "gold": 5320,
+   "slots": 4
+  },
+  {
+   "name": "Devoto's Devotion",
+   "baseType": "Nightmare Bascinet",
+   "dust": 21625,
+   "dustQ20": 30275,
+   "gold": 5280,
+   "slots": 4
+  },
+  {
+   "name": "Bloodgrip",
+   "baseType": "Marble Amulet",
+   "dust": 21625,
+   "dustQ20": 30275,
+   "gold": 5280,
+   "slots": 1
+  },
+  {
+   "name": "Agnerod East",
+   "baseType": "Imperial Staff",
+   "dust": 21350,
+   "dustQ20": 29890,
+   "gold": 5260,
+   "slots": 8
+  },
+  {
+   "name": "Agnerod North",
+   "baseType": "Imperial Staff",
+   "dust": 21350,
+   "dustQ20": 29890,
+   "gold": 5260,
+   "slots": 8
+  },
+  {
+   "name": "Agnerod South",
+   "baseType": "Imperial Staff",
+   "dust": 21350,
+   "dustQ20": 29890,
+   "gold": 5260,
+   "slots": 8
+  },
+  {
+   "name": "Agnerod West",
+   "baseType": "Imperial Staff",
+   "dust": 21350,
+   "dustQ20": 29890,
+   "gold": 5260,
+   "slots": 8
+  },
+  {
+   "name": "Breath of the Council",
+   "baseType": "Carnal Sceptre",
+   "dust": 21350,
+   "dustQ20": 29890,
+   "gold": 5260,
+   "slots": 6
+  },
+  {
+   "name": "The Poised Prism",
+   "baseType": "Primal Arrow Quiver",
+   "dust": 21350,
+   "dustQ20": 29890,
+   "gold": 5260,
+   "slots": 6
+  },
+  {
+   "name": "Andvarius",
+   "baseType": "Gold Ring",
+   "dust": 21275,
+   "dustQ20": 29785,
+   "gold": 5240,
+   "slots": 1
+  },
+  {
+   "name": "Star of Wraeclast",
+   "baseType": "Ruby Amulet",
+   "dust": 21275,
+   "dustQ20": 29785,
+   "gold": 5240,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Fenumus' Weave",
+   "baseType": "Carnal Mitts",
+   "dust": 21275,
+   "dustQ20": 29785,
+   "gold": 5240,
+   "slots": 4
+  },
+  {
+   "name": "Replica Victario's Charity",
+   "baseType": "Laminated Kite Shield",
+   "dust": 21275,
+   "dustQ20": 29785,
+   "gold": 5240,
+   "slots": 6
+  },
+  {
+   "name": "Replica Heartbreaker",
+   "baseType": "Royal Skean",
+   "dust": 21275,
+   "dustQ20": 29785,
+   "gold": 5240,
+   "slots": 3
+  },
+  {
+   "name": "Worldcarver",
+   "baseType": "Dragonscale Gauntlets",
+   "dust": 21000,
+   "dustQ20": 29400,
+   "gold": 5220,
+   "slots": 4
+  },
+  {
+   "name": "Painseeker",
+   "baseType": "Shagreen Gloves",
+   "dust": 21000,
+   "dustQ20": 29400,
+   "gold": 5220,
+   "slots": 4
+  },
+  {
+   "name": "The Poet's Pen",
+   "baseType": "Carved Wand",
+   "dust": 20775,
+   "dustQ20": 29085,
+   "gold": 5180,
+   "slots": 3
+  },
+  {
+   "name": "Putembo's Mountain",
+   "baseType": "Topaz Ring",
+   "dust": 20775,
+   "dustQ20": 29085,
+   "gold": 5180,
+   "slots": 1
+  },
+  {
+   "name": "Rise of the Phoenix",
+   "baseType": "Mosaic Kite Shield",
+   "dust": 20725,
+   "dustQ20": 29015,
+   "gold": 5180,
+   "slots": 6
+  },
+  {
+   "name": "Darkray Vectors",
+   "baseType": "Dragonscale Boots",
+   "dust": 20725,
+   "dustQ20": 29015,
+   "gold": 5180,
+   "slots": 4
+  },
+  {
+   "name": "Vis Mortis",
+   "baseType": "Necromancer Silks",
+   "dust": 20725,
+   "dustQ20": 29015,
+   "gold": 5180,
+   "slots": 6
+  },
+  {
+   "name": "Ventor's Gamble",
+   "baseType": "Gold Ring",
+   "dust": 20725,
+   "dustQ20": 29015,
+   "gold": 5180,
+   "slots": 1
+  },
+  {
+   "name": "Malachai's Loop",
+   "baseType": "Harmonic Spirit Shield",
+   "dust": 20725,
+   "dustQ20": 29015,
+   "gold": 5180,
+   "slots": 4
+  },
+  {
+   "name": "Cane of Kulemak",
+   "baseType": "Serpentine Staff",
+   "dust": 20650,
+   "dustQ20": 28910,
+   "gold": 5180,
+   "slots": 8
+  },
+  {
+   "name": "The Scales of Justice",
+   "baseType": "Chiming Spirit Shield",
+   "dust": 20650,
+   "dustQ20": 28910,
+   "gold": 5180,
+   "slots": 4
+  },
+  {
+   "name": "Bound Fate",
+   "baseType": "Cloth Belt",
+   "dust": 20650,
+   "dustQ20": 28910,
+   "gold": 5180,
+   "slots": 2
+  },
+  {
+   "name": "Death's Hand",
+   "baseType": "Karui Sceptre",
+   "dust": 20400,
+   "dustQ20": 28560,
+   "gold": 5140,
+   "slots": 6
+  },
+  {
+   "name": "Doryani's Catalyst",
+   "baseType": "Vaal Sceptre",
+   "dust": 20125,
+   "dustQ20": 28175,
+   "gold": 5120,
+   "slots": 6
+  },
+  {
+   "name": "Soul Strike",
+   "baseType": "Spike-Point Arrow Quiver",
+   "dust": 20125,
+   "dustQ20": 28175,
+   "gold": 5120,
+   "slots": 6
+  },
+  {
+   "name": "Geofri's Sanctuary",
+   "baseType": "Elegant Ringmail",
+   "dust": 20125,
+   "dustQ20": 28175,
+   "gold": 5120,
+   "slots": 6
+  },
+  {
+   "name": "Hyrri's Truth",
+   "baseType": "Jade Amulet",
+   "dust": 20125,
+   "dustQ20": 28175,
+   "gold": 5120,
+   "slots": 1
+  },
+  {
+   "name": "Rashkaldor's Patience",
+   "baseType": "Jade Amulet",
+   "dust": 20050,
+   "dustQ20": 28070,
+   "gold": 5100,
+   "slots": 1
+  },
+  {
+   "name": "Maw of Conquest",
+   "baseType": "Steel Circlet",
+   "dust": 20050,
+   "dustQ20": 28070,
+   "gold": 5100,
+   "slots": 4
+  },
+  {
+   "name": "The Jinxed Juju",
+   "baseType": "Citrine Amulet",
+   "dust": 20050,
+   "dustQ20": 28070,
+   "gold": 5100,
+   "slots": 1
+  },
+  {
+   "name": "The Restless Ward",
+   "baseType": "Carnal Armour",
+   "dust": 19800,
+   "dustQ20": 27720,
+   "gold": 5080,
+   "slots": 6
+  },
+  {
+   "name": "Replica Siegebreaker",
+   "baseType": "Heavy Belt",
+   "dust": 19575,
+   "dustQ20": 27405,
+   "gold": 5040,
+   "slots": 2
+  },
+  {
+   "name": "Speaker's Wreath",
+   "baseType": "Prophet Crown",
+   "dust": 19525,
+   "dustQ20": 27335,
+   "gold": 5040,
+   "slots": 4
+  },
+  {
+   "name": "The Stampede",
+   "baseType": "Assassin's Boots",
+   "dust": 19525,
+   "dustQ20": 27335,
+   "gold": 5040,
+   "slots": 4
+  },
+  {
+   "name": "Actum",
+   "baseType": "Butcher Axe",
+   "dust": 19525,
+   "dustQ20": 27335,
+   "gold": 5040,
+   "slots": 6
+  },
+  {
+   "name": "Cerberus Limb",
+   "baseType": "Blood Sceptre",
+   "dust": 19475,
+   "dustQ20": 27265,
+   "gold": 5040,
+   "slots": 6
+  },
+  {
+   "name": "Replica Kalisa's Grace",
+   "baseType": "Samite Gloves",
+   "dust": 19475,
+   "dustQ20": 27265,
+   "gold": 5040,
+   "slots": 4
+  },
+  {
+   "name": "Replica Innsbury Edge",
+   "baseType": "Elder Sword",
+   "dust": 19475,
+   "dustQ20": 27265,
+   "gold": 5040,
+   "slots": 6
+  },
+  {
+   "name": "Jaws of Agony",
+   "baseType": "Supreme Spiked Shield",
+   "dust": 19225,
+   "dustQ20": 26915,
+   "gold": 5000,
+   "slots": 4
+  },
+  {
+   "name": "Rive",
+   "baseType": "Terror Claw",
+   "dust": 19225,
+   "dustQ20": 26915,
+   "gold": 5000,
+   "slots": 4
+  },
+  {
+   "name": "Mercenary's Lot",
+   "baseType": "Slink Gloves",
+   "dust": 19225,
+   "dustQ20": 26915,
+   "gold": 5000,
+   "slots": 4
+  },
+  {
+   "name": "The Oppressor",
+   "baseType": "Elegant Round Shield",
+   "dust": 19225,
+   "dustQ20": 26915,
+   "gold": 5000,
+   "slots": 6
+  },
+  {
+   "name": "Hyaon's Fury",
+   "baseType": "Legion Sword",
+   "dust": 18975,
+   "dustQ20": 26565,
+   "gold": 4980,
+   "slots": 6
+  },
+  {
+   "name": "Singularity",
+   "baseType": "Platinum Sceptre",
+   "dust": 18975,
+   "dustQ20": 26565,
+   "gold": 4980,
+   "slots": 6
+  },
+  {
+   "name": "Apep's Slumber",
+   "baseType": "Vaal Spirit Shield",
+   "dust": 18975,
+   "dustQ20": 26565,
+   "gold": 4980,
+   "slots": 4
+  },
+  {
+   "name": "Belly of the Beast",
+   "baseType": "Full Wyrmscale",
+   "dust": 18900,
+   "dustQ20": 26460,
+   "gold": 4980,
+   "slots": 6
+  },
+  {
+   "name": "Redblade Tramplers",
+   "baseType": "Ancient Greaves",
+   "dust": 18900,
+   "dustQ20": 26460,
+   "gold": 4980,
+   "slots": 4
+  },
+  {
+   "name": "Veruso's Battering Rams",
+   "baseType": "Titan Gauntlets",
+   "dust": 18650,
+   "dustQ20": 26110,
+   "gold": 4940,
+   "slots": 4
+  },
+  {
+   "name": "Asenath's Mark",
+   "baseType": "Iron Circlet",
+   "dust": 18450,
+   "dustQ20": 25830,
+   "gold": 4920,
+   "slots": 4
+  },
+  {
+   "name": "Uzaza's Valley",
+   "baseType": "Sapphire Ring",
+   "dust": 18450,
+   "dustQ20": 25830,
+   "gold": 4920,
+   "slots": 1
+  },
+  {
+   "name": "Scorpion's Call",
+   "baseType": "Heavy Arrow Quiver",
+   "dust": 18400,
+   "dustQ20": 25760,
+   "gold": 4920,
+   "slots": 6
+  },
+  {
+   "name": "Soulthirst",
+   "baseType": "Cloth Belt",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 2
+  },
+  {
+   "name": "The Tempest's Binding",
+   "baseType": "Callous Mask",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 4
+  },
+  {
+   "name": "Slavedriver's Hand",
+   "baseType": "Ambush Mitts",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 4
+  },
+  {
+   "name": "Vivinsect",
+   "baseType": "Unset Ring",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 1
+  },
+  {
+   "name": "Replica Malachai's Artifice",
+   "baseType": "Unset Ring",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 1
+  },
+  {
+   "name": "Replica Voideye",
+   "baseType": "Unset Ring",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 1
+  },
+  {
+   "name": "Rotblood Promise",
+   "baseType": "Unset Ring",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 1
+  },
+  {
+   "name": "Triumvirate Authority",
+   "baseType": "Unset Ring",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 1
+  },
+  {
+   "name": "Izaro's Dilemma",
+   "baseType": "Imperial Claw",
+   "dust": 18125,
+   "dustQ20": 25375,
+   "gold": 4880,
+   "slots": 4
+  },
+  {
+   "name": "Nuro's Harp",
+   "baseType": "Harbinger Bow",
+   "dust": 18125,
+   "dustQ20": 25375,
+   "gold": 4880,
+   "slots": 8
+  },
+  {
+   "name": "Xoph's Blood",
+   "baseType": "Amber Amulet",
+   "dust": 17900,
+   "dustQ20": 25060,
+   "gold": 4840,
+   "slots": 1
+  },
+  {
+   "name": "The Pandemonius",
+   "baseType": "Jade Amulet",
+   "dust": 17900,
+   "dustQ20": 25060,
+   "gold": 4840,
+   "slots": 1
+  },
+  {
+   "name": "Choir of the Storm",
+   "baseType": "Lapis Amulet",
+   "dust": 17900,
+   "dustQ20": 25060,
+   "gold": 4840,
+   "slots": 1
+  },
+  {
+   "name": "Replica Hyrri's Truth",
+   "baseType": "Jade Amulet",
+   "dust": 17900,
+   "dustQ20": 25060,
+   "gold": 4840,
+   "slots": 1
+  },
+  {
+   "name": "Starkonja's Head",
+   "baseType": "Silken Hood",
+   "dust": 17875,
+   "dustQ20": 25025,
+   "gold": 4840,
+   "slots": 4
+  },
+  {
+   "name": "Romira's Banquet",
+   "baseType": "Diamond Ring",
+   "dust": 17875,
+   "dustQ20": 25025,
+   "gold": 4840,
+   "slots": 1
+  },
+  {
+   "name": "Scaeva",
+   "baseType": "Gladius",
+   "dust": 17875,
+   "dustQ20": 25025,
+   "gold": 4840,
+   "slots": 6
+  },
+  {
+   "name": "Cane of Unravelling",
+   "baseType": "Ezomyte Staff",
+   "dust": 17875,
+   "dustQ20": 25025,
+   "gold": 4840,
+   "slots": 8
+  },
+  {
+   "name": "Soulwrest",
+   "baseType": "Ezomyte Staff",
+   "dust": 17875,
+   "dustQ20": 25025,
+   "gold": 4840,
+   "slots": 8
+  },
+  {
+   "name": "Cowl of the Thermophile",
+   "baseType": "Ezomyte Burgonet",
+   "dust": 17875,
+   "dustQ20": 25025,
+   "gold": 4840,
+   "slots": 4
+  },
+  {
+   "name": "Cowl of the Cryophile",
+   "baseType": "Silken Hood",
+   "dust": 17875,
+   "dustQ20": 25025,
+   "gold": 4840,
+   "slots": 4
+  },
+  {
+   "name": "The Blood Dance",
+   "baseType": "Sharkskin Boots",
+   "dust": 17825,
+   "dustQ20": 24955,
+   "gold": 4840,
+   "slots": 4
+  },
+  {
+   "name": "Hinekora's Sight",
+   "baseType": "Onyx Amulet",
+   "dust": 17825,
+   "dustQ20": 24955,
+   "gold": 4840,
+   "slots": 1
+  },
+  {
+   "name": "Replica Hinekora's Sight",
+   "baseType": "Onyx Amulet",
+   "dust": 17825,
+   "dustQ20": 24955,
+   "gold": 4840,
+   "slots": 1
+  },
+  {
+   "name": "Oro's Sacrifice",
+   "baseType": "Infernal Sword",
+   "dust": 17575,
+   "dustQ20": 24605,
+   "gold": 4820,
+   "slots": 8
+  },
+  {
+   "name": "Surgebinders",
+   "baseType": "Dragonscale Gauntlets",
+   "dust": 17575,
+   "dustQ20": 24605,
+   "gold": 4820,
+   "slots": 4
+  },
+  {
+   "name": "Piscator's Vigil",
+   "baseType": "Imbued Wand",
+   "dust": 17350,
+   "dustQ20": 24290,
+   "gold": 4780,
+   "slots": 3
+  },
+  {
+   "name": "The Dancing Dervish",
+   "baseType": "Reaver Sword",
+   "dust": 17350,
+   "dustQ20": 24290,
+   "gold": 4780,
+   "slots": 8
+  },
+  {
+   "name": "Hiltless",
+   "baseType": "Reaver Sword",
+   "dust": 17350,
+   "dustQ20": 24290,
+   "gold": 4780,
+   "slots": 8
+  },
+  {
+   "name": "Dendrobate",
+   "baseType": "Sentinel Jacket",
+   "dust": 17350,
+   "dustQ20": 24290,
+   "gold": 4780,
+   "slots": 6
+  },
+  {
+   "name": "Cowl of the Ceraunophile",
+   "baseType": "Solaris Circlet",
+   "dust": 17350,
+   "dustQ20": 24290,
+   "gold": 4780,
+   "slots": 4
+  },
+  {
+   "name": "Haemophilia",
+   "baseType": "Serpentscale Gauntlets",
+   "dust": 17300,
+   "dustQ20": 24220,
+   "gold": 4780,
+   "slots": 4
+  },
+  {
+   "name": "Volkuur's Guidance",
+   "baseType": "Zealot Gloves",
+   "dust": 17300,
+   "dustQ20": 24220,
+   "gold": 4780,
+   "slots": 4
+  },
+  {
+   "name": "Replica Volkuur's Guidance",
+   "baseType": "Zealot Gloves",
+   "dust": 17300,
+   "dustQ20": 24220,
+   "gold": 4780,
+   "slots": 4
+  },
+  {
+   "name": "Callinellus Malleus",
+   "baseType": "Auric Mace",
+   "dust": 17075,
+   "dustQ20": 23905,
+   "gold": 4740,
+   "slots": 6
+  },
+  {
+   "name": "The Goddess Unleashed",
+   "baseType": "Eternal Sword",
+   "dust": 17075,
+   "dustQ20": 23905,
+   "gold": 4740,
+   "slots": 6
+  },
+  {
+   "name": "Allure",
+   "baseType": "Vaal Claw",
+   "dust": 17075,
+   "dustQ20": 23905,
+   "gold": 4740,
+   "slots": 4
+  },
+  {
+   "name": "Debeon's Dirge",
+   "baseType": "Despot Axe",
+   "dust": 17075,
+   "dustQ20": 23905,
+   "gold": 4740,
+   "slots": 8
+  },
+  {
+   "name": "White Wind",
+   "baseType": "Imperial Skean",
+   "dust": 17075,
+   "dustQ20": 23905,
+   "gold": 4740,
+   "slots": 3
+  },
+  {
+   "name": "Kaom's Primacy",
+   "baseType": "Karui Chopper",
+   "dust": 80875,
+   "dustQ20": 113225,
+   "gold": 9560,
+   "slots": 8
+  },
+  {
+   "name": "Snakebite",
+   "baseType": "Assassin's Mitts",
+   "dust": 16850,
+   "dustQ20": 23590,
+   "gold": 4720,
+   "slots": 4
+  },
+  {
+   "name": "Ichimonji",
+   "baseType": "Corsair Sword",
+   "dust": 16850,
+   "dustQ20": 23590,
+   "gold": 4720,
+   "slots": 3
+  },
+  {
+   "name": "Mask of the Spirit Drinker",
+   "baseType": "Magistrate Crown",
+   "dust": 16850,
+   "dustQ20": 23590,
+   "gold": 4720,
+   "slots": 4
+  },
+  {
+   "name": "The Ghastly Theatre",
+   "baseType": "Teak Round Shield",
+   "dust": 16850,
+   "dustQ20": 23590,
+   "gold": 4720,
+   "slots": 6
+  },
+  {
+   "name": "The Gluttonous Tide",
+   "baseType": "Citadel Bow",
+   "dust": 16850,
+   "dustQ20": 23590,
+   "gold": 4720,
+   "slots": 8
+  },
+  {
+   "name": "Mutewind Pennant",
+   "baseType": "Enameled Buckler",
+   "dust": 16800,
+   "dustQ20": 23520,
+   "gold": 4720,
+   "slots": 4
+  },
+  {
+   "name": "Mutewind Whispersteps",
+   "baseType": "Serpentscale Boots",
+   "dust": 16800,
+   "dustQ20": 23520,
+   "gold": 4720,
+   "slots": 4
+  },
+  {
+   "name": "Tainted Pact",
+   "baseType": "Coral Amulet",
+   "dust": 16800,
+   "dustQ20": 23520,
+   "gold": 4720,
+   "slots": 1
+  },
+  {
+   "name": "Null and Void",
+   "baseType": "Legion Gloves",
+   "dust": 16350,
+   "dustQ20": 22890,
+   "gold": 4660,
+   "slots": 4
+  },
+  {
+   "name": "Kiloava's Bluster",
+   "baseType": "Ironwood Buckler",
+   "dust": 16350,
+   "dustQ20": 22890,
+   "gold": 4660,
+   "slots": 4
+  },
+  {
+   "name": "The Supreme Truth",
+   "baseType": "Crystal Sceptre",
+   "dust": 16300,
+   "dustQ20": 22820,
+   "gold": 4640,
+   "slots": 6
+  },
+  {
+   "name": "Nycta's Lantern",
+   "baseType": "Crystal Sceptre",
+   "dust": 16300,
+   "dustQ20": 22820,
+   "gold": 4640,
+   "slots": 6
+  },
+  {
+   "name": "Tremor Rod",
+   "baseType": "Military Staff",
+   "dust": 16300,
+   "dustQ20": 22820,
+   "gold": 4640,
+   "slots": 8
+  },
+  {
+   "name": "Brinerot Whalers",
+   "baseType": "Trapper Boots",
+   "dust": 16300,
+   "dustQ20": 22820,
+   "gold": 4640,
+   "slots": 4
+  },
+  {
+   "name": "Allelopathy",
+   "baseType": "Satin Gloves",
+   "dust": 16300,
+   "dustQ20": 22820,
+   "gold": 4640,
+   "slots": 4
+  },
+  {
+   "name": "Replica Allelopathy",
+   "baseType": "Satin Gloves",
+   "dust": 16300,
+   "dustQ20": 22820,
+   "gold": 4640,
+   "slots": 4
+  },
+  {
+   "name": "Mark of the Doubting Knight",
+   "baseType": "Platinum Kris",
+   "dust": 16100,
+   "dustQ20": 22540,
+   "gold": 4620,
+   "slots": 3
+  },
+  {
+   "name": "Skin of the Loyal",
+   "baseType": "Simple Robe",
+   "dust": 2775,
+   "dustQ20": 3885,
+   "gold": 2100,
+   "slots": 6
+  },
+  {
+   "name": "Replica Atziri's Foible",
+   "baseType": "Paua Amulet",
+   "dust": 15925,
+   "dustQ20": 22295,
+   "gold": 4600,
+   "slots": 1
+  },
+  {
+   "name": "Greed's Embrace",
+   "baseType": "Golden Plate",
+   "dust": 15875,
+   "dustQ20": 22225,
+   "gold": 4600,
+   "slots": 6
+  },
+  {
+   "name": "Story of the Vaal",
+   "baseType": "Gemstone Sword",
+   "dust": 15875,
+   "dustQ20": 22225,
+   "gold": 4600,
+   "slots": 3
+  },
+  {
+   "name": "Storm Secret",
+   "baseType": "Topaz Ring",
+   "dust": 15875,
+   "dustQ20": 22225,
+   "gold": 4600,
+   "slots": 1
+  },
+  {
+   "name": "Ahuana's Bite",
+   "baseType": "Sharktooth Arrow Quiver",
+   "dust": 15875,
+   "dustQ20": 22225,
+   "gold": 4600,
+   "slots": 6
+  },
+  {
+   "name": "Marylene's Fallacy",
+   "baseType": "Lapis Amulet",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 1
+  },
+  {
+   "name": "Call of the Brotherhood",
+   "baseType": "Two-Stone Ring",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 1
+  },
+  {
+   "name": "Emberwake",
+   "baseType": "Ruby Ring",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 1
+  },
+  {
+   "name": "Trypanon",
+   "baseType": "Great Mallet",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 8
+  },
+  {
+   "name": "Voice of the Storm",
+   "baseType": "Lapis Amulet",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 1
+  },
+  {
+   "name": "Fury Valve",
+   "baseType": "Turquoise Amulet",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 1
+  },
+  {
+   "name": "Mother's Embrace",
+   "baseType": "Heavy Belt",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 2
+  },
+  {
+   "name": "Blood Price",
+   "baseType": "Reaver Helmet",
+   "dust": 15825,
+   "dustQ20": 22155,
+   "gold": 4580,
+   "slots": 4
+  },
+  {
+   "name": "Thousand Teeth Temu",
+   "baseType": "Vaal Buckler",
+   "dust": 15625,
+   "dustQ20": 21875,
+   "gold": 4560,
+   "slots": 4
+  },
+  {
+   "name": "The Broken Crown",
+   "baseType": "Prophet Crown",
+   "dust": 15625,
+   "dustQ20": 21875,
+   "gold": 4560,
+   "slots": 4
+  },
+  {
+   "name": "The Retch",
+   "baseType": "Rustic Sash",
+   "dust": 15450,
+   "dustQ20": 21630,
+   "gold": 4540,
+   "slots": 2
+  },
+  {
+   "name": "Voidbringer",
+   "baseType": "Conjurer Gloves",
+   "dust": 15425,
+   "dustQ20": 21595,
+   "gold": 4540,
+   "slots": 4
+  },
+  {
+   "name": "Dance of the Offered",
+   "baseType": "Carnal Boots",
+   "dust": 15425,
+   "dustQ20": 21595,
+   "gold": 4540,
+   "slots": 4
+  },
+  {
+   "name": "Sin Trek",
+   "baseType": "Stealth Boots",
+   "dust": 15175,
+   "dustQ20": 21245,
+   "gold": 4500,
+   "slots": 4
+  },
+  {
+   "name": "Chin Sol",
+   "baseType": "Assassin Bow",
+   "dust": 15175,
+   "dustQ20": 21245,
+   "gold": 4500,
+   "slots": 8
+  },
+  {
+   "name": "Wings of Entropy",
+   "baseType": "Ezomyte Axe",
+   "dust": 15175,
+   "dustQ20": 21245,
+   "gold": 4500,
+   "slots": 8
+  },
+  {
+   "name": "Sinvicta's Mettle",
+   "baseType": "Ezomyte Axe",
+   "dust": 15175,
+   "dustQ20": 21245,
+   "gold": 4500,
+   "slots": 8
+  },
+  {
+   "name": "Voidhome",
+   "baseType": "Dread Maul",
+   "dust": 14975,
+   "dustQ20": 20965,
+   "gold": 4480,
+   "slots": 8
+  },
+  {
+   "name": "Pyroshock Clasp",
+   "baseType": "Leather Belt",
+   "dust": 14975,
+   "dustQ20": 20965,
+   "gold": 4480,
+   "slots": 2
+  },
+  {
+   "name": "Circle of Nostalgia",
+   "baseType": "Amethyst Ring",
+   "dust": 14925,
+   "dustQ20": 20895,
+   "gold": 4460,
+   "slots": 1
+  },
+  {
+   "name": "Chernobog's Pillar",
+   "baseType": "Ebony Tower Shield",
+   "dust": 14725,
+   "dustQ20": 20615,
+   "gold": 4440,
+   "slots": 8
+  },
+  {
+   "name": "Kingsguard",
+   "baseType": "Conquest Chainmail",
+   "dust": 14725,
+   "dustQ20": 20615,
+   "gold": 4440,
+   "slots": 6
+  },
+  {
+   "name": "Kondo's Pride",
+   "baseType": "Ezomyte Blade",
+   "dust": 14725,
+   "dustQ20": 20615,
+   "gold": 4440,
+   "slots": 8
+  },
+  {
+   "name": "Geofri's Crest",
+   "baseType": "Great Crown",
+   "dust": 14525,
+   "dustQ20": 20335,
+   "gold": 4420,
+   "slots": 4
+  },
+  {
+   "name": "Bronn's Lithe",
+   "baseType": "Cutthroat's Garb",
+   "dust": 14525,
+   "dustQ20": 20335,
+   "gold": 4420,
+   "slots": 6
+  },
+  {
+   "name": "The Consuming Dark",
+   "baseType": "Fiend Dagger",
+   "dust": 14525,
+   "dustQ20": 20335,
+   "gold": 4420,
+   "slots": 3
+  },
+  {
+   "name": "The Coming Calamity",
+   "baseType": "Destroyer Regalia",
+   "dust": 14525,
+   "dustQ20": 20335,
+   "gold": 4420,
+   "slots": 6
+  },
+  {
+   "name": "Command of the Pit",
+   "baseType": "Riveted Gloves",
+   "dust": 14500,
+   "dustQ20": 20300,
+   "gold": 4420,
+   "slots": 4
+  },
+  {
+   "name": "Replica Harvest",
+   "baseType": "Jasper Chopper",
+   "dust": 14500,
+   "dustQ20": 20300,
+   "gold": 4420,
+   "slots": 8
+  },
+  {
+   "name": "Cameria's Maul",
+   "baseType": "Gavel",
+   "dust": 14300,
+   "dustQ20": 20020,
+   "gold": 4380,
+   "slots": 6
+  },
+  {
+   "name": "Balefire",
+   "baseType": "Opal Sceptre",
+   "dust": 14300,
+   "dustQ20": 20020,
+   "gold": 4380,
+   "slots": 6
+  },
+  {
+   "name": "The Wasp Nest",
+   "baseType": "Throat Stabber",
+   "dust": 14300,
+   "dustQ20": 20020,
+   "gold": 4380,
+   "slots": 4
+  },
+  {
+   "name": "Taproot",
+   "baseType": "Ambusher",
+   "dust": 14300,
+   "dustQ20": 20020,
+   "gold": 4380,
+   "slots": 3
+  },
+  {
+   "name": "The Druggery",
+   "baseType": "Cloth Belt",
+   "dust": 14300,
+   "dustQ20": 20020,
+   "gold": 4380,
+   "slots": 2
+  },
+  {
+   "name": "Goblinedge",
+   "baseType": "Ambusher",
+   "dust": 14300,
+   "dustQ20": 20020,
+   "gold": 4380,
+   "slots": 3
+  },
+  {
+   "name": "The Redblade",
+   "baseType": "Gladius",
+   "dust": 14300,
+   "dustQ20": 20020,
+   "gold": 4380,
+   "slots": 6
+  },
+  {
+   "name": "Victario's Influence",
+   "baseType": "Lacquered Garb",
+   "dust": 14100,
+   "dustQ20": 19740,
+   "gold": 4360,
+   "slots": 6
+  },
+  {
+   "name": "Crown of the Pale King",
+   "baseType": "Regicide Mask",
+   "dust": 14100,
+   "dustQ20": 19740,
+   "gold": 4360,
+   "slots": 4
+  },
+  {
+   "name": "Oskarm",
+   "baseType": "Nubuck Gloves",
+   "dust": 14100,
+   "dustQ20": 19740,
+   "gold": 4360,
+   "slots": 4
+  },
+  {
+   "name": "Aurseize",
+   "baseType": "Steelscale Gauntlets",
+   "dust": 14075,
+   "dustQ20": 19705,
+   "gold": 4360,
+   "slots": 4
+  },
+  {
+   "name": "Tombfist",
+   "baseType": "Steelscale Gauntlets",
+   "dust": 14075,
+   "dustQ20": 19705,
+   "gold": 4360,
+   "slots": 4
+  },
+  {
+   "name": "Vixen's Entrapment",
+   "baseType": "Embroidered Gloves",
+   "dust": 14075,
+   "dustQ20": 19705,
+   "gold": 4360,
+   "slots": 4
+  },
+  {
+   "name": "Moonsorrow",
+   "baseType": "Imbued Wand",
+   "dust": 13875,
+   "dustQ20": 19425,
+   "gold": 4320,
+   "slots": 3
+  },
+  {
+   "name": "Obliteration",
+   "baseType": "Imbued Wand",
+   "dust": 13875,
+   "dustQ20": 19425,
+   "gold": 4320,
+   "slots": 3
+  },
+  {
+   "name": "Replica Soul Taker",
+   "baseType": "Siege Axe",
+   "dust": 13875,
+   "dustQ20": 19425,
+   "gold": 4320,
+   "slots": 6
+  },
+  {
+   "name": "The Dancing Duo",
+   "baseType": "Reaver Sword",
+   "dust": 13875,
+   "dustQ20": 19425,
+   "gold": 4320,
+   "slots": 8
+  },
+  {
+   "name": "The Fledgling",
+   "baseType": "Lacquered Helmet",
+   "dust": 13700,
+   "dustQ20": 19180,
+   "gold": 4300,
+   "slots": 4
+  },
+  {
+   "name": "Voll's Protector",
+   "baseType": "Holy Chainmail",
+   "dust": 13650,
+   "dustQ20": 19110,
+   "gold": 4300,
+   "slots": 6
+  },
+  {
+   "name": "Meginord's Vise",
+   "baseType": "Steel Gauntlets",
+   "dust": 13650,
+   "dustQ20": 19110,
+   "gold": 4300,
+   "slots": 4
+  },
+  {
+   "name": "Redblade Banner",
+   "baseType": "Painted Tower Shield",
+   "dust": 13650,
+   "dustQ20": 19110,
+   "gold": 4300,
+   "slots": 8
+  },
+  {
+   "name": "Xoph's Heart",
+   "baseType": "Amber Amulet",
+   "dust": 13650,
+   "dustQ20": 19110,
+   "gold": 4300,
+   "slots": 1
+  },
+  {
+   "name": "The Halcyon",
+   "baseType": "Jade Amulet",
+   "dust": 13650,
+   "dustQ20": 19110,
+   "gold": 4300,
+   "slots": 1
+  },
+  {
+   "name": "Replica Earendel's Embrace",
+   "baseType": "Grinning Fetish",
+   "dust": 13650,
+   "dustQ20": 19110,
+   "gold": 4300,
+   "slots": 6
+  },
+  {
+   "name": "Gang's Momentum",
+   "baseType": "Legion Boots",
+   "dust": 13475,
+   "dustQ20": 18865,
+   "gold": 4260,
+   "slots": 4
+  },
+  {
+   "name": "Femurs of the Saints",
+   "baseType": "Primordial Staff",
+   "dust": 13475,
+   "dustQ20": 18865,
+   "gold": 4260,
+   "slots": 8
+  },
+  {
+   "name": "March of the Legion",
+   "baseType": "Legion Boots",
+   "dust": 13475,
+   "dustQ20": 18865,
+   "gold": 4260,
+   "slots": 4
+  },
+  {
+   "name": "Sign of the Sin Eater",
+   "baseType": "Tyrant's Sekhem",
+   "dust": 13475,
+   "dustQ20": 18865,
+   "gold": 4260,
+   "slots": 6
+  },
+  {
+   "name": "Rotting Legion",
+   "baseType": "Loricated Ringmail",
+   "dust": 13475,
+   "dustQ20": 18865,
+   "gold": 4260,
+   "slots": 6
+  },
+  {
+   "name": "The Burden of Shadows",
+   "baseType": "Primordial Staff",
+   "dust": 13475,
+   "dustQ20": 18865,
+   "gold": 4260,
+   "slots": 8
+  },
+  {
+   "name": "Warped Timepiece",
+   "baseType": "Turquoise Amulet",
+   "dust": 13300,
+   "dustQ20": 18620,
+   "gold": 4240,
+   "slots": 1
+  },
+  {
+   "name": "Heartbound Loop",
+   "baseType": "Moonstone Ring",
+   "dust": 13300,
+   "dustQ20": 18620,
+   "gold": 4240,
+   "slots": 1
+  },
+  {
+   "name": "Frostbreath",
+   "baseType": "Ornate Mace",
+   "dust": 13300,
+   "dustQ20": 18620,
+   "gold": 4240,
+   "slots": 6
+  },
+  {
+   "name": "Darkness Enthroned",
+   "baseType": "Stygian Vise",
+   "dust": 13300,
+   "dustQ20": 18620,
+   "gold": 4240,
+   "slots": 2
+  },
+  {
+   "name": "Perquil's Toe",
+   "baseType": "Gold Amulet",
+   "dust": 13300,
+   "dustQ20": 18620,
+   "gold": 4240,
+   "slots": 1
+  },
+  {
+   "name": "Nametaker",
+   "baseType": "Graceful Sword",
+   "dust": 13300,
+   "dustQ20": 18620,
+   "gold": 4240,
+   "slots": 6
+  },
+  {
+   "name": "Soul Mantle",
+   "baseType": "Spidersilk Robe",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 6
+  },
+  {
+   "name": "Alberon's Warpath",
+   "baseType": "Soldier Boots",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 4
+  },
+  {
+   "name": "Sire of Shards",
+   "baseType": "Serpentine Staff",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 8
+  },
+  {
+   "name": "Wyrmsign",
+   "baseType": "Wyrmscale Gauntlets",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 4
+  },
+  {
+   "name": "Venopuncture",
+   "baseType": "Iron Ring",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 1
+  },
+  {
+   "name": "Icefang Orbit",
+   "baseType": "Iron Ring",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 1
+  },
+  {
+   "name": "Shattershard",
+   "baseType": "Crimson Round Shield",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 6
+  },
+  {
+   "name": "Steelworm",
+   "baseType": "Broadhead Arrow Quiver",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 6
+  },
+  {
+   "name": "Tanu Ahi",
+   "baseType": "Wyrmscale Gauntlets",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 4
+  },
+  {
+   "name": "Bloodsoaked Medallion",
+   "baseType": "Amber Amulet",
+   "dust": 12925,
+   "dustQ20": 18095,
+   "gold": 4180,
+   "slots": 1
+  },
+  {
+   "name": "Windscream",
+   "baseType": "Reinforced Greaves",
+   "dust": 12875,
+   "dustQ20": 18025,
+   "gold": 4180,
+   "slots": 4
+  },
+  {
+   "name": "Deidbell",
+   "baseType": "Gilded Sallet",
+   "dust": 12875,
+   "dustQ20": 18025,
+   "gold": 4180,
+   "slots": 4
+  },
+  {
+   "name": "The Whispering Ice",
+   "baseType": "Vile Staff",
+   "dust": 12875,
+   "dustQ20": 18025,
+   "gold": 4180,
+   "slots": 8
+  },
+  {
+   "name": "Gluttony",
+   "baseType": "Leather Belt",
+   "dust": 12525,
+   "dustQ20": 17535,
+   "gold": 4140,
+   "slots": 2
+  },
+  {
+   "name": "Nightgrip",
+   "baseType": "Runic Gages",
+   "dust": 12525,
+   "dustQ20": 17535,
+   "gold": 4140,
+   "slots": 4
+  },
+  {
+   "name": "Olroth's Charge",
+   "baseType": "Runic Sollerets",
+   "dust": 12525,
+   "dustQ20": 17535,
+   "gold": 4140,
+   "slots": 4
+  },
+  {
+   "name": "Sudden Dawn",
+   "baseType": "Steel Circlet",
+   "dust": 12525,
+   "dustQ20": 17535,
+   "gold": 4140,
+   "slots": 4
+  },
+  {
+   "name": "Ephemeral Edge",
+   "baseType": "Dusk Blade",
+   "dust": 625025,
+   "dustQ20": 875035,
+   "gold": 24000,
+   "slots": 6
+  },
+  {
+   "name": "Death's Harp",
+   "baseType": "Death Bow",
+   "dust": 12500,
+   "dustQ20": 17500,
+   "gold": 4120,
+   "slots": 8
+  },
+  {
+   "name": "Bitterdream",
+   "baseType": "Shadow Sceptre",
+   "dust": 12500,
+   "dustQ20": 17500,
+   "gold": 4120,
+   "slots": 6
+  },
+  {
+   "name": "Replica Iron Commander",
+   "baseType": "Death Bow",
+   "dust": 12500,
+   "dustQ20": 17500,
+   "gold": 4120,
+   "slots": 8
+  },
+  {
+   "name": "Hrimnor's Resolve",
+   "baseType": "Samnite Helmet",
+   "dust": 12325,
+   "dustQ20": 17255,
+   "gold": 4100,
+   "slots": 4
+  },
+  {
+   "name": "Rat's Nest",
+   "baseType": "Ursine Pelt",
+   "dust": 12325,
+   "dustQ20": 17255,
+   "gold": 4100,
+   "slots": 4
+  },
+  {
+   "name": "Maloney's Nightfall",
+   "baseType": "Vile Arrow Quiver",
+   "dust": 12325,
+   "dustQ20": 17255,
+   "gold": 4100,
+   "slots": 6
+  },
+  {
+   "name": "Three-step Assault",
+   "baseType": "Shagreen Boots",
+   "dust": 12325,
+   "dustQ20": 17255,
+   "gold": 4100,
+   "slots": 4
+  },
+  {
+   "name": "The Ascetic",
+   "baseType": "Gold Amulet",
+   "dust": 12325,
+   "dustQ20": 17255,
+   "gold": 4100,
+   "slots": 1
+  },
+  {
+   "name": "The Highwayman",
+   "baseType": "Gold Ring",
+   "dust": 12325,
+   "dustQ20": 17255,
+   "gold": 4100,
+   "slots": 1
+  },
+  {
+   "name": "Innsbury Edge",
+   "baseType": "Elder Sword",
+   "dust": 12175,
+   "dustQ20": 17045,
+   "gold": 4080,
+   "slots": 6
+  },
+  {
+   "name": "The Fracturing Spinner",
+   "baseType": "Blunt Arrow Quiver",
+   "dust": 12125,
+   "dustQ20": 16975,
+   "gold": 4080,
+   "slots": 6
+  },
+  {
+   "name": "Atziri's Mirror",
+   "baseType": "Golden Buckler",
+   "dust": 11975,
+   "dustQ20": 16765,
+   "gold": 4040,
+   "slots": 4
+  },
+  {
+   "name": "Great Old One's Ward",
+   "baseType": "Corrugated Buckler",
+   "dust": 11825,
+   "dustQ20": 16555,
+   "gold": 4019,
+   "slots": 4
+  },
+  {
+   "name": "Replica Advancing Fortress",
+   "baseType": "Gut Ripper",
+   "dust": 11825,
+   "dustQ20": 16555,
+   "gold": 4019,
+   "slots": 4
+  },
+  {
+   "name": "Kahuturoa's Certainty",
+   "baseType": "Ancient Greaves",
+   "dust": 11825,
+   "dustQ20": 16555,
+   "gold": 4019,
+   "slots": 4
+  },
+  {
+   "name": "Umbilicus Immortalis",
+   "baseType": "Leather Belt",
+   "dust": 11775,
+   "dustQ20": 16485,
+   "gold": 4019,
+   "slots": 2
+  },
+  {
+   "name": "Xirgil's Crank",
+   "baseType": "Coiled Staff",
+   "dust": 11775,
+   "dustQ20": 16485,
+   "gold": 4019,
+   "slots": 8
+  },
+  {
+   "name": "Bisco's Collar",
+   "baseType": "Gold Amulet",
+   "dust": 11775,
+   "dustQ20": 16485,
+   "gold": 4019,
+   "slots": 1
+  },
+  {
+   "name": "Bisco's Leash",
+   "baseType": "Heavy Belt",
+   "dust": 11775,
+   "dustQ20": 16485,
+   "gold": 4019,
+   "slots": 2
+  },
+  {
+   "name": "Replica Lioneye's Paws",
+   "baseType": "Bronzescale Boots",
+   "dust": 11775,
+   "dustQ20": 16485,
+   "gold": 4019,
+   "slots": 4
+  },
+  {
+   "name": "Relic of the Pact",
+   "baseType": "Sage Wand",
+   "dust": 11775,
+   "dustQ20": 16485,
+   "gold": 4019,
+   "slots": 3
+  },
+  {
+   "name": "Infractem",
+   "baseType": "Decimation Bow",
+   "dust": 11625,
+   "dustQ20": 16275,
+   "gold": 4000,
+   "slots": 8
+  },
+  {
+   "name": "Prismatic Eclipse",
+   "baseType": "Twilight Blade",
+   "dust": 11625,
+   "dustQ20": 16275,
+   "gold": 4000,
+   "slots": 6
+  },
+  {
+   "name": "Empire's Grasp",
+   "baseType": "Goliath Gauntlets",
+   "dust": 11625,
+   "dustQ20": 16275,
+   "gold": 4000,
+   "slots": 4
+  },
+  {
+   "name": "Replica Forbidden Shako",
+   "baseType": "Great Crown",
+   "dust": 11625,
+   "dustQ20": 16275,
+   "gold": 4000,
+   "slots": 4
+  },
+  {
+   "name": "Geofri's Legacy",
+   "baseType": "Great Crown",
+   "dust": 11625,
+   "dustQ20": 16275,
+   "gold": 4000,
+   "slots": 4
+  },
+  {
+   "name": "Voideye",
+   "baseType": "Unset Ring",
+   "dust": 11475,
+   "dustQ20": 16065,
+   "gold": 3980,
+   "slots": 1
+  },
+  {
+   "name": "Malachai's Artifice",
+   "baseType": "Unset Ring",
+   "dust": 11475,
+   "dustQ20": 16065,
+   "gold": 3980,
+   "slots": 1
+  },
+  {
+   "name": "Kongming's Stratagem",
+   "baseType": "Ancient Spirit Shield",
+   "dust": 11475,
+   "dustQ20": 16065,
+   "gold": 3980,
+   "slots": 4
+  },
+  {
+   "name": "Essence Worm",
+   "baseType": "Unset Ring",
+   "dust": 11475,
+   "dustQ20": 16065,
+   "gold": 3980,
+   "slots": 1
+  },
+  {
+   "name": "Architect's Hand",
+   "baseType": "Ambush Mitts",
+   "dust": 11475,
+   "dustQ20": 16065,
+   "gold": 3980,
+   "slots": 4
+  },
+  {
+   "name": "The Annihilating Light",
+   "baseType": "Quarterstaff",
+   "dust": 11475,
+   "dustQ20": 16065,
+   "gold": 3980,
+   "slots": 8
+  },
+  {
+   "name": "Stormseeker",
+   "baseType": "Ambush Mitts",
+   "dust": 11475,
+   "dustQ20": 16065,
+   "gold": 3980,
+   "slots": 4
+  },
+  {
+   "name": "The Geomantic Gyre",
+   "baseType": "Highborn Staff",
+   "dust": 11300,
+   "dustQ20": 15820,
+   "gold": 3940,
+   "slots": 8
+  },
+  {
+   "name": "Maligaro's Restraint",
+   "baseType": "Chain Belt",
+   "dust": 11150,
+   "dustQ20": 15610,
+   "gold": 3920,
+   "slots": 2
+  },
+  {
+   "name": "Jorrhast's Blacksteel",
+   "baseType": "Steelhead",
+   "dust": 11150,
+   "dustQ20": 15610,
+   "gold": 3920,
+   "slots": 8
+  },
+  {
+   "name": "Natural Hierarchy",
+   "baseType": "Rotfeather Talisman",
+   "dust": 53475,
+   "dustQ20": 74865,
+   "gold": 7940,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Ascent From Flesh",
+   "baseType": "Chain Belt",
+   "dust": 11150,
+   "dustQ20": 15610,
+   "gold": 3920,
+   "slots": 2
+  },
+  {
+   "name": "Kitava's Thirst",
+   "baseType": "Zealot Helmet",
+   "dust": 11150,
+   "dustQ20": 15610,
+   "gold": 3920,
+   "slots": 4
+  },
+  {
+   "name": "Soulbound",
+   "baseType": "Paua Ring",
+   "dust": 11150,
+   "dustQ20": 15610,
+   "gold": 3920,
+   "slots": 1
+  },
+  {
+   "name": "Doomfletch",
+   "baseType": "Royal Bow",
+   "dust": 11100,
+   "dustQ20": 15540,
+   "gold": 3920,
+   "slots": 8
+  },
+  {
+   "name": "Brutus' Lead Sprinkler",
+   "baseType": "Ritual Sceptre",
+   "dust": 11100,
+   "dustQ20": 15540,
+   "gold": 3920,
+   "slots": 6
+  },
+  {
+   "name": "Terminus Est",
+   "baseType": "Tiger Sword",
+   "dust": 10950,
+   "dustQ20": 15330,
+   "gold": 3880,
+   "slots": 8
+  },
+  {
+   "name": "Black Sun Crest",
+   "baseType": "Lacquered Helmet",
+   "dust": 10950,
+   "dustQ20": 15330,
+   "gold": 3880,
+   "slots": 4
+  },
+  {
+   "name": "Southbound",
+   "baseType": "Soldier Gloves",
+   "dust": 10950,
+   "dustQ20": 15330,
+   "gold": 3880,
+   "slots": 4
+  },
+  {
+   "name": "Ambu's Charge",
+   "baseType": "Crusader Chainmail",
+   "dust": 10825,
+   "dustQ20": 15155,
+   "gold": 3860,
+   "slots": 6
+  },
+  {
+   "name": "Replica Ambu's Charge",
+   "baseType": "Crusader Chainmail",
+   "dust": 10825,
+   "dustQ20": 15155,
+   "gold": 3860,
+   "slots": 6
+  },
+  {
+   "name": "Vaal Caress",
+   "baseType": "Bronzescale Gauntlets",
+   "dust": 10775,
+   "dustQ20": 15085,
+   "gold": 3860,
+   "slots": 4
+  },
+  {
+   "name": "Heartbreaker",
+   "baseType": "Royal Skean",
+   "dust": 10650,
+   "dustQ20": 14910,
+   "gold": 3840,
+   "slots": 3
+  },
+  {
+   "name": "Immortal Flesh",
+   "baseType": "Leather Belt",
+   "dust": 10650,
+   "dustQ20": 14910,
+   "gold": 3840,
+   "slots": 2
+  },
+  {
+   "name": "Victario's Charity",
+   "baseType": "Laminated Kite Shield",
+   "dust": 10650,
+   "dustQ20": 14910,
+   "gold": 3840,
+   "slots": 6
+  },
+  {
+   "name": "The Embalmer",
+   "baseType": "Carnal Mitts",
+   "dust": 10650,
+   "dustQ20": 14910,
+   "gold": 3840,
+   "slots": 4
+  },
+  {
+   "name": "Zeel's Amplifier",
+   "baseType": "Polished Spiked Shield",
+   "dust": 10325,
+   "dustQ20": 14455,
+   "gold": 3780,
+   "slots": 4
+  },
+  {
+   "name": "The Eternal Apple",
+   "baseType": "Chiming Spirit Shield",
+   "dust": 10325,
+   "dustQ20": 14455,
+   "gold": 3780,
+   "slots": 4
+  },
+  {
+   "name": "Pragmatism",
+   "baseType": "Colosseum Plate",
+   "dust": 10325,
+   "dustQ20": 14455,
+   "gold": 3780,
+   "slots": 6
+  },
+  {
+   "name": "Demon Stitcher",
+   "baseType": "Satin Gloves",
+   "dust": 10200,
+   "dustQ20": 14280,
+   "gold": 3760,
+   "slots": 4
+  },
+  {
+   "name": "Eye of Chayula",
+   "baseType": "Onyx Amulet",
+   "dust": 10175,
+   "dustQ20": 14245,
+   "gold": 3760,
+   "slots": 1
+  },
+  {
+   "name": "The Eternal Struggle",
+   "baseType": "Onyx Amulet",
+   "dust": 10175,
+   "dustQ20": 14245,
+   "gold": 3760,
+   "slots": 1
+  },
+  {
+   "name": "Midnight Bargain",
+   "baseType": "Engraved Wand",
+   "dust": 9900,
+   "dustQ20": 13860,
+   "gold": 3720,
+   "slots": 3
+  },
+  {
+   "name": "Ceinture of Benevolence",
+   "baseType": "Cloth Belt",
+   "dust": 9900,
+   "dustQ20": 13860,
+   "gold": 3720,
+   "slots": 2
+  },
+  {
+   "name": "Dream Fragments",
+   "baseType": "Sapphire Ring",
+   "dust": 9875,
+   "dustQ20": 13825,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "Reverberation Rod",
+   "baseType": "Spiraled Wand",
+   "dust": 9875,
+   "dustQ20": 13825,
+   "gold": 3720,
+   "slots": 3
+  },
+  {
+   "name": "Winterweave",
+   "baseType": "Coral Ring",
+   "dust": 9875,
+   "dustQ20": 13825,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "Bloodboil",
+   "baseType": "Coral Ring",
+   "dust": 9875,
+   "dustQ20": 13825,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "Doedre's Tongue",
+   "baseType": "Lapis Amulet",
+   "dust": 9875,
+   "dustQ20": 13825,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "Kalisa's Grace",
+   "baseType": "Samite Gloves",
+   "dust": 9750,
+   "dustQ20": 13650,
+   "gold": 3680,
+   "slots": 4
+  },
+  {
+   "name": "Lightbane Raiment",
+   "baseType": "Ornate Ringmail",
+   "dust": 9750,
+   "dustQ20": 13650,
+   "gold": 3680,
+   "slots": 6
+  },
+  {
+   "name": "Doedre's Scorn",
+   "baseType": "Lunaris Circlet",
+   "dust": 9600,
+   "dustQ20": 13440,
+   "gold": 3660,
+   "slots": 4
+  },
+  {
+   "name": "Moonbender's Wing",
+   "baseType": "Tomahawk",
+   "dust": 9600,
+   "dustQ20": 13440,
+   "gold": 3660,
+   "slots": 6
+  },
+  {
+   "name": "The Flawed Refuge",
+   "baseType": "Maple Round Shield",
+   "dust": 9600,
+   "dustQ20": 13440,
+   "gold": 3660,
+   "slots": 6
+  },
+  {
+   "name": "Ungil's Harmony",
+   "baseType": "Turquoise Amulet",
+   "dust": 9575,
+   "dustQ20": 13405,
+   "gold": 3660,
+   "slots": 1
+  },
+  {
+   "name": "Brinerot Flag",
+   "baseType": "Tarnished Spirit Shield",
+   "dust": 9575,
+   "dustQ20": 13405,
+   "gold": 3660,
+   "slots": 4
+  },
+  {
+   "name": "Ornament of the East",
+   "baseType": "Gut Ripper",
+   "dust": 9450,
+   "dustQ20": 13230,
+   "gold": 3640,
+   "slots": 4
+  },
+  {
+   "name": "Advancing Fortress",
+   "baseType": "Gut Ripper",
+   "dust": 9450,
+   "dustQ20": 13230,
+   "gold": 3640,
+   "slots": 4
+  },
+  {
+   "name": "Valako's Sign",
+   "baseType": "Topaz Ring",
+   "dust": 9325,
+   "dustQ20": 13055,
+   "gold": 3620,
+   "slots": 1
+  },
+  {
+   "name": "Replica Bones of Ullr",
+   "baseType": "Silk Slippers",
+   "dust": 9300,
+   "dustQ20": 13020,
+   "gold": 3620,
+   "slots": 4
+  },
+  {
+   "name": "The Blood Reaper",
+   "baseType": "Headsman Axe",
+   "dust": 9175,
+   "dustQ20": 12845,
+   "gold": 3600,
+   "slots": 8
+  },
+  {
+   "name": "Sibyl's Lament",
+   "baseType": "Coral Ring",
+   "dust": 9175,
+   "dustQ20": 12845,
+   "gold": 3600,
+   "slots": 1
+  },
+  {
+   "name": "The Anvil",
+   "baseType": "Amber Amulet",
+   "dust": 9175,
+   "dustQ20": 12845,
+   "gold": 3600,
+   "slots": 1
+  },
+  {
+   "name": "Maligaro's Lens",
+   "baseType": "Compound Spiked Shield",
+   "dust": 9175,
+   "dustQ20": 12845,
+   "gold": 3600,
+   "slots": 4
+  },
+  {
+   "name": "Mark of Submission",
+   "baseType": "Unset Ring",
+   "dust": 9175,
+   "dustQ20": 12845,
+   "gold": 3600,
+   "slots": 1
+  },
+  {
+   "name": "The Signal Fire",
+   "baseType": "Blazing Arrow Quiver",
+   "dust": 9175,
+   "dustQ20": 12845,
+   "gold": 3600,
+   "slots": 6
+  },
+  {
+   "name": "Corona Solaris",
+   "baseType": "Crystal Wand",
+   "dust": 9175,
+   "dustQ20": 12845,
+   "gold": 3600,
+   "slots": 3
+  },
+  {
+   "name": "The Harvest",
+   "baseType": "Jasper Chopper",
+   "dust": 9050,
+   "dustQ20": 12670,
+   "gold": 3560,
+   "slots": 8
+  },
+  {
+   "name": "Rigwald's Charge",
+   "baseType": "Highland Blade",
+   "dust": 8900,
+   "dustQ20": 12460,
+   "gold": 3540,
+   "slots": 8
+  },
+  {
+   "name": "Widowmaker",
+   "baseType": "Boot Blade",
+   "dust": 8900,
+   "dustQ20": 12460,
+   "gold": 3540,
+   "slots": 3
+  },
+  {
+   "name": "Siegebreaker",
+   "baseType": "Heavy Belt",
+   "dust": 8900,
+   "dustQ20": 12460,
+   "gold": 3540,
+   "slots": 2
+  },
+  {
+   "name": "Tawhanuku's Timing",
+   "baseType": "Moonstone Ring",
+   "dust": 8900,
+   "dustQ20": 12460,
+   "gold": 3540,
+   "slots": 1
+  },
+  {
+   "name": "Heatshiver",
+   "baseType": "Leather Hood",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 4
+  },
+  {
+   "name": "Berek's Respite",
+   "baseType": "Two-Stone Ring",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 1
+  },
+  {
+   "name": "Rigwald's Crest",
+   "baseType": "Two-Stone Ring",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 1
+  },
+  {
+   "name": "The Flow Untethered",
+   "baseType": "Cloth Belt",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 2
+  },
+  {
+   "name": "Replica Tempestuous Steel",
+   "baseType": "War Sword",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 6
+  },
+  {
+   "name": "Arn's Anguish",
+   "baseType": "Cloth Belt",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 2
+  },
+  {
+   "name": "Olesya's Delight",
+   "baseType": "Cloth Belt",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 2
+  },
+  {
+   "name": "Graven's Secret",
+   "baseType": "Cloth Belt",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 2
+  },
+  {
+   "name": "Ixchel's Temptation",
+   "baseType": "Gold Ring",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Replica Heatshiver",
+   "baseType": "Leather Hood",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 4
+  },
+  {
+   "name": "Daresso's Passion",
+   "baseType": "Estoc",
+   "dust": 8650,
+   "dustQ20": 12110,
+   "gold": 3500,
+   "slots": 4
+  },
+  {
+   "name": "El'Abin's Visage",
+   "baseType": "Fencer Helm",
+   "dust": 8650,
+   "dustQ20": 12110,
+   "gold": 3500,
+   "slots": 4
+  },
+  {
+   "name": "Bloodbond",
+   "baseType": "Bone Armour",
+   "dust": 8525,
+   "dustQ20": 11935,
+   "gold": 3480,
+   "slots": 6
+  },
+  {
+   "name": "Wurm's Molt",
+   "baseType": "Leather Belt",
+   "dust": 8400,
+   "dustQ20": 11760,
+   "gold": 3460,
+   "slots": 2
+  },
+  {
+   "name": "Winterheart",
+   "baseType": "Gold Amulet",
+   "dust": 8400,
+   "dustQ20": 11760,
+   "gold": 3460,
+   "slots": 1
+  },
+  {
+   "name": "Goldwyrm",
+   "baseType": "Nubuck Boots",
+   "dust": 8300,
+   "dustQ20": 11620,
+   "gold": 3440,
+   "slots": 4
+  },
+  {
+   "name": "The Primordial Chain",
+   "baseType": "Coral Amulet",
+   "dust": 8300,
+   "dustQ20": 11620,
+   "gold": 3440,
+   "slots": 1
+  },
+  {
+   "name": "Plume of Pursuit",
+   "baseType": "Bone Circlet",
+   "dust": 8300,
+   "dustQ20": 11620,
+   "gold": 3440,
+   "slots": 4
+  },
+  {
+   "name": "Cloak of Flame",
+   "baseType": "Scholar's Robe",
+   "dust": 8275,
+   "dustQ20": 11585,
+   "gold": 3420,
+   "slots": 6
+  },
+  {
+   "name": "Clayshaper",
+   "baseType": "Rock Breaker",
+   "dust": 8150,
+   "dustQ20": 11410,
+   "gold": 3400,
+   "slots": 6
+  },
+  {
+   "name": "Sentari's Answer",
+   "baseType": "Brass Spirit Shield",
+   "dust": 8050,
+   "dustQ20": 11270,
+   "gold": 3380,
+   "slots": 4
+  },
+  {
+   "name": "Chober Chaber",
+   "baseType": "Great Mallet",
+   "dust": 7925,
+   "dustQ20": 11095,
+   "gold": 3360,
+   "slots": 8
+  },
+  {
+   "name": "Eclipse Solaris",
+   "baseType": "Engraved Wand",
+   "dust": 290675,
+   "dustQ20": 406945,
+   "gold": 17000,
+   "slots": 3
+  },
+  {
+   "name": "Chaber Cairn",
+   "baseType": "Great Mallet",
+   "dust": 7925,
+   "dustQ20": 11095,
+   "gold": 3360,
+   "slots": 8
+  },
+  {
+   "name": "The Aylardex",
+   "baseType": "Agate Amulet",
+   "dust": 7825,
+   "dustQ20": 10955,
+   "gold": 3340,
+   "slots": 1
+  },
+  {
+   "name": "Iron Commander",
+   "baseType": "Death Bow",
+   "dust": 7825,
+   "dustQ20": 10955,
+   "gold": 3340,
+   "slots": 8
+  },
+  {
+   "name": "Replica Bitterdream",
+   "baseType": "Shadow Sceptre",
+   "dust": 7825,
+   "dustQ20": 10955,
+   "gold": 3340,
+   "slots": 6
+  },
+  {
+   "name": "Ahkeli's Valley",
+   "baseType": "Ruby Ring",
+   "dust": 7800,
+   "dustQ20": 10920,
+   "gold": 3340,
+   "slots": 1
+  },
+  {
+   "name": "Precursor's Emblem",
+   "baseType": "Ruby Ring",
+   "dust": 7800,
+   "dustQ20": 10920,
+   "gold": 3340,
+   "slots": 1
+  },
+  {
+   "name": "Circle of Anguish",
+   "baseType": "Ruby Ring",
+   "dust": 7800,
+   "dustQ20": 10920,
+   "gold": 3340,
+   "slots": 1
+  },
+  {
+   "name": "Icetomb",
+   "baseType": "Latticed Ringmail",
+   "dust": 7675,
+   "dustQ20": 10745,
+   "gold": 3320,
+   "slots": 6
+  },
+  {
+   "name": "Crystal Vault",
+   "baseType": "Latticed Ringmail",
+   "dust": 7675,
+   "dustQ20": 10745,
+   "gold": 3320,
+   "slots": 6
+  },
+  {
+   "name": "Orbala's Stand",
+   "baseType": "Eelskin Boots",
+   "dust": 7675,
+   "dustQ20": 10745,
+   "gold": 3320,
+   "slots": 4
+  },
+  {
+   "name": "Rearguard",
+   "baseType": "Blunt Arrow Quiver",
+   "dust": 7575,
+   "dustQ20": 10605,
+   "gold": 3300,
+   "slots": 6
+  },
+  {
+   "name": "Shadows and Dust",
+   "baseType": "Clasped Mitts",
+   "dust": 7575,
+   "dustQ20": 10605,
+   "gold": 3300,
+   "slots": 4
+  },
+  {
+   "name": "Demigod's Beacon",
+   "baseType": "Golden Flame",
+   "dust": 7575,
+   "dustQ20": 10605,
+   "gold": 3300,
+   "slots": 6
+  },
+  {
+   "name": "Aukuna's Will",
+   "baseType": "Clasped Mitts",
+   "dust": 7575,
+   "dustQ20": 10605,
+   "gold": 3300,
+   "slots": 4
+  },
+  {
+   "name": "Replica Winterheart",
+   "baseType": "Gold Amulet",
+   "dust": 7575,
+   "dustQ20": 10605,
+   "gold": 3300,
+   "slots": 1
+  },
+  {
+   "name": "Valyrium",
+   "baseType": "Moonstone Ring",
+   "dust": 7475,
+   "dustQ20": 10465,
+   "gold": 3280,
+   "slots": 1
+  },
+  {
+   "name": "Lioneye's Paws",
+   "baseType": "Bronzescale Boots",
+   "dust": 7375,
+   "dustQ20": 10325,
+   "gold": 3260,
+   "slots": 4
+  },
+  {
+   "name": "Thief's Torment",
+   "baseType": "Prismatic Ring",
+   "dust": 7375,
+   "dustQ20": 10325,
+   "gold": 3260,
+   "slots": 1
+  },
+  {
+   "name": "Lori's Lantern",
+   "baseType": "Prismatic Ring",
+   "dust": 7375,
+   "dustQ20": 10325,
+   "gold": 3260,
+   "slots": 1
+  },
+  {
+   "name": "Replica Twyzel",
+   "baseType": "Sage Wand",
+   "dust": 7375,
+   "dustQ20": 10325,
+   "gold": 3260,
+   "slots": 3
+  },
+  {
+   "name": "Zahndethus' Cassock",
+   "baseType": "Sage's Robe",
+   "dust": 7250,
+   "dustQ20": 10150,
+   "gold": 3220,
+   "slots": 6
+  },
+  {
+   "name": "Mindspiral",
+   "baseType": "Aventail Helmet",
+   "dust": 7250,
+   "dustQ20": 10150,
+   "gold": 3220,
+   "slots": 4
+  },
+  {
+   "name": "Cybil's Paw",
+   "baseType": "Thresher Claw",
+   "dust": 7250,
+   "dustQ20": 10150,
+   "gold": 3220,
+   "slots": 4
+  },
+  {
+   "name": "Torchoak Step",
+   "baseType": "Antique Greaves",
+   "dust": 7250,
+   "dustQ20": 10150,
+   "gold": 3220,
+   "slots": 4
+  },
+  {
+   "name": "Chalice of Horrors",
+   "baseType": "War Buckler",
+   "dust": 7150,
+   "dustQ20": 10010,
+   "gold": 3200,
+   "slots": 4
+  },
+  {
+   "name": "Ngamahu's Sign",
+   "baseType": "Ruby Ring",
+   "dust": 7150,
+   "dustQ20": 10010,
+   "gold": 3200,
+   "slots": 1
+  },
+  {
+   "name": "Skullhead",
+   "baseType": "Secutor Helm",
+   "dust": 7025,
+   "dustQ20": 9835,
+   "gold": 3180,
+   "slots": 4
+  },
+  {
+   "name": "Skirmish",
+   "baseType": "Two-Point Arrow Quiver",
+   "dust": 7025,
+   "dustQ20": 9835,
+   "gold": 3180,
+   "slots": 6
+  },
+  {
+   "name": "Gifts from Above",
+   "baseType": "Diamond Ring",
+   "dust": 6950,
+   "dustQ20": 9730,
+   "gold": 3160,
+   "slots": 1
+  },
+  {
+   "name": "Blightwell",
+   "baseType": "Clutching Talisman",
+   "dust": 11100,
+   "dustQ20": 15540,
+   "gold": 3920,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Replica Leer Cast",
+   "baseType": "Festival Mask",
+   "dust": 6950,
+   "dustQ20": 9730,
+   "gold": 3160,
+   "slots": 4
+  },
+  {
+   "name": "Putembo's Meadow",
+   "baseType": "Topaz Ring",
+   "dust": 6925,
+   "dustQ20": 9695,
+   "gold": 3160,
+   "slots": 1
+  },
+  {
+   "name": "Circle of Regret",
+   "baseType": "Topaz Ring",
+   "dust": 6925,
+   "dustQ20": 9695,
+   "gold": 3160,
+   "slots": 1
+  },
+  {
+   "name": "The Three Dragons",
+   "baseType": "Golden Mask",
+   "dust": 6825,
+   "dustQ20": 9555,
+   "gold": 3140,
+   "slots": 4
+  },
+  {
+   "name": "Earendel's Embrace",
+   "baseType": "Grinning Fetish",
+   "dust": 6825,
+   "dustQ20": 9555,
+   "gold": 3140,
+   "slots": 6
+  },
+  {
+   "name": "Willclash",
+   "baseType": "Golden Mask",
+   "dust": 6825,
+   "dustQ20": 9555,
+   "gold": 3140,
+   "slots": 4
+  },
+  {
+   "name": "Lycosidae",
+   "baseType": "Rawhide Tower Shield",
+   "dust": 6725,
+   "dustQ20": 9415,
+   "gold": 3120,
+   "slots": 8
+  },
+  {
+   "name": "Mortem Morsu",
+   "baseType": "Fright Claw",
+   "dust": 6625,
+   "dustQ20": 9275,
+   "gold": 3100,
+   "slots": 4
+  },
+  {
+   "name": "Al Dhih",
+   "baseType": "Timeworn Claw",
+   "dust": 6550,
+   "dustQ20": 9170,
+   "gold": 3080,
+   "slots": 4
+  },
+  {
+   "name": "The Baron",
+   "baseType": "Close Helmet",
+   "dust": 6550,
+   "dustQ20": 9170,
+   "gold": 3080,
+   "slots": 4
+  },
+  {
+   "name": "Fairgraves' Tricorne",
+   "baseType": "Tricorne",
+   "dust": 6525,
+   "dustQ20": 9135,
+   "gold": 3080,
+   "slots": 4
+  },
+  {
+   "name": "Hyperboreus",
+   "baseType": "Leather Belt",
+   "dust": 6525,
+   "dustQ20": 9135,
+   "gold": 3080,
+   "slots": 2
+  },
+  {
+   "name": "Survivor's Guilt",
+   "baseType": "Heavy Belt",
+   "dust": 6525,
+   "dustQ20": 9135,
+   "gold": 3080,
+   "slots": 2
+  },
+  {
+   "name": "Reaper's Pursuit",
+   "baseType": "Shadow Axe",
+   "dust": 6450,
+   "dustQ20": 9030,
+   "gold": 3060,
+   "slots": 8
+  },
+  {
+   "name": "Deidbellow",
+   "baseType": "Gilded Sallet",
+   "dust": 6450,
+   "dustQ20": 9030,
+   "gold": 3060,
+   "slots": 4
+  },
+  {
+   "name": "Windshriek",
+   "baseType": "Reinforced Greaves",
+   "dust": 6450,
+   "dustQ20": 9030,
+   "gold": 3060,
+   "slots": 4
+  },
+  {
+   "name": "Drillneck",
+   "baseType": "Penetrating Arrow Quiver",
+   "dust": 6350,
+   "dustQ20": 8890,
+   "gold": 3040,
+   "slots": 6
+  },
+  {
+   "name": "Timeclasp",
+   "baseType": "Moonstone Ring",
+   "dust": 6350,
+   "dustQ20": 8890,
+   "gold": 3040,
+   "slots": 1
+  },
+  {
+   "name": "Faithguard",
+   "baseType": "Runic Helm",
+   "dust": 6350,
+   "dustQ20": 8890,
+   "gold": 3040,
+   "slots": 4
+  },
+  {
+   "name": "Shavronne's Pace",
+   "baseType": "Scholar Boots",
+   "dust": 6250,
+   "dustQ20": 8750,
+   "gold": 3020,
+   "slots": 4
+  },
+  {
+   "name": "Briskwrap",
+   "baseType": "Sun Leather",
+   "dust": 6250,
+   "dustQ20": 8750,
+   "gold": 3020,
+   "slots": 6
+  },
+  {
+   "name": "Flesh-Eater",
+   "baseType": "Dream Mace",
+   "dust": 6250,
+   "dustQ20": 8750,
+   "gold": 3020,
+   "slots": 6
+  },
+  {
+   "name": "Triad Grip",
+   "baseType": "Mesh Gloves",
+   "dust": 6250,
+   "dustQ20": 8750,
+   "gold": 3020,
+   "slots": 4
+  },
+  {
+   "name": "Shavronne's Gambit",
+   "baseType": "Scholar Boots",
+   "dust": 6250,
+   "dustQ20": 8750,
+   "gold": 3020,
+   "slots": 4
+  },
+  {
+   "name": "Death's Opus",
+   "baseType": "Death Bow",
+   "dust": 6250,
+   "dustQ20": 8750,
+   "gold": 3020,
+   "slots": 8
+  },
+  {
+   "name": "Le Heup of All",
+   "baseType": "Iron Ring",
+   "dust": 6175,
+   "dustQ20": 8645,
+   "gold": 3000,
+   "slots": 1
+  },
+  {
+   "name": "Pyre",
+   "baseType": "Sapphire Ring",
+   "dust": 6150,
+   "dustQ20": 8610,
+   "gold": 3000,
+   "slots": 1
+  },
+  {
+   "name": "Uzaza's Mountain",
+   "baseType": "Sapphire Ring",
+   "dust": 6150,
+   "dustQ20": 8610,
+   "gold": 3000,
+   "slots": 1
+  },
+  {
+   "name": "Circle of Fear",
+   "baseType": "Sapphire Ring",
+   "dust": 6150,
+   "dustQ20": 8610,
+   "gold": 3000,
+   "slots": 1
+  },
+  {
+   "name": "Replica Tasalio's Sign",
+   "baseType": "Sapphire Ring",
+   "dust": 6150,
+   "dustQ20": 8610,
+   "gold": 3000,
+   "slots": 1
+  },
+  {
+   "name": "Call of the Void",
+   "baseType": "Sapphire Ring",
+   "dust": 12300,
+   "dustQ20": 14760,
+   "gold": 6000,
+   "slots": 1
+  },
+  {
+   "name": "Ikiaho's Promise",
+   "baseType": "Coral Amulet",
+   "dust": 6075,
+   "dustQ20": 8505,
+   "gold": 2980,
+   "slots": 1
+  },
+  {
+   "name": "Matua Tupuna",
+   "baseType": "Tarnished Spirit Shield",
+   "dust": 6000,
+   "dustQ20": 8400,
+   "gold": 2960,
+   "slots": 4
+  },
+  {
+   "name": "The Trickster's Smile",
+   "baseType": "Visored Sallet",
+   "dust": 6000,
+   "dustQ20": 8400,
+   "gold": 2960,
+   "slots": 4
+  },
+  {
+   "name": "Blood of Corruption",
+   "baseType": "Amber Amulet",
+   "dust": 5975,
+   "dustQ20": 8365,
+   "gold": 2960,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "Replica Karui Ward",
+   "baseType": "Jade Amulet",
+   "dust": 5975,
+   "dustQ20": 8365,
+   "gold": 2960,
+   "slots": 1
+  },
+  {
+   "name": "Mightflay",
+   "baseType": "Flaying Knife",
+   "dust": 5900,
+   "dustQ20": 8260,
+   "gold": 2940,
+   "slots": 3
+  },
+  {
+   "name": "Titucius' Span",
+   "baseType": "Reinforced Tower Shield",
+   "dust": 5900,
+   "dustQ20": 8260,
+   "gold": 2940,
+   "slots": 8
+  },
+  {
+   "name": "Twyzel",
+   "baseType": "Sage Wand",
+   "dust": 5900,
+   "dustQ20": 8260,
+   "gold": 2940,
+   "slots": 3
+  },
+  {
+   "name": "Chitus' Needle",
+   "baseType": "Elegant Foil",
+   "dust": 5900,
+   "dustQ20": 8260,
+   "gold": 2940,
+   "slots": 4
+  },
+  {
+   "name": "The Warden's Brand",
+   "baseType": "Iron Ring",
+   "dust": 5900,
+   "dustQ20": 8260,
+   "gold": 2940,
+   "slots": 1
+  },
+  {
+   "name": "Retaliation Charm",
+   "baseType": "Citrine Amulet",
+   "dust": 5900,
+   "dustQ20": 8260,
+   "gold": 2940,
+   "slots": 1
+  },
+  {
+   "name": "Elevore",
+   "baseType": "Wolf Pelt",
+   "dust": 5900,
+   "dustQ20": 8260,
+   "gold": 2940,
+   "slots": 4
+  },
+  {
+   "name": "Veil of the Night",
+   "baseType": "Great Helmet",
+   "dust": 5825,
+   "dustQ20": 8155,
+   "gold": 2920,
+   "slots": 4
+  },
+  {
+   "name": "Edge of Madness",
+   "baseType": "Etched Greatsword",
+   "dust": 5825,
+   "dustQ20": 8155,
+   "gold": 2920,
+   "slots": 8
+  },
+  {
+   "name": "Replica Veil of the Night",
+   "baseType": "Great Helmet",
+   "dust": 5825,
+   "dustQ20": 8155,
+   "gold": 2920,
+   "slots": 4
+  },
+  {
+   "name": "Relentless Fury",
+   "baseType": "Decorative Axe",
+   "dust": 5725,
+   "dustQ20": 8015,
+   "gold": 2900,
+   "slots": 6
+  },
+  {
+   "name": "Thirst for Horrors",
+   "baseType": "War Buckler",
+   "dust": 5725,
+   "dustQ20": 8015,
+   "gold": 2900,
+   "slots": 4
+  },
+  {
+   "name": "Fated End",
+   "baseType": "Paua Ring",
+   "dust": 5625,
+   "dustQ20": 7875,
+   "gold": 2880,
+   "slots": 1
+  },
+  {
+   "name": "Replica Doedre's Damning",
+   "baseType": "Paua Ring",
+   "dust": 5625,
+   "dustQ20": 7875,
+   "gold": 2880,
+   "slots": 1
+  },
+  {
+   "name": "Wake of Destruction",
+   "baseType": "Mesh Boots",
+   "dust": 5550,
+   "dustQ20": 7770,
+   "gold": 2860,
+   "slots": 4
+  },
+  {
+   "name": "Leer Cast",
+   "baseType": "Festival Mask",
+   "dust": 5550,
+   "dustQ20": 7770,
+   "gold": 2860,
+   "slots": 4
+  },
+  {
+   "name": "Lakishu's Blade",
+   "baseType": "Elegant Sword",
+   "dust": 5550,
+   "dustQ20": 7770,
+   "gold": 2860,
+   "slots": 6
+  },
+  {
+   "name": "The Stormheart",
+   "baseType": "Royal Staff",
+   "dust": 5550,
+   "dustQ20": 7770,
+   "gold": 2860,
+   "slots": 8
+  },
+  {
+   "name": "Viper's Scales",
+   "baseType": "Full Scale Armour",
+   "dust": 5550,
+   "dustQ20": 7770,
+   "gold": 2860,
+   "slots": 6
+  },
+  {
+   "name": "Doomfletch's Prism",
+   "baseType": "Royal Bow",
+   "dust": 5550,
+   "dustQ20": 7770,
+   "gold": 2860,
+   "slots": 8
+  },
+  {
+   "name": "The Stormwall",
+   "baseType": "Royal Staff",
+   "dust": 5550,
+   "dustQ20": 7770,
+   "gold": 2860,
+   "slots": 8
+  },
+  {
+   "name": "Meginord's Girdle",
+   "baseType": "Heavy Belt",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 2
+  },
+  {
+   "name": "Berek's Pass",
+   "baseType": "Two-Stone Ring",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 1
+  },
+  {
+   "name": "Berek's Grip",
+   "baseType": "Two-Stone Ring",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 1
+  },
+  {
+   "name": "Kikazaru",
+   "baseType": "Topaz Ring",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 1
+  },
+  {
+   "name": "Belt of the Deceiver",
+   "baseType": "Heavy Belt",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 2
+  },
+  {
+   "name": "Tasalio's Sign",
+   "baseType": "Sapphire Ring",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 1
+  },
+  {
+   "name": "Maligaro's Cruelty",
+   "baseType": "Turquoise Amulet",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 1
+  },
+  {
+   "name": "Curtain Call",
+   "baseType": "Plague Mask",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 4
+  },
+  {
+   "name": "The Felbog Fang",
+   "baseType": "Citrine Amulet",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 1
+  },
+  {
+   "name": "Honoured Alliance",
+   "baseType": "Coral Ring",
+   "dust": 5475,
+   "dustQ20": 7665,
+   "gold": 2840,
+   "slots": 1
+  },
+  {
+   "name": "Geofri's Baptism",
+   "baseType": "Brass Maul",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 8
+  },
+  {
+   "name": "Sundance",
+   "baseType": "Clasped Boots",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 4
+  },
+  {
+   "name": "Slitherpinch",
+   "baseType": "Bronzescale Gauntlets",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 4
+  },
+  {
+   "name": "Queen's Decree",
+   "baseType": "Ornate Sword",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 8
+  },
+  {
+   "name": "Glitterdisc",
+   "baseType": "Burnished Spiked Shield",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 4
+  },
+  {
+   "name": "Queen's Escape",
+   "baseType": "Ornate Sword",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 8
+  },
+  {
+   "name": "Sunspite",
+   "baseType": "Clasped Boots",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 4
+  },
+  {
+   "name": "Geofri's Devotion",
+   "baseType": "Brass Maul",
+   "dust": 5400,
+   "dustQ20": 7560,
+   "gold": 2820,
+   "slots": 8
+  },
+  {
+   "name": "Thousand Ribbons",
+   "baseType": "Simple Robe",
+   "dust": 5300,
+   "dustQ20": 7420,
+   "gold": 2800,
+   "slots": 6
+  },
+  {
+   "name": "Tabula Rasa",
+   "baseType": "Simple Robe",
+   "dust": 5300,
+   "dustQ20": 7420,
+   "gold": 2800,
+   "slots": 6
+  },
+  {
+   "name": "Ewar's Mirage",
+   "baseType": "Antique Rapier",
+   "dust": 5225,
+   "dustQ20": 7315,
+   "gold": 2780,
+   "slots": 4
+  },
+  {
+   "name": "Mark of the Red Covenant",
+   "baseType": "Tribal Circlet",
+   "dust": 5225,
+   "dustQ20": 7315,
+   "gold": 2780,
+   "slots": 4
+  },
+  {
+   "name": "Coward's Legacy",
+   "baseType": "Chain Belt",
+   "dust": 5150,
+   "dustQ20": 7210,
+   "gold": 2760,
+   "slots": 2
+  },
+  {
+   "name": "Circle of Guilt",
+   "baseType": "Iron Ring",
+   "dust": 5150,
+   "dustQ20": 7210,
+   "gold": 2760,
+   "slots": 1
+  },
+  {
+   "name": "Chains of Emancipation",
+   "baseType": "Chain Belt",
+   "dust": 5150,
+   "dustQ20": 7210,
+   "gold": 2760,
+   "slots": 2
+  },
+  {
+   "name": "Carnage Heart",
+   "baseType": "Onyx Amulet",
+   "dust": 5075,
+   "dustQ20": 7105,
+   "gold": 2760,
+   "slots": 1
+  },
+  {
+   "name": "Foxshade",
+   "baseType": "Wild Leather",
+   "dust": 5075,
+   "dustQ20": 7105,
+   "gold": 2760,
+   "slots": 6
+  },
+  {
+   "name": "Prismweave",
+   "baseType": "Rustic Sash",
+   "dust": 5075,
+   "dustQ20": 7105,
+   "gold": 2760,
+   "slots": 2
+  },
+  {
+   "name": "Duskwing",
+   "baseType": "Saqawine Vulture",
+   "dust": 5075,
+   "dustQ20": 7105,
+   "gold": 2760,
+   "slots": 1
+  },
+  {
+   "name": "Timetwist",
+   "baseType": "Moonstone Ring",
+   "dust": 5075,
+   "dustQ20": 7105,
+   "gold": 2760,
+   "slots": 1
+  },
+  {
+   "name": "Fox's Fortune",
+   "baseType": "Wild Leather",
+   "dust": 5075,
+   "dustQ20": 7105,
+   "gold": 2760,
+   "slots": 6
+  },
+  {
+   "name": "Malachai's Simula",
+   "baseType": "Iron Mask",
+   "dust": 5025,
+   "dustQ20": 7035,
+   "gold": 2740,
+   "slots": 4
+  },
+  {
+   "name": "Ashrend",
+   "baseType": "Buckskin Tunic",
+   "dust": 5025,
+   "dustQ20": 7035,
+   "gold": 2740,
+   "slots": 6
+  },
+  {
+   "name": "Solaris Lorica",
+   "baseType": "Copper Plate",
+   "dust": 5025,
+   "dustQ20": 7035,
+   "gold": 2740,
+   "slots": 6
+  },
+  {
+   "name": "Trolltimber Spire",
+   "baseType": "Cedar Tower Shield",
+   "dust": 5025,
+   "dustQ20": 7035,
+   "gold": 2740,
+   "slots": 8
+  },
+  {
+   "name": "Widowhail",
+   "baseType": "Crude Bow",
+   "dust": 5000,
+   "dustQ20": 7000,
+   "gold": 2740,
+   "slots": 6
+  },
+  {
+   "name": "Storm Prison",
+   "baseType": "Spiraled Wand",
+   "dust": 4925,
+   "dustQ20": 6895,
+   "gold": 2720,
+   "slots": 3
+  },
+  {
+   "name": "Amplification Rod",
+   "baseType": "Spiraled Wand",
+   "dust": 4925,
+   "dustQ20": 6895,
+   "gold": 2720,
+   "slots": 3
+  },
+  {
+   "name": "Facebreaker",
+   "baseType": "Strapped Mitts",
+   "dust": 4875,
+   "dustQ20": 6825,
+   "gold": 2700,
+   "slots": 4
+  },
+  {
+   "name": "Mokou's Embrace",
+   "baseType": "Ruby Ring",
+   "dust": 4875,
+   "dustQ20": 6825,
+   "gold": 2700,
+   "slots": 1
+  },
+  {
+   "name": "Ahkeli's Mountain",
+   "baseType": "Ruby Ring",
+   "dust": 4875,
+   "dustQ20": 6825,
+   "gold": 2700,
+   "slots": 1
+  },
+  {
+   "name": "The Peregrine",
+   "baseType": "Visored Sallet",
+   "dust": 4800,
+   "dustQ20": 6720,
+   "gold": 2680,
+   "slots": 4
+  },
+  {
+   "name": "Stormcharger",
+   "baseType": "Plated Greaves",
+   "dust": 4800,
+   "dustQ20": 6720,
+   "gold": 2680,
+   "slots": 4
+  },
+  {
+   "name": "Giantsbane",
+   "baseType": "Bronze Gauntlets",
+   "dust": 4800,
+   "dustQ20": 6720,
+   "gold": 2680,
+   "slots": 4
+  },
+  {
+   "name": "Whakatutuki o Matua",
+   "baseType": "Tarnished Spirit Shield",
+   "dust": 4800,
+   "dustQ20": 6720,
+   "gold": 2680,
+   "slots": 4
+  },
+  {
+   "name": "Flesh and Spirit",
+   "baseType": "Ironscale Gauntlets",
+   "dust": 4725,
+   "dustQ20": 6615,
+   "gold": 2660,
+   "slots": 4
+  },
+  {
+   "name": "Replica Bloodplay",
+   "baseType": "Stiletto",
+   "dust": 4725,
+   "dustQ20": 6615,
+   "gold": 2660,
+   "slots": 3
+  },
+  {
+   "name": "Bones of Ullr",
+   "baseType": "Silk Slippers",
+   "dust": 4650,
+   "dustQ20": 6510,
+   "gold": 2640,
+   "slots": 4
+  },
+  {
+   "name": "Quecholli",
+   "baseType": "Jagged Maul",
+   "dust": 4650,
+   "dustQ20": 6510,
+   "gold": 2640,
+   "slots": 8
+  },
+  {
+   "name": "Deerstalker",
+   "baseType": "Deerskin Boots",
+   "dust": 4650,
+   "dustQ20": 6510,
+   "gold": 2640,
+   "slots": 4
+  },
+  {
+   "name": "Fidelitas' Spike",
+   "baseType": "Jagged Foil",
+   "dust": 4650,
+   "dustQ20": 6510,
+   "gold": 2640,
+   "slots": 4
+  },
+  {
+   "name": "Bated Breath",
+   "baseType": "Chain Belt",
+   "dust": 4650,
+   "dustQ20": 6510,
+   "gold": 2640,
+   "slots": 2
+  },
+  {
+   "name": "Praxis",
+   "baseType": "Paua Ring",
+   "dust": 4650,
+   "dustQ20": 6510,
+   "gold": 2640,
+   "slots": 1
+  },
+  {
+   "name": "Panquetzaliztli",
+   "baseType": "Jagged Maul",
+   "dust": 4650,
+   "dustQ20": 6510,
+   "gold": 2640,
+   "slots": 8
+  },
+  {
+   "name": "Perandus Blazon",
+   "baseType": "Cloth Belt",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 2
+  },
+  {
+   "name": "Ungil's Gauche",
+   "baseType": "Boot Knife",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 3
+  },
+  {
+   "name": "Brightbeak",
+   "baseType": "War Hammer",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "Daresso's Salute",
+   "baseType": "Citrine Amulet",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 1
+  },
+  {
+   "name": "Victario's Acuity",
+   "baseType": "Turquoise Amulet",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 1
+  },
+  {
+   "name": "Asphyxia's Wrath",
+   "baseType": "Feathered Arrow Quiver",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "Shaper's Seed",
+   "baseType": "Agate Amulet",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 1
+  },
+  {
+   "name": "The Deep One's Hide",
+   "baseType": "Studded Round Shield",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "Lavianga's Wisdom",
+   "baseType": "War Hammer",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "Spine of the First Claimant",
+   "baseType": "Iron Sceptre",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "Extractor Mentis",
+   "baseType": "Agate Amulet",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 1
+  },
+  {
+   "name": "Demigod's Dominance",
+   "baseType": "Golden Mantle",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "The Tempestuous Steel",
+   "baseType": "War Sword",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "Saemus' Gift",
+   "baseType": "Feathered Arrow Quiver",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 6
+  },
+  {
+   "name": "Frostferno",
+   "baseType": "Leather Hood",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 4
+  },
+  {
+   "name": "The Tactician",
+   "baseType": "Studded Belt",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 2
+  },
+  {
+   "name": "The Nomad",
+   "baseType": "Studded Belt",
+   "dust": 4375,
+   "dustQ20": 6125,
+   "gold": 2580,
+   "slots": 2
+  },
+  {
+   "name": "Victario's Flight",
+   "baseType": "Goathide Boots",
+   "dust": 4325,
+   "dustQ20": 6055,
+   "gold": 2560,
+   "slots": 4
+  },
+  {
+   "name": "Ashcaller",
+   "baseType": "Carved Wand",
+   "dust": 4325,
+   "dustQ20": 6055,
+   "gold": 2560,
+   "slots": 3
+  },
+  {
+   "name": "Putembo's Valley",
+   "baseType": "Topaz Ring",
+   "dust": 4325,
+   "dustQ20": 6055,
+   "gold": 2560,
+   "slots": 1
+  },
+  {
+   "name": "Ghostwrithe",
+   "baseType": "Silken Vest",
+   "dust": 4200,
+   "dustQ20": 5880,
+   "gold": 2520,
+   "slots": 6
+  },
+  {
+   "name": "Dusktoe",
+   "baseType": "Ironscale Boots",
+   "dust": 4125,
+   "dustQ20": 5775,
+   "gold": 2500,
+   "slots": 4
+  },
+  {
+   "name": "Wideswing",
+   "baseType": "Poleaxe",
+   "dust": 4125,
+   "dustQ20": 5775,
+   "gold": 2500,
+   "slots": 8
+  },
+  {
+   "name": "Faminebind",
+   "baseType": "Rustic Sash",
+   "dust": 4125,
+   "dustQ20": 5775,
+   "gold": 2500,
+   "slots": 2
+  },
+  {
+   "name": "Roth's Reach",
+   "baseType": "Recurve Bow",
+   "dust": 4125,
+   "dustQ20": 5775,
+   "gold": 2500,
+   "slots": 8
+  },
+  {
+   "name": "Duskblight",
+   "baseType": "Ironscale Boots",
+   "dust": 4125,
+   "dustQ20": 5775,
+   "gold": 2500,
+   "slots": 4
+  },
+  {
+   "name": "Thrillsteel",
+   "baseType": "Barbute Helmet",
+   "dust": 4125,
+   "dustQ20": 5775,
+   "gold": 2500,
+   "slots": 4
+  },
+  {
+   "name": "Doryani's Invitation",
+   "baseType": "Heavy Belt",
+   "dust": 4075,
+   "dustQ20": 5705,
+   "gold": 2500,
+   "slots": 2
+  },
+  {
+   "name": "Night's Hold",
+   "baseType": "Black Maw Talisman",
+   "dust": 4075,
+   "dustQ20": 5705,
+   "gold": 2500,
+   "slots": 1,
+   "noQuality": true
+  },
+  {
+   "name": "String of Servitude",
+   "baseType": "Heavy Belt",
+   "dust": 4075,
+   "dustQ20": 5705,
+   "gold": 2500,
+   "slots": 2,
+   "noQuality": true
+  },
+  {
+   "name": "Bear's Girdle",
+   "baseType": "Leather Belt",
+   "dust": 4075,
+   "dustQ20": 5705,
+   "gold": 2500,
+   "slots": 2
+  },
+  {
+   "name": "Hrimnor's Hymn",
+   "baseType": "Sledgehammer",
+   "dust": 4000,
+   "dustQ20": 5600,
+   "gold": 2480,
+   "slots": 8
+  },
+  {
+   "name": "Aurumvorax",
+   "baseType": "Basket Rapier",
+   "dust": 4000,
+   "dustQ20": 5600,
+   "gold": 2480,
+   "slots": 4
+  },
+  {
+   "name": "Hrimnor's Dirge",
+   "baseType": "Sledgehammer",
+   "dust": 4000,
+   "dustQ20": 5600,
+   "gold": 2480,
+   "slots": 8
+  },
+  {
+   "name": "Malachai's Awakening",
+   "baseType": "Iron Mask",
+   "dust": 4000,
+   "dustQ20": 5600,
+   "gold": 2480,
+   "slots": 4
+  },
+  {
+   "name": "Kaltenhalt",
+   "baseType": "Painted Buckler",
+   "dust": 3900,
+   "dustQ20": 5460,
+   "gold": 2440,
+   "slots": 4
+  },
+  {
+   "name": "Nomic's Storm",
+   "baseType": "Strapped Boots",
+   "dust": 3900,
+   "dustQ20": 5460,
+   "gold": 2440,
+   "slots": 4
+  },
+  {
+   "name": "Dreadarc",
+   "baseType": "Cleaver",
+   "dust": 3900,
+   "dustQ20": 5460,
+   "gold": 2440,
+   "slots": 6
+  },
+  {
+   "name": "Kaltensoul",
+   "baseType": "Painted Buckler",
+   "dust": 3900,
+   "dustQ20": 5460,
+   "gold": 2440,
+   "slots": 4
+  },
+  {
+   "name": "Dreadsurge",
+   "baseType": "Cleaver",
+   "dust": 3900,
+   "dustQ20": 5460,
+   "gold": 2440,
+   "slots": 6
+  },
+  {
+   "name": "Uzaza's Meadow",
+   "baseType": "Sapphire Ring",
+   "dust": 3850,
+   "dustQ20": 5390,
+   "gold": 2420,
+   "slots": 1
+  },
+  {
+   "name": "Wreath of Phrecia",
+   "baseType": "Iron Circlet",
+   "dust": 3850,
+   "dustQ20": 5390,
+   "gold": 2420,
+   "slots": 4
+  },
+  {
+   "name": "Demigod's Presence",
+   "baseType": "Gold Amulet",
+   "dust": 3775,
+   "dustQ20": 5285,
+   "gold": 2400,
+   "slots": 1
+  },
+  {
+   "name": "The Ignomon",
+   "baseType": "Gold Amulet",
+   "dust": 3775,
+   "dustQ20": 5285,
+   "gold": 2400,
+   "slots": 1
+  },
+  {
+   "name": "Bloodplay",
+   "baseType": "Stiletto",
+   "dust": 3775,
+   "dustQ20": 5285,
+   "gold": 2400,
+   "slots": 3
+  },
+  {
+   "name": "The Effigon",
+   "baseType": "Gold Amulet",
+   "dust": 3775,
+   "dustQ20": 5285,
+   "gold": 2400,
+   "slots": 1
+  },
+  {
+   "name": "The Untouched Soul",
+   "baseType": "Gold Amulet",
+   "dust": 3775,
+   "dustQ20": 5285,
+   "gold": 2400,
+   "slots": 1
+  },
+  {
+   "name": "Tipua Kaikohuru",
+   "baseType": "Whalebone Rapier",
+   "dust": 3725,
+   "dustQ20": 5215,
+   "gold": 2400,
+   "slots": 4
+  },
+  {
+   "name": "The Goddess Bound",
+   "baseType": "Whalebone Rapier",
+   "dust": 3725,
+   "dustQ20": 5215,
+   "gold": 2400,
+   "slots": 4
+  },
+  {
+   "name": "Shackles of the Wretched",
+   "baseType": "Chain Gloves",
+   "dust": 3725,
+   "dustQ20": 5215,
+   "gold": 2400,
+   "slots": 4
+  },
+  {
+   "name": "Hyrri's Bite",
+   "baseType": "Sharktooth Arrow Quiver",
+   "dust": 3675,
+   "dustQ20": 5145,
+   "gold": 2380,
+   "slots": 6
+  },
+  {
+   "name": "Hyrri's Demise",
+   "baseType": "Sharktooth Arrow Quiver",
+   "dust": 3675,
+   "dustQ20": 5145,
+   "gold": 2380,
+   "slots": 6
+  },
+  {
+   "name": "Chain of Endurance",
+   "baseType": "Chain Belt",
+   "dust": 3675,
+   "dustQ20": 5145,
+   "gold": 2380,
+   "slots": 2
+  },
+  {
+   "name": "Limbsplit",
+   "baseType": "Woodsplitter",
+   "dust": 3575,
+   "dustQ20": 5005,
+   "gold": 2340,
+   "slots": 8
+  },
+  {
+   "name": "Pillar of the Caged God",
+   "baseType": "Iron Staff",
+   "dust": 3575,
+   "dustQ20": 5005,
+   "gold": 2340,
+   "slots": 8
+  },
+  {
+   "name": "Dying Breath",
+   "baseType": "Iron Staff",
+   "dust": 3575,
+   "dustQ20": 5005,
+   "gold": 2340,
+   "slots": 8
+  },
+  {
+   "name": "Realmshaper",
+   "baseType": "Iron Staff",
+   "dust": 3575,
+   "dustQ20": 5005,
+   "gold": 2340,
+   "slots": 8
+  },
+  {
+   "name": "The Cauteriser",
+   "baseType": "Woodsplitter",
+   "dust": 3575,
+   "dustQ20": 5005,
+   "gold": 2340,
+   "slots": 8
+  },
+  {
+   "name": "Realm Ender",
+   "baseType": "Iron Staff",
+   "dust": 3575,
+   "dustQ20": 5005,
+   "gold": 2340,
+   "slots": 8
+  },
+  {
+   "name": "Doedre's Damning",
+   "baseType": "Paua Ring",
+   "dust": 3525,
+   "dustQ20": 4935,
+   "gold": 2340,
+   "slots": 1
+  },
+  {
+   "name": "Quill Rain",
+   "baseType": "Short Bow",
+   "dust": 3525,
+   "dustQ20": 4935,
+   "gold": 2340,
+   "slots": 6
+  },
+  {
+   "name": "Replica Quill Rain",
+   "baseType": "Short Bow",
+   "dust": 3525,
+   "dustQ20": 4935,
+   "gold": 2340,
+   "slots": 6
+  },
+  {
+   "name": "Shiversting",
+   "baseType": "Bastard Sword",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 8
+  },
+  {
+   "name": "Honourhome",
+   "baseType": "Soldier Helmet",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Doedre's Tenure",
+   "baseType": "Velvet Gloves",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Demigod's Triumph",
+   "baseType": "Golden Wreath",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Demigod's Stride",
+   "baseType": "Golden Caligae",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Demigod's Touch",
+   "baseType": "Golden Bracers",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Demigod's Bounty",
+   "baseType": "Golden Obi",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 2
+  },
+  {
+   "name": "Demigod's Eye",
+   "baseType": "Golden Hoop",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 1
+  },
+  {
+   "name": "Wildslash",
+   "baseType": "Awl",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Demigod's Immortality",
+   "baseType": "Golden Visage",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Doedre's Malevolence",
+   "baseType": "Velvet Gloves",
+   "dust": 3450,
+   "dustQ20": 4830,
+   "gold": 2320,
+   "slots": 4
+  },
+  {
+   "name": "Kaom's Sign",
+   "baseType": "Coral Ring",
+   "dust": 3425,
+   "dustQ20": 4795,
+   "gold": 2300,
+   "slots": 1
+  },
+  {
+   "name": "Replica Blood Thorn",
+   "baseType": "Gnarled Branch",
+   "dust": 3425,
+   "dustQ20": 4795,
+   "gold": 2300,
+   "slots": 4
+  },
+  {
+   "name": "Replica Fencoil",
+   "baseType": "Gnarled Branch",
+   "dust": 3425,
+   "dustQ20": 4795,
+   "gold": 2300,
+   "slots": 4
+  },
+  {
+   "name": "Feastbind",
+   "baseType": "Rustic Sash",
+   "dust": 3350,
+   "dustQ20": 4690,
+   "gold": 2280,
+   "slots": 2
+  },
+  {
+   "name": "Sadima's Touch",
+   "baseType": "Wool Gloves",
+   "dust": 3325,
+   "dustQ20": 4655,
+   "gold": 2280,
+   "slots": 4
+  },
+  {
+   "name": "Goldrim",
+   "baseType": "Leather Cap",
+   "dust": 3325,
+   "dustQ20": 4655,
+   "gold": 2280,
+   "slots": 4
+  },
+  {
+   "name": "Sacrificial Heart",
+   "baseType": "Paua Amulet",
+   "dust": 3325,
+   "dustQ20": 4655,
+   "gold": 2280,
+   "slots": 1
+  },
+  {
+   "name": "Replica Last Resort",
+   "baseType": "Nailed Fist",
+   "dust": 3325,
+   "dustQ20": 4655,
+   "gold": 2280,
+   "slots": 4
+  },
+  {
+   "name": "The Princess",
+   "baseType": "Sabre",
+   "dust": 3250,
+   "dustQ20": 4550,
+   "gold": 2260,
+   "slots": 3
+  },
+  {
+   "name": "Gorebreaker",
+   "baseType": "Spiked Club",
+   "dust": 3250,
+   "dustQ20": 4550,
+   "gold": 2260,
+   "slots": 3
+  },
+  {
+   "name": "Axiom Perpetuum",
+   "baseType": "Bronze Sceptre",
+   "dust": 3250,
+   "dustQ20": 4550,
+   "gold": 2260,
+   "slots": 6
+  },
+  {
+   "name": "Coward's Chains",
+   "baseType": "Chain Belt",
+   "dust": 3225,
+   "dustQ20": 4515,
+   "gold": 2240,
+   "slots": 2
+  },
+  {
+   "name": "Replica Prismweave",
+   "baseType": "Rustic Sash",
+   "dust": 3225,
+   "dustQ20": 4515,
+   "gold": 2240,
+   "slots": 2
+  },
+  {
+   "name": "Wondertrap",
+   "baseType": "Velvet Slippers",
+   "dust": 3175,
+   "dustQ20": 4445,
+   "gold": 2220,
+   "slots": 4
+  },
+  {
+   "name": "Hrimsorrow",
+   "baseType": "Goathide Gloves",
+   "dust": 3175,
+   "dustQ20": 4445,
+   "gold": 2220,
+   "slots": 4
+  },
+  {
+   "name": "Storm Cloud",
+   "baseType": "Long Bow",
+   "dust": 3175,
+   "dustQ20": 4445,
+   "gold": 2220,
+   "slots": 8
+  },
+  {
+   "name": "Hrimburn",
+   "baseType": "Goathide Gloves",
+   "dust": 3175,
+   "dustQ20": 4445,
+   "gold": 2220,
+   "slots": 4
+  },
+  {
+   "name": "Greedtrap",
+   "baseType": "Velvet Slippers",
+   "dust": 3175,
+   "dustQ20": 4445,
+   "gold": 2220,
+   "slots": 4
+  },
+  {
+   "name": "Wildwrap",
+   "baseType": "Strapped Leather",
+   "dust": 3175,
+   "dustQ20": 4445,
+   "gold": 2220,
+   "slots": 6
+  },
+  {
+   "name": "Bramblejack",
+   "baseType": "Plate Vest",
+   "dust": 3125,
+   "dustQ20": 4375,
+   "gold": 2220,
+   "slots": 6
+  },
+  {
+   "name": "Crest of Perandus",
+   "baseType": "Pine Buckler",
+   "dust": 3075,
+   "dustQ20": 4305,
+   "gold": 2200,
+   "slots": 4
+  },
+  {
+   "name": "Asenath's Chant",
+   "baseType": "Iron Circlet",
+   "dust": 3075,
+   "dustQ20": 4305,
+   "gold": 2200,
+   "slots": 4
+  },
+  {
+   "name": "Stone of Lazhwar",
+   "baseType": "Lapis Amulet",
+   "dust": 2975,
+   "dustQ20": 4165,
+   "gold": 2160,
+   "slots": 1
+  },
+  {
+   "name": "Karui Ward",
+   "baseType": "Jade Amulet",
+   "dust": 2975,
+   "dustQ20": 4165,
+   "gold": 2160,
+   "slots": 1
+  },
+  {
+   "name": "Springleaf",
+   "baseType": "Plank Kite Shield",
+   "dust": 2975,
+   "dustQ20": 4165,
+   "gold": 2160,
+   "slots": 6
+  },
+  {
+   "name": "Tear of Purity",
+   "baseType": "Lapis Amulet",
+   "dust": 2975,
+   "dustQ20": 4165,
+   "gold": 2160,
+   "slots": 1
+  },
+  {
+   "name": "Karui Charge",
+   "baseType": "Jade Amulet",
+   "dust": 2975,
+   "dustQ20": 4165,
+   "gold": 2160,
+   "slots": 1
+  },
+  {
+   "name": "The Oak",
+   "baseType": "Plank Kite Shield",
+   "dust": 2975,
+   "dustQ20": 4165,
+   "gold": 2160,
+   "slots": 6
+  },
+  {
+   "name": "The Screaming Eagle",
+   "baseType": "Jade Hatchet",
+   "dust": 2900,
+   "dustQ20": 4060,
+   "gold": 2140,
+   "slots": 6
+  },
+  {
+   "name": "Abberath's Horn",
+   "baseType": "Goat's Horn",
+   "dust": 2900,
+   "dustQ20": 4060,
+   "gold": 2140,
+   "slots": 3
+  },
+  {
+   "name": "The Gryphon",
+   "baseType": "Jade Hatchet",
+   "dust": 2900,
+   "dustQ20": 4060,
+   "gold": 2140,
+   "slots": 6
+  },
+  {
+   "name": "Ondar's Clasp",
+   "baseType": "Wrapped Mitts",
+   "dust": 2825,
+   "dustQ20": 3955,
+   "gold": 2120,
+   "slots": 4
+  },
+  {
+   "name": "Wheel of the Stormsail",
+   "baseType": "Rotted Round Shield",
+   "dust": 2825,
+   "dustQ20": 3955,
+   "gold": 2120,
+   "slots": 6
+  },
+  {
+   "name": "Goredrill",
+   "baseType": "Skinning Knife",
+   "dust": 2825,
+   "dustQ20": 3955,
+   "gold": 2120,
+   "slots": 3
+  },
+  {
+   "name": "Sanguine Gambol",
+   "baseType": "Skinning Knife",
+   "dust": 2825,
+   "dustQ20": 3955,
+   "gold": 2120,
+   "slots": 3
+  },
+  {
+   "name": "The Megalomaniac",
+   "baseType": "Bronze Stalker Sentinel",
+   "dust": 2825,
+   "dustQ20": 3955,
+   "gold": 2120,
+   "slots": 4
+  },
+  {
+   "name": "Fencoil",
+   "baseType": "Gnarled Branch",
+   "dust": 2725,
+   "dustQ20": 3815,
+   "gold": 2080,
+   "slots": 4
+  },
+  {
+   "name": "Craghead",
+   "baseType": "Serrated Arrow Quiver",
+   "dust": 2725,
+   "dustQ20": 3815,
+   "gold": 2080,
+   "slots": 6
+  },
+  {
+   "name": "The Blood Thorn",
+   "baseType": "Gnarled Branch",
+   "dust": 2725,
+   "dustQ20": 3815,
+   "gold": 2080,
+   "slots": 4
+  },
+  {
+   "name": "Kaom's Way",
+   "baseType": "Coral Ring",
+   "dust": 2725,
+   "dustQ20": 3815,
+   "gold": 2080,
+   "slots": 1
+  },
+  {
+   "name": "Cragfall",
+   "baseType": "Serrated Arrow Quiver",
+   "dust": 2725,
+   "dustQ20": 3815,
+   "gold": 2080,
+   "slots": 6
+  },
+  {
+   "name": "Mirebough",
+   "baseType": "Gnarled Branch",
+   "dust": 2725,
+   "dustQ20": 3815,
+   "gold": 2080,
+   "slots": 4
+  },
+  {
+   "name": "Sidhebreath",
+   "baseType": "Paua Amulet",
+   "dust": 2650,
+   "dustQ20": 3710,
+   "gold": 2060,
+   "slots": 1
+  },
+  {
+   "name": "Crown of Thorns",
+   "baseType": "Vine Circlet",
+   "dust": 2650,
+   "dustQ20": 3710,
+   "gold": 2060,
+   "slots": 4
+  },
+  {
+   "name": "Araku Tiki",
+   "baseType": "Coral Amulet",
+   "dust": 2650,
+   "dustQ20": 3710,
+   "gold": 2060,
+   "slots": 1
+  },
+  {
+   "name": "Wanderlust",
+   "baseType": "Wool Shoes",
+   "dust": 2650,
+   "dustQ20": 3710,
+   "gold": 2060,
+   "slots": 4
+  },
+  {
+   "name": "Last Resort",
+   "baseType": "Nailed Fist",
+   "dust": 2650,
+   "dustQ20": 3710,
+   "gold": 2060,
+   "slots": 4
+  },
+  {
+   "name": "Ngamahu Tiki",
+   "baseType": "Coral Amulet",
+   "dust": 2650,
+   "dustQ20": 3710,
+   "gold": 2060,
+   "slots": 1
+  },
+  {
+   "name": "Martyr's Crown",
+   "baseType": "Vine Circlet",
+   "dust": 2650,
+   "dustQ20": 3710,
+   "gold": 2060,
+   "slots": 4
+  },
+  {
+   "name": "Blackheart",
+   "baseType": "Iron Ring",
+   "dust": 2575,
+   "dustQ20": 3605,
+   "gold": 2020,
+   "slots": 1
+  },
+  {
+   "name": "Blackgleam",
+   "baseType": "Blazing Arrow Quiver",
+   "dust": 2575,
+   "dustQ20": 3605,
+   "gold": 2020,
+   "slots": 6
+  },
+  {
+   "name": "Voidheart",
+   "baseType": "Iron Ring",
+   "dust": 2575,
+   "dustQ20": 3605,
+   "gold": 2020,
+   "slots": 1
+  },
+  {
+   "name": "Oni-Goroshi",
+   "baseType": "Charan's Sword",
+   "dust": 2575,
+   "dustQ20": 3605,
+   "gold": 2020,
+   "slots": 6
+  },
+  {
+   "name": "Redbeak",
+   "baseType": "Rusted Sword",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 3
+  },
+  {
+   "name": "Silverbranch",
+   "baseType": "Crude Bow",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 6
+  },
+  {
+   "name": "Ezomyte Peak",
+   "baseType": "Iron Hat",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 4
+  },
+  {
+   "name": "Lochtonial Caress",
+   "baseType": "Iron Gauntlets",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 4
+  },
+  {
+   "name": "Lifesprig",
+   "baseType": "Driftwood Wand",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 3
+  },
+  {
+   "name": "Talisman of the Victor",
+   "baseType": "Jet Amulet",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 1
+  },
+  {
+   "name": "Demigod's Authority",
+   "baseType": "Golden Blade",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 6
+  },
+  {
+   "name": "Wall of Brambles",
+   "baseType": "Plate Vest",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 6
+  },
+  {
+   "name": "Ezomyte Hold",
+   "baseType": "Iron Hat",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 4
+  },
+  {
+   "name": "Silverbough",
+   "baseType": "Crude Bow",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 6
+  },
+  {
+   "name": "Dreadbeak",
+   "baseType": "Rusted Sword",
+   "dust": 2500,
+   "dustQ20": 3500,
+   "gold": 2000,
+   "slots": 3
+  },
+  {
+   "name": "Grace of the Goddess",
+   "baseType": "Prophecy Wand",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 3
+  },
+  {
+   "name": "Starcaller",
+   "baseType": "Abyssal Axe",
+   "dust": 348825,
+   "dustQ20": 488355,
+   "gold": 18460,
+   "slots": 8
+  },
+  {
+   "name": "Legacy of the Rose",
+   "baseType": "Judgement Staff",
+   "dust": 348825,
+   "dustQ20": 488355,
+   "gold": 18460,
+   "slots": 8
+  },
+  {
+   "name": "The Living Blade",
+   "baseType": "Ezomyte Blade",
+   "dust": 29450,
+   "dustQ20": 41230,
+   "gold": 6060,
+   "slots": 8
+  },
+  {
+   "name": "Tawhoa's Felling",
+   "baseType": "Piledriver",
+   "dust": 18400,
+   "dustQ20": 25760,
+   "gold": 4920,
+   "slots": 8
+  },
+  {
+   "name": "Cadigan's Authority",
+   "baseType": "Platinum Sceptre",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 3
+  },
+  {
+   "name": "Mystic Refractor",
+   "baseType": "Pagan Wand",
+   "dust": 53050,
+   "dustQ20": 74270,
+   "gold": 7900,
+   "slots": 3
+  },
+  {
+   "name": "Ynda's Stand",
+   "baseType": "Studded Belt",
+   "dust": 22575,
+   "dustQ20": 31605,
+   "gold": 5380,
+   "slots": 2
+  },
+  {
+   "name": "The Tides of Time",
+   "baseType": "Vanguard Belt",
+   "dust": 189000,
+   "dustQ20": 239400,
+   "gold": 17520,
+   "slots": 2
+  },
+  {
+   "name": "Venarius' Astrolabe",
+   "baseType": "Astrolabe Amulet",
+   "dust": 534700,
+   "dustQ20": 588170,
+   "gold": 47920,
+   "slots": 1
+  },
+  {
+   "name": "Coiling Whisper",
+   "baseType": "Amethyst Ring",
+   "dust": 149250,
+   "dustQ20": 208950,
+   "gold": 12600,
+   "slots": 1
+  },
+  {
+   "name": "Enmity's Embrace",
+   "baseType": "Vermillion Ring",
+   "dust": 154975,
+   "dustQ20": 216965,
+   "gold": 12820,
+   "slots": 1
+  },
+  {
+   "name": "Binds of Bloody Vengeance",
+   "baseType": "Vanguard Belt",
+   "dust": 252000,
+   "dustQ20": 352800,
+   "gold": 15940,
+   "slots": 2
+  },
+  {
+   "name": "Circle of Ambition",
+   "baseType": "Prismatic Ring",
+   "dust": 35350,
+   "dustQ20": 49490,
+   "gold": 6580,
+   "slots": 1
+  },
+  {
+   "name": "Whispers of Infinity",
+   "baseType": "Seaglass Amulet",
+   "dust": 129775,
+   "dustQ20": 181685,
+   "gold": 11820,
+   "slots": 1
+  },
+  {
+   "name": "The Hateful Accuser",
+   "baseType": "Nameless Ring",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 1
+  },
+  {
+   "name": "Betrayal's Sting",
+   "baseType": "Steel Ring",
+   "dust": 146075,
+   "dustQ20": 204505,
+   "gold": 12480,
+   "slots": 1
+  },
+  {
+   "name": "The Arkhon's Tools",
+   "baseType": "Cloth Belt",
+   "dust": 131525,
+   "dustQ20": 184135,
+   "gold": 11900,
+   "slots": 2
+  },
+  {
+   "name": "Squirming Terror",
+   "baseType": "Unset Ring",
+   "dust": 36725,
+   "dustQ20": 51415,
+   "gold": 6700,
+   "slots": 1
+  },
+  {
+   "name": "The Queller of Minds",
+   "baseType": "Nameless Ring",
+   "dust": 18125,
+   "dustQ20": 25375,
+   "gold": 4880,
+   "slots": 1
+  },
+  {
+   "name": "The Selfish Shepherd",
+   "baseType": "Nameless Ring",
+   "dust": 18125,
+   "dustQ20": 25375,
+   "gold": 4880,
+   "slots": 1
+  },
+  {
+   "name": "Soul Tether",
+   "baseType": "Cloth Belt",
+   "dust": 20050,
+   "dustQ20": 28070,
+   "gold": 5100,
+   "slots": 2
+  },
+  {
+   "name": "Prospero's Protection",
+   "baseType": "Iron Ring",
+   "dust": 15625,
+   "dustQ20": 21875,
+   "gold": 4560,
+   "slots": 1
+  },
+  {
+   "name": "Nevalius Inheritance",
+   "baseType": "Cloth Belt",
+   "dust": 8775,
+   "dustQ20": 12285,
+   "gold": 3520,
+   "slots": 2
+  },
+  {
+   "name": "Grattus Signet",
+   "baseType": "Diamond Ring",
+   "dust": 6350,
+   "dustQ20": 8890,
+   "gold": 3040,
+   "slots": 1
+  },
+  {
+   "name": "The Tempest",
+   "baseType": "Long Bow",
+   "dust": 3175,
+   "dustQ20": 4445,
+   "gold": 2220,
+   "slots": 8
+  },
+  {
+   "name": "Serle's Masterwork",
+   "baseType": "Phantom Mace",
+   "dust": 14525,
+   "dustQ20": 20335,
+   "gold": 4420,
+   "slots": 6
+  },
+  {
+   "name": "Svalinn",
+   "baseType": "Girded Tower Shield",
+   "dust": 65750,
+   "dustQ20": 92050,
+   "gold": 8700,
+   "slots": 8
+  },
+  {
+   "name": "The Celestial Brace",
+   "baseType": "Goliath Gauntlets",
+   "dust": 69775,
+   "dustQ20": 97685,
+   "gold": 8940,
+   "slots": 4
+  },
+  {
+   "name": "The Apostate",
+   "baseType": "Cabalist Regalia",
+   "dust": 40975,
+   "dustQ20": 57365,
+   "gold": 7040,
+   "slots": 6
+  },
+  {
+   "name": "Spinehail",
+   "baseType": "Vile Arrow Quiver",
+   "dust": 123350,
+   "dustQ20": 172690,
+   "gold": 11560,
+   "slots": 6
+  },
+  {
+   "name": "Seven Teachings",
+   "baseType": "Waxed Garb",
+   "dust": 125000,
+   "dustQ20": 175000,
+   "gold": 11620,
+   "slots": 6
+  },
+  {
+   "name": "Kaom's Command",
+   "baseType": "Siege Helmet",
+   "dust": 20050,
+   "dustQ20": 28070,
+   "gold": 5100,
+   "slots": 4
+  },
+  {
+   "name": "Hand of Heresy",
+   "baseType": "Martyr Gloves",
+   "dust": 292150,
+   "dustQ20": 409010,
+   "gold": 17040,
+   "slots": 4
+  },
+  {
+   "name": "Servant of Decay",
+   "baseType": "Torturer Garb",
+   "dust": 146075,
+   "dustQ20": 204505,
+   "gold": 12480,
+   "slots": 6
+  },
+  {
+   "name": "The Devourer of Minds",
+   "baseType": "Pig-Faced Bascinet",
+   "dust": 140625,
+   "dustQ20": 178125,
+   "gold": 15330,
+   "slots": 4
+  },
+  {
+   "name": "Ravenous Passion",
+   "baseType": "Zealot Helmet",
+   "dust": 53475,
+   "dustQ20": 74865,
+   "gold": 7940,
+   "slots": 4
+  },
+  {
+   "name": "Azadi Crest",
+   "baseType": "Lacquered Buckler",
+   "dust": 108700,
+   "dustQ20": 152180,
+   "gold": 10920,
+   "slots": 4
+  },
+  {
+   "name": "The Tempest Rising",
+   "baseType": "Goliath Greaves",
+   "dust": 71850,
+   "dustQ20": 100590,
+   "gold": 9060,
+   "slots": 4
+  },
+  {
+   "name": "Admiral's Arrogance",
+   "baseType": "Antique Gauntlets",
+   "dust": 15375,
+   "dustQ20": 21525,
+   "gold": 4520,
+   "slots": 4
+  },
+  {
+   "name": "The Dark Monarch",
+   "baseType": "Lich's Circlet",
+   "dust": 116275,
+   "dustQ20": 162785,
+   "gold": 11260,
+   "slots": 4
+  },
+  {
+   "name": "The Hand of Phrecia",
+   "baseType": "Mesh Gloves",
+   "dust": 12500,
+   "dustQ20": 17500,
+   "gold": 4120,
+   "slots": 4
+  },
+  {
+   "name": "Howlcrack",
+   "baseType": "Ezomyte Burgonet",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 4
+  },
+  {
+   "name": "Scornflux",
+   "baseType": "Satin Slippers",
+   "dust": 22650,
+   "dustQ20": 31710,
+   "gold": 5400,
+   "slots": 4
+  },
+  {
+   "name": "Veruso's Ambition",
+   "baseType": "Shackled Boots",
+   "dust": 8300,
+   "dustQ20": 11620,
+   "gold": 3440,
+   "slots": 4
+  },
+  {
+   "name": "Broadstroke",
+   "baseType": "Shackled Boots",
+   "dust": 2975,
+   "dustQ20": 4165,
+   "gold": 2160,
+   "slots": 6
+  },
+  {
+   "name": "The Golden Charlatan",
+   "baseType": "Lion Sword",
+   "dust": 298400,
+   "dustQ20": 417760,
+   "gold": 17200,
+   "slots": 8
+  },
+  {
+   "name": "Wing of the Wyvern",
+   "baseType": "Imperial Bow",
+   "dust": 307350,
+   "dustQ20": 430290,
+   "gold": 17440,
+   "slots": 8
+  },
+  {
+   "name": "Festering Resentment",
+   "baseType": "Demon Dagger",
+   "dust": 326075,
+   "dustQ20": 456505,
+   "gold": 17900,
+   "slots": 3
+  },
+  {
+   "name": "Jiquani's Potential",
+   "baseType": "Imperial Staff",
+   "dust": 1707500,
+   "dustQ20": 2390500,
+   "gold": 37720,
+   "slots": 8
+  },
+  {
+   "name": "The Grey Wind",
+   "baseType": "Spectral Axe",
+   "dust": 38625,
+   "dustQ20": 54075,
+   "gold": 6860,
+   "slots": 6
+  },
+  {
+   "name": "Unlight Extant",
+   "baseType": "Sage Wand",
+   "dust": 7375,
+   "dustQ20": 10325,
+   "gold": 3260,
+   "slots": 3
+  },
+  {
+   "name": "The Monastery Bell",
+   "baseType": "Dream Mace",
+   "dust": 7825,
+   "dustQ20": 10955,
+   "gold": 3340,
+   "slots": 6
+  },
+  {
+   "name": "Bitter Instinct",
+   "baseType": "Spiny Round Shield",
+   "dust": 30350,
+   "dustQ20": 42490,
+   "gold": 6160,
+   "slots": 6
+  },
+  {
+   "name": "Rigwald's Hunt",
+   "baseType": "General's Brigandine",
+   "dust": 102450,
+   "dustQ20": 143430,
+   "gold": 10640,
+   "slots": 6
+  },
+  {
+   "name": "The Hallowed Monarch",
+   "baseType": "Faithful Helmet",
+   "dust": 42000,
+   "dustQ20": 58800,
+   "gold": 7120,
+   "slots": 4
+  },
+  {
+   "name": "Hand of the Lords",
+   "baseType": "Carnal Mitts",
+   "dust": 63850,
+   "dustQ20": 89390,
+   "gold": 8600,
+   "slots": 4
+  },
+  {
+   "name": "The Caged Mammoth",
+   "baseType": "Antique Gauntlets",
+   "dust": 15375,
+   "dustQ20": 21525,
+   "gold": 4520,
+   "slots": 4
+  },
+  {
+   "name": "Refuge in Isolation",
+   "baseType": "Paladin Crown",
+   "dust": 48700,
+   "dustQ20": 68180,
+   "gold": 7600,
+   "slots": 4
+  },
+  {
+   "name": "Lost Unity",
+   "baseType": "Formless Ring",
+   "dust": 79175,
+   "dustQ20": 110845,
+   "gold": 9460,
+   "slots": 1
+  },
+  {
+   "name": "Woespike",
+   "baseType": "Steel Ring",
+   "dust": 48700,
+   "dustQ20": 68180,
+   "gold": 7600,
+   "slots": 1
+  },
+  {
+   "name": "The Unseen Hue",
+   "baseType": "Opal Ring",
+   "dust": 48700,
+   "dustQ20": 68180,
+   "gold": 7600,
+   "slots": 1
+  },
+  {
+   "name": "The Sundered Will",
+   "baseType": "Fugitive Ring",
+   "dust": 9900,
+   "dustQ20": 13860,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "Bonemeld",
+   "baseType": "Marble Amulet",
+   "dust": 43250,
+   "dustQ20": 60550,
+   "gold": 7220,
+   "slots": 1
+  },
+  {
+   "name": "The Will of Uul-Netol",
+   "baseType": "Organic Ring",
+   "dust": 9900,
+   "dustQ20": 13860,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "The Will of Esh",
+   "baseType": "Synaptic Ring",
+   "dust": 9900,
+   "dustQ20": 13860,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "The Will of Tul",
+   "baseType": "Cryonic Ring",
+   "dust": 9900,
+   "dustQ20": 13860,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "The Will of Xoph",
+   "baseType": "Enthalpic Ring",
+   "dust": 9900,
+   "dustQ20": 13860,
+   "gold": 3720,
+   "slots": 1
+  },
+  {
+   "name": "Cowards' Wail",
+   "baseType": "Ezomyte Tower Shield",
+   "dust": 32200,
+   "dustQ20": 45080,
+   "gold": 6320,
+   "slots": 8
+  },
+  {
+   "name": "Haunting Memories",
+   "baseType": "Turquoise Amulet",
+   "dust": 26300,
+   "dustQ20": 36820,
+   "gold": 5760,
+   "slots": 1
+  },
+  {
+   "name": "The Desecrated Chalice",
+   "baseType": "Coronal Maul",
+   "dust": 23325,
+   "dustQ20": 32655,
+   "gold": 5460,
+   "slots": 8
+  },
+  {
+   "name": "The Sacred Chalice",
+   "baseType": "Coronal Maul",
+   "dust": 23325,
+   "dustQ20": 32655,
+   "gold": 5460,
+   "slots": 8
+  },
+  {
+   "name": "The Flame of Hope",
+   "baseType": "Maraketh Bow",
+   "dust": 24750,
+   "dustQ20": 34650,
+   "gold": 5620,
+   "slots": 8
+  },
+  {
+   "name": "Skysunder",
+   "baseType": "Exquisite Blade",
+   "dust": 38425,
+   "dustQ20": 53795,
+   "gold": 6840,
+   "slots": 8
+  },
+  {
+   "name": "The Bane of Hope",
+   "baseType": "Maraketh Bow",
+   "dust": 24750,
+   "dustQ20": 34650,
+   "gold": 5620,
+   "slots": 8
+  },
+  {
+   "name": "The Broken Elegy",
+   "baseType": "Foul Staff",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 8
+  },
+  {
+   "name": "Fleshrender",
+   "baseType": "Exquisite Blade",
+   "dust": 38425,
+   "dustQ20": 53795,
+   "gold": 6840,
+   "slots": 8
+  },
+  {
+   "name": "The Sands of Time",
+   "baseType": "Tyrant's Sekhem",
+   "dust": 80875,
+   "dustQ20": 113225,
+   "gold": 9560,
+   "slots": 6
+  },
+  {
+   "name": "Khatal's Geyser",
+   "baseType": "Lapis Amulet",
+   "dust": 14100,
+   "dustQ20": 19740,
+   "gold": 4360,
+   "slots": 1
+  },
+  {
+   "name": "The Bandit Lord's Band",
+   "baseType": "Gold Ring",
+   "dust": 74000,
+   "dustQ20": 103600,
+   "gold": 9180,
+   "slots": 1
+  },
+  {
+   "name": "Screams of the Desiccated",
+   "baseType": "Leather Belt",
+   "dust": 115300,
+   "dustQ20": 161420,
+   "gold": 11220,
+   "slots": 2
+  },
+  {
+   "name": "Solerai's Radiance",
+   "baseType": "Chain Belt",
+   "dust": 4925,
+   "dustQ20": 6895,
+   "gold": 2720,
+   "slots": 2
+  },
+  {
+   "name": "Khatal's Weeping",
+   "baseType": "Lapis Amulet",
+   "dust": 14100,
+   "dustQ20": 19740,
+   "gold": 4360,
+   "slots": 1
+  },
+  {
+   "name": "Replica Gifts from Above",
+   "baseType": "Diamond Ring",
+   "dust": 6950,
+   "dustQ20": 9730,
+   "gold": 3160,
+   "slots": 1
+  },
+  {
+   "name": "Saresh's Darkness",
+   "baseType": "Chain Belt",
+   "dust": 4925,
+   "dustQ20": 6895,
+   "gold": 2720,
+   "slots": 2
+  },
+  {
+   "name": "Seablister",
+   "baseType": "Spiny Round Shield",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 6
+  },
+  {
+   "name": "Spinesnatch",
+   "baseType": "Fleshripper",
+   "dust": 115300,
+   "dustQ20": 161420,
+   "gold": 11220,
+   "slots": 8
+  },
+  {
+   "name": "Subsume the Source",
+   "baseType": "Faithful Helmet",
+   "dust": 126000,
+   "dustQ20": 176400,
+   "gold": 11680,
+   "slots": 4
+  },
+  {
+   "name": "The Crustacean's Call",
+   "baseType": "Primordial Staff",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 8
+  },
+  {
+   "name": "Dread Captain's Cutlass",
+   "baseType": "Ghostflame Blade",
+   "dust": 36225,
+   "dustQ20": 50715,
+   "gold": 6660,
+   "slots": 6
+  },
+  {
+   "name": "Pearl of Tsoatha",
+   "baseType": "Prismatic Ring",
+   "dust": 85800,
+   "dustQ20": 120120,
+   "gold": 9820,
+   "slots": 1
+  },
+  {
+   "name": "Replica Maata's Teaching",
+   "baseType": "Karui Sceptre",
+   "dust": 76225,
+   "dustQ20": 106715,
+   "gold": 9300,
+   "slots": 6
+  },
+  {
+   "name": "Rotmother's Mutiny",
+   "baseType": "Pearlescent Amulet",
+   "dust": 13650,
+   "dustQ20": 19110,
+   "gold": 4300,
+   "slots": 1
+  },
+  {
+   "name": "The Draugur's Lantern",
+   "baseType": "Ancient Spirit Shield",
+   "dust": 24675,
+   "dustQ20": 34545,
+   "gold": 5600,
+   "slots": 4
+  },
+  {
+   "name": "The Unblinking Eye",
+   "baseType": "Harlequin Mask",
+   "dust": 33150,
+   "dustQ20": 46410,
+   "gold": 6400,
+   "slots": 4
+  },
+  {
+   "name": "The Wellhook",
+   "baseType": "Fishing Rod",
+   "dust": 2128100,
+   "dustQ20": 2979340,
+   "gold": 41640,
+   "slots": 4
+  },
+  {
+   "name": "Unholy Accomplice",
+   "baseType": "Cloth Belt",
+   "dust": 556975,
+   "dustQ20": 779765,
+   "gold": 22780,
+   "slots": 2
+  },
+  {
+   "name": "Waxen Soul",
+   "baseType": "Saint's Hauberk",
+   "dust": 307350,
+   "dustQ20": 430290,
+   "gold": 17440,
+   "slots": 6
+  },
+  {
+   "name": "Zana's Ingenuity",
+   "baseType": "Prismatic Ring",
+   "dust": 149500,
+   "dustQ20": 209300,
+   "gold": 12600,
+   "slots": 1
+  },
+  {
+   "name": "Corpse Rose",
+   "baseType": "Imbued Wand",
+   "dust": 17350,
+   "dustQ20": 24290,
+   "gold": 4780,
+   "slots": 3
+  },
+  {
+   "name": "Hide of the Vendigo",
+   "baseType": "Exquisite Leather",
+   "dust": 18975,
+   "dustQ20": 26565,
+   "gold": 4980,
+   "slots": 6
+  },
+  {
+   "name": "Mantle of Dreams",
+   "baseType": "Body Armour",
+   "dust": 99475,
+   "dustQ20": 139265,
+   "gold": 10500,
+   "slots": 6
+  },
+  {
+   "name": "Ordered Fate",
+   "baseType": "Walnut Spirit Shield",
+   "dust": 12525,
+   "dustQ20": 17535,
+   "gold": 4140,
+   "slots": 4
+  },
+  {
+   "name": "The Sword of Ages",
+   "baseType": "Exquisite Blade",
+   "dust": 1697500,
+   "dustQ20": 2376500,
+   "gold": 37620,
+   "slots": 8
+  },
+  {
+   "name": "Unwilling Embrace",
+   "baseType": "Bone Ring",
+   "dust": 18350,
+   "dustQ20": 25690,
+   "gold": 4900,
+   "slots": 1
+  },
+  {
+   "name": "The Covetous Dark",
+   "baseType": "Eye Gouger",
+   "dust": 20125,
+   "dustQ20": 28175,
+   "gold": 5120,
+   "slots": 4
+  },
+  {
+   "name": "Bane of the Apostate",
+   "baseType": "Judgement Staff",
+   "dust": 22650,
+   "dustQ20": 31710,
+   "gold": 5400,
+   "slots": 8
+  },
+  {
+   "name": "Veil of Flesh",
+   "baseType": "Callous Mask",
+   "dust": 16975,
+   "dustQ20": 23765,
+   "gold": 4740,
+   "slots": 4
+  }
+ ]
+}

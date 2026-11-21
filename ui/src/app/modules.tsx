@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Archive, BarChart3, Bookmark, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Archive, BarChart3, Bookmark, Castle, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
@@ -9,6 +9,7 @@ import { PobBuildsPage } from "@/modules/pob-builds/PobBuildsPage";
 import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
 import { EconomyPage } from "@/modules/economy/EconomyPage";
 import { StashPage } from "@/modules/stash/StashPage";
+import { KingsmarchPage } from "@/modules/kingsmarch/KingsmarchPage";
 import { BookmarksPage } from "@/modules/user-data/BookmarksPage";
 import { HistoryPage } from "@/modules/user-data/HistoryPage";
 import { PinsPage } from "@/modules/user-data/PinsPage";
@@ -124,6 +125,16 @@ const CLUSTERS: ModuleDef = {
   keywords: "кластер кластерный самоцвет cluster jewel крафт craft фоссил ископаемые fossil notable прибыль roi",
 };
 
+/** Город Kalguur: подвкладки по механикам, первая — «Пыль» (что выгодно купить на разбор). */
+const KINGSMARCH: ModuleDef = {
+  id: "kingsmarch",
+  label: "Kingsmarch",
+  icon: Castle,
+  group: "craft",
+  component: KingsmarchPage,
+  keywords: "kingsmarch кингсмарч пыль dust thaumaturgic disenchant разбор rog уники settlers kalguur",
+};
+
 /** Библиотека сборок Path of Building (план shared/docs/pob-trader.md). */
 const POB_BUILDS: ModuleDef = {
   id: "pob-builds",
@@ -162,7 +173,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, WATCHLIST, ECONOMY, STASH, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, ECONOMY, STASH, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, KINGSMARCH, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
