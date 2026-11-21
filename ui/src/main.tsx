@@ -35,6 +35,11 @@ if (import.meta.env.DEV) {
     const [{ useClustersData }, { clustersDemo }] = await Promise.all([import("./modules/clusters/useClusters"), import("./modules/clusters/demo")]);
     useClustersData.setState(clustersDemo());
   }
+  // demo=bosses — «Фарм → Боссы» с демо-боссами и расчётом в браузере (ядра нет).
+  if (q.get("demo") === "bosses") {
+    const [{ useBossesData }, { bossesDemo }] = await Promise.all([import("./modules/bosses/useBosses"), import("./modules/bosses/demo")]);
+    useBossesData.setState({ demo: bossesDemo() });
+  }
   // demo=stash — «Тайник» с демо-снапшотами (в tauri dev — настоящие цены и иконки), demo=stash-login — вход.
   if (q.get("demo") === "stash" || q.get("demo") === "stash-login") {
     const [{ useStash }, { stashDemo }] = await Promise.all([import("./modules/stash/stash"), import("./modules/stash/demo")]);

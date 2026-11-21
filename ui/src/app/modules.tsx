@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Archive, BarChart3, Bookmark, Castle, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Archive, BarChart3, Bookmark, Castle, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Skull, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
@@ -10,6 +10,7 @@ import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
 import { EconomyPage } from "@/modules/economy/EconomyPage";
 import { StashPage } from "@/modules/stash/StashPage";
 import { KingsmarchPage } from "@/modules/kingsmarch/KingsmarchPage";
+import { BossesPage } from "@/modules/bosses/BossesPage";
 import { BookmarksPage } from "@/modules/user-data/BookmarksPage";
 import { HistoryPage } from "@/modules/user-data/HistoryPage";
 import { PinsPage } from "@/modules/user-data/PinsPage";
@@ -29,7 +30,7 @@ export type ModuleDef = {
   label: string;
   icon: LucideIcon;
   /** Группа навигации; `footer` — внизу сайдбара; `dev` — только при включённом режиме разработчика. */
-  group: "check" | "builds" | "craft" | "data" | "dev" | "footer";
+  group: "check" | "builds" | "craft" | "farm" | "data" | "dev" | "footer";
   component: ComponentType;
   /** Можно ли передать в модуль текущий предмет. */
   acceptsItem?: boolean;
@@ -135,6 +136,16 @@ const KINGSMARCH: ModuleDef = {
   keywords: "kingsmarch кингсмарч пыль dust thaumaturgic disenchant разбор rog уники settlers kalguur",
 };
 
+/** Доход с боссов: EV, прибыль в час и риск по живым ценам (план shared/docs/boss-farm.md). */
+const BOSSES: ModuleDef = {
+  id: "bosses",
+  label: "Боссы",
+  icon: Skull,
+  group: "farm",
+  component: BossesPage,
+  keywords: "боссы босс фарм boss farm pinnacle uber shaper elder sirus maven доход в час ttk дроп",
+};
+
 /** Библиотека сборок Path of Building (план shared/docs/pob-trader.md). */
 const POB_BUILDS: ModuleDef = {
   id: "pob-builds",
@@ -158,6 +169,7 @@ const GROUP_LABELS: Record<Exclude<ModuleDef["group"], "footer">, string> = {
   check: "Проверка",
   builds: "Билды",
   craft: "Крафт",
+  farm: "Фарм",
   data: "Данные",
   dev: "Разработка",
 };
@@ -173,7 +185,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, WATCHLIST, ECONOMY, STASH, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, KINGSMARCH, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, ECONOMY, STASH, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, KINGSMARCH, BOSSES, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
