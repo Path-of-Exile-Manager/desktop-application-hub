@@ -57,7 +57,7 @@ const ARMOURS: [&str; 6] = ["Body Armour", "Boots", "Gloves", "Helmet", "Shield"
 const ACCESSORIES: [&str; 4] = ["Amulet", "Belt", "Ring", "Trinket"];
 
 /// Раздел предмета: id как в интерфейсе (`currency`, `essences`, `unique-weapons`…).
-fn category_of(item: &CatalogItem) -> &'static str {
+pub fn category_of(item: &CatalogItem) -> &'static str {
     let name = item.name.en.as_str();
     let class = item.class_id.as_str();
     let unique = item.rarity == ItemRarity::Unique;

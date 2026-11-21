@@ -31,6 +31,7 @@ mod pob;
 mod pob_stage;
 mod prices;
 mod server;
+mod stash;
 mod sync;
 mod trade;
 mod updater;
@@ -100,6 +101,7 @@ pub fn run() {
             clusters::start(app.handle(), &app_root);
             account::start(app.handle(), &app.state::<paths::AppPaths>());
             sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
+            stash::start(app.handle(), &app.state::<paths::AppPaths>());
             market::start(app.handle());
             updater::start(app.handle(), &app_root);
             app.manage(appraise::LastAppraisal::default());
@@ -197,6 +199,16 @@ pub fn run() {
             discord::discord_configure,
             discord::discord_reconnect,
             discord::discord_clear_log,
+            stash::stash_status,
+            stash::stash_connect,
+            stash::stash_disconnect,
+            stash::stash_refresh_tabs,
+            stash::stash_select,
+            stash::stash_cancel,
+            stash::stash_take_snapshot,
+            stash::stash_snapshots,
+            stash::stash_snapshot_detail,
+            stash::stash_snapshot_delete,
             updater::updater_status,
             updater::updater_check,
             updater::updater_restart,

@@ -35,6 +35,13 @@ if (import.meta.env.DEV) {
     const [{ useClustersData }, { clustersDemo }] = await Promise.all([import("./modules/clusters/useClusters"), import("./modules/clusters/demo")]);
     useClustersData.setState(clustersDemo());
   }
+  // demo=stash — «Тайник» с демо-снапшотами (в tauri dev — настоящие цены и иконки), demo=stash-login — вход.
+  if (q.get("demo") === "stash" || q.get("demo") === "stash-login") {
+    const [{ useStash }, { stashDemo }] = await Promise.all([import("./modules/stash/stash"), import("./modules/stash/demo")]);
+    const demo = await stashDemo();
+    if (q.get("demo") === "stash-login") demo.status = { ...demo.status, connected: false, account: null, limits: [] };
+    useStash.setState(demo);
+  }
 }
 
 // Тот же фронтенд и для оверлея поверх игры (src-tauri/src/overlay.rs): какое окно — по его метке.

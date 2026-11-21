@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { BarChart3, Bookmark, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
+import { Archive, BarChart3, Bookmark, Dices, Eye, Gem, History, LayoutGrid, Library, Pin, Regex, Settings, Tag, Wrench, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/design-system";
 import { PriceCheckPage } from "@/modules/price-check/PriceCheckPage";
 import { AncientOrbPage } from "@/modules/ancient-orb/AncientOrbPage";
@@ -8,6 +8,7 @@ import { ClustersPage } from "@/modules/clusters/ClustersPage";
 import { PobBuildsPage } from "@/modules/pob-builds/PobBuildsPage";
 import { WatchlistPage } from "@/modules/watchlist/WatchlistPage";
 import { EconomyPage } from "@/modules/economy/EconomyPage";
+import { StashPage } from "@/modules/stash/StashPage";
 import { BookmarksPage } from "@/modules/user-data/BookmarksPage";
 import { HistoryPage } from "@/modules/user-data/HistoryPage";
 import { PinsPage } from "@/modules/user-data/PinsPage";
@@ -77,6 +78,16 @@ const ECONOMY: ModuleDef = {
   group: "check",
   component: EconomyPage,
   keywords: "цены экономика poe.ninja валюта эссенции скарабеи карты уники камни базы economy",
+};
+
+/** Стоимость тайника аккаунта PoE и снапшоты (вход по POESESSID, хранение — локально). */
+const STASH: ModuleDef = {
+  id: "stash",
+  label: "Тайник",
+  icon: Archive,
+  group: "check",
+  component: StashPage,
+  keywords: "тайник вкладки stash tabs снапшот snapshot стоимость доход в час net worth poesessid аккаунт",
 };
 
 /** Данные сайта торговли — общие с расширением браузера (Ф10). */
@@ -151,7 +162,7 @@ export type ModuleSet = {
 };
 
 function buildModuleSet(developerMode: boolean): ModuleSet {
-  const modules = [PRICE_CHECK, WATCHLIST, ECONOMY, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
+  const modules = [PRICE_CHECK, WATCHLIST, ECONOMY, STASH, POB_BUILDS, ANCIENT_ORB, MAP_REGEX, CLUSTERS, ...TRADE_DATA, ...(developerMode ? DEV_MODULES : []), SETTINGS];
   return {
     modules,
     navGroups: (Object.keys(GROUP_LABELS) as (keyof typeof GROUP_LABELS)[])
