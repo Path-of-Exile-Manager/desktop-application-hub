@@ -5,7 +5,7 @@ import { iconUrl, searchCatalog } from "@/app/dataset";
 import type { ClusterName } from "@/generated/ClusterName";
 import { openTrade } from "@/app/user-data";
 import { formatAge } from "@/app/prices";
-import { alternativesFor, craftSteps, formatRoi, formatShare, levelRange, methodName, nameIn, SIZE_LABEL, type Alternative, type NameLanguage, type PlanStep } from "./model";
+import { alternativesFor, basePassivesText, craftSteps, formatRoi, formatShare, levelRange, methodName, nameIn, SIZE_LABEL, type Alternative, type NameLanguage, type PlanStep } from "./model";
 import { checkBase, clusterDetail, tradeUrl, useBaseChecks, useClustersData, type BaseCheckState, type ClusterDetail, type ClusterRow, type CraftPlan } from "./useClusters";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -118,7 +118,7 @@ function Availability({ row, plan, planned, check }: { row: ClusterRow; plan: Cr
     body = check?.status === "error" ? `Наличие на трейде не проверено: ${check.error}` : "Наличие на трейде ещё не проверено.";
   } else if (result.total === 0) {
     status = "danger";
-    body = `Баз с этим энчантом и ${row.passives} пассивами сейчас нет на трейде ни на каком подходящем уровне — крафт пока не начать.`;
+    body = `Баз с этим энчантом и ${basePassivesText(row)} пассивами сейчас нет на трейде ни на каком подходящем уровне — крафт пока не начать.`;
   } else if (result.plannedRange) {
     status = "success";
     body = `На трейде ${result.total.toLocaleString("ru-RU")} шт. уровня ${levelRange(plan)}, от ${text(result.cheapest ?? result.basePrice ?? 0, true)}. Расчёт ниже — по цене ${text(result.basePrice ?? plan.basePrice, true)}.`;
@@ -182,11 +182,20 @@ function BaseCard({ row, plan, planned, check, enchants, language, onBuy }: { ro
       </div>
       <div className="grid grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] gap-4 rounded-md border border-border-subtle bg-bg-surface px-4 py-3">
         {fact("Энчант", <span title={enchant}>{enchant}</span>)}
-        {fact("Пассивов", `Adds ${row.passives} Passive Skills`)}
+        {fact(
+          "Пассивов",
+          <span title={row.basePassives.map((p) => `Adds ${p} Passive Skills`).join(" / ")}>{row.basePassives.length > 1 ? basePassivesText(row) : `Adds ${row.passives} Passive Skills`}</span>,
+        )}
         {fact("Уровень предмета", levelRange(plan))}
         {fact("Цена базы", `≈ ${text(plan.basePrice, true)}`)}
       </div>
       <Availability row={row} plan={plan} planned={planned} check={check} />
+      {row.basePassives.length > 1 && (
+        <p className="text-caption text-text-secondary">
+          Цели на {row.passives} пассива подходит и база на {row.basePassives.filter((p) => p !== row.passives).join(" или ")}
+          {planned.passives !== row.passives ? ` — по ценам сейчас выгоднее база на ${planned.passives} пассивов.` : " — поиск на трейде ищет обе, берите что дешевле."}
+        </p>
+      )}
       {others.length > 0 && (
         <p className="text-caption text-text-secondary">
           Подойдут и другие энчанты (шанс и цена базы будут другими): {others.map((e) => nameIn(e, language)).join(", ")}.

@@ -195,6 +195,12 @@ export function levelRange(plan: CraftPlan): string {
   return plan.itemLevelMax === plan.itemLevel ? String(plan.itemLevel) : `${plan.itemLevel}–${plan.itemLevelMax}`;
 }
 
+/** Сколько пассивов может быть у базы: «4 или 5» (цели на 4 подходит и база на 5), иначе число цели. */
+export function basePassivesText(row: ClusterRow): string {
+  const list = row.basePassives.length > 0 ? row.basePassives : [row.passives];
+  return list.length > 1 ? `${list.slice(0, -1).join(", ")} или ${list[list.length - 1]}` : String(list[0]);
+}
+
 /** Шаг плана крафта: что сделать, подробности и главный ли это шаг (его выделяют). */
 export type PlanStep = { title: string; detail?: string; key?: boolean };
 

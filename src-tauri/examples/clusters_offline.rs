@@ -85,6 +85,9 @@ fn main() {
     }
     println!("лучший способ: {methods:?}");
     println!("целей {}, с планом {planned}, расчёт {:.2} с; проблемы: {issues:?}", computed.rows.len(), elapsed.as_secs_f64());
+    let four: Vec<_> = computed.rows.iter().filter(|row| row.passives == 4).collect();
+    let on_five = four.iter().filter(|row| row.best.as_ref().is_some_and(|b| b.passives == 5)).count();
+    println!("целей на 4 пассива: {}, лучшая база на 5 пассивов: {on_five}", four.len());
 
     let mut ranked: Vec<_> = computed.rows.iter().filter_map(|row| row.best.as_ref().and_then(|best| best.roi.map(|roi| (roi, row, best)))).collect();
     ranked.sort_by(|left, right| right.0.total_cmp(&left.0));

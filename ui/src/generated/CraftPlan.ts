@@ -25,7 +25,11 @@ itemLevel: number,
 /**
  * Уровень базы не выше: дальше в пул добавляются моды и шанс цели падает. `null` — выше модов нет.
  */
-itemLevelMax: number | null, basePrice: number, 
+itemLevelMax: number | null, 
+/**
+ * Пассивов у самой выгодной базы по прайсу (у цели на 4 — бывает 5, см. `ClusterRow.base_passives`).
+ */
+passives: number, basePrice: number, 
 /**
  * Шанс закончить цель одной попыткой.
  */

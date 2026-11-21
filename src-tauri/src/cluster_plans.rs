@@ -184,6 +184,8 @@ pub struct CraftPlan {
     pub item_level: u32,
     /// Уровень базы не выше: дальше в пул добавляются моды и шанс цели падает. `null` — выше модов нет.
     pub item_level_max: Option<u32>,
+    /// Пассивов у самой выгодной базы по прайсу (у цели на 4 — бывает 5, см. `ClusterRow.base_passives`).
+    pub passives: u32,
     pub base_price: f64,
     /// Шанс закончить цель одной попыткой.
     pub probability: f64,
@@ -259,6 +261,8 @@ pub struct ClusterRow {
     pub size: String,
     pub size_name: ClusterName,
     pub passives: u32,
+    /// Сколько пассивов может быть у базы: `[4, 5]` у цели на 4, иначе только число цели.
+    pub base_passives: Vec<u32>,
     pub min_ilvl: u32,
     pub notables: Vec<ClusterName>,
     /// Id энчантов размера, на которых выпадают все notable цели: по ним карточка находит
@@ -414,29 +418,37 @@ impl BaseOffers {
         Self { by_size }
     }
 
-    /// Базы для цели: нужные пассивы, уровень не ниже нужного, энчант из подходящих. Из баз
-    /// одного энчанта остаются только те, что дешевле всех баз ниже уровнем: база выше уровнем
-    /// добавляет моды в пул (шанс не растёт) и дороже — она хуже.
+    /// Базы для цели: подходящие пассивы (`base_passives`), уровень не ниже нужного, энчант из
+    /// подходящих. Из баз одного энчанта остаются только те, что дешевле всех баз ниже уровнем
+    /// (и того же уровня с другим числом пассивов): база выше уровнем добавляет моды в пул (шанс
+    /// не растёт) и дороже — она хуже; число пассивов на пул не влияет.
     fn for_target(&self, target: &TargetReply) -> Vec<BaseOffer> {
         let mut result = Vec::new();
         let Some(offers) = self.by_size.get(&target.size) else { return result };
+        let accepted = base_passives(target);
 
         for enchant in &target.enchants {
             let mut fitting: Vec<&(String, u32, u32, f64)> =
-                offers.iter().filter(|(id, passives, level, _)| id == enchant && *passives == target.passives && *level >= target.min_ilvl).collect();
-            fitting.sort_by_key(|(_, _, level, _)| *level);
+                offers.iter().filter(|(id, passives, level, _)| id == enchant && accepted.contains(passives) && *level >= target.min_ilvl).collect();
+            fitting.sort_by(|a, b| a.2.cmp(&b.2).then(a.3.total_cmp(&b.3)));
 
             let mut cheapest = f64::INFINITY;
-            for (id, _, level, price) in fitting {
+            for (id, passives, level, price) in fitting {
                 if *price < cheapest {
                     cheapest = *price;
-                    result.push(BaseOffer { enchant: id.clone(), item_level: *level, price: *price });
+                    result.push(BaseOffer { enchant: id.clone(), item_level: *level, price: *price, passives: Some(*passives) });
                 }
             }
         }
 
         result
     }
+}
+
+/// Сколько пассивов может быть у базы для цели. Цели на 4 пассива подходит и база на 5 (решение
+/// пользователя 22.11.2026: такие самоцветы по сути равноценны) — берётся та, что выгоднее.
+pub fn base_passives(target: &TargetReply) -> Vec<u32> {
+    if target.passives == 4 { vec![4, 5] } else { vec![target.passives] }
 }
 
 /// Текст энчанта, как его пишут источники цен (строки через перевод строки или «, », в любом
@@ -491,6 +503,7 @@ fn evaluate(engine: &Engine, names: &dyn MarketData, market: &Prices, offers: &B
         size: target.size.clone(),
         size_name: size.map_or_else(|| ClusterName { en: target.size.clone(), ru: None }, |s| ClusterName { en: s.name.en.clone(), ru: s.name.ru.clone() }),
         passives: target.passives,
+        base_passives: base_passives(target),
         min_ilvl: target.min_ilvl,
         notables: target.notables.iter().map(|name| notable_name(engine, name)).collect(),
         enchant_ids: target.enchants.clone(),
@@ -527,8 +540,8 @@ fn target_query(engine: &Engine, target: &TargetReply) -> Option<serde_json::Val
     }))
 }
 
-/// Запрос базы плана: белая, энчант, ровно столько пассивов, уровень в диапазоне того же пула модов;
-/// мгновенный выкуп и продавцы в сети.
+/// Запрос базы плана: белая, энчант, подходящее число пассивов (`base_passives`), уровень в
+/// диапазоне того же пула модов; мгновенный выкуп и продавцы в сети.
 fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, levels: (u32, Option<u32>)) -> Option<serde_json::Value> {
     let data = engine.data();
     let size = data.clusters.sizes.iter().find(|size| size.id == target.size)?;
@@ -536,13 +549,15 @@ fn base_query(engine: &Engine, target: &TargetReply, enchant_id: &str, levels: (
     // `enchant.stat_3948993189|11`: фильтр энчанта и номер варианта в нём.
     let (stat, option) = enchant.trade_stat_ids.first()?.split_once('|')?;
     let option: u32 = option.parse().ok()?;
+    let accepted = base_passives(target);
+    let (min_passives, max_passives) = (accepted.iter().min()?, accepted.iter().max()?);
     Some(json!({
         "query": {
             "status": { "option": "available" },
             "type": size.name.en,
             "stats": [{ "type": "and", "filters": [
                 { "id": stat, "value": { "option": option } },
-                { "id": PASSIVES_STAT, "value": { "min": target.passives, "max": target.passives } }
+                { "id": PASSIVES_STAT, "value": { "min": min_passives, "max": max_passives } }
             ] }],
             "filters": {
                 "type_filters": { "filters": { "rarity": { "option": "normal" } } },
@@ -584,7 +599,8 @@ pub fn plans_for_base(
 ) -> Vec<CraftPlan> {
     let market = market_prices(engine, data, own);
     let sale = target.market.as_ref().filter(|m| m.status == ClusterMarketStatus::Ok).and_then(|m| m.price_chaos);
-    let offers = [BaseOffer { enchant: enchant_id.to_owned(), item_level, price: base_price }];
+    // Найденные на трейде базы — любого подходящего числа пассивов: какого именно, неизвестно.
+    let offers = [BaseOffer { enchant: enchant_id.to_owned(), item_level, price: base_price, passives: None }];
     craft_engine::plan_target(engine, &target.size, &target.notables, &offers, &market, sale, FOSSIL_OFFERS)
         .unwrap_or_default()
         .iter()
@@ -651,6 +667,7 @@ fn craft_plan(engine: &Engine, names: &dyn MarketData, plan: &Plan, target: &Tar
         trade_base: base_query(engine, target, &plan.base.enchant, levels),
         item_level: levels.0,
         item_level_max: levels.1,
+        passives: plan.base.passives.unwrap_or(target.passives),
         base_price: plan.base.price,
         probability: plan.estimate.probability,
         fish_first: plan.estimate.fish_first.and_then(|index| target.notables.get(index)).map(|name| notable_name(engine, name)),

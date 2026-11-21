@@ -16,6 +16,8 @@ pub struct BaseOffer {
     pub enchant: String,
     pub item_level: u32,
     pub price: f64,
+    /// Число пассивов базы — только для покупки: на пул модов и шанс оно не влияет.
+    pub passives: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]

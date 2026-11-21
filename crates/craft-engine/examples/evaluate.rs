@@ -136,6 +136,7 @@ fn main() {
                 enchant: (*enchant).to_owned(),
                 item_level: ITEM_LEVEL,
                 price: 2.0 + index as f64,
+                passives: None,
             })
             .collect();
         let started = Instant::now();

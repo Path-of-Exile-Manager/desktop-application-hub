@@ -5,7 +5,11 @@ import type { ClusterName } from "./ClusterName";
 import type { ClusterTargetDemand } from "./ClusterTargetDemand";
 import type { CraftPlan } from "./CraftPlan";
 
-export type ClusterRow = { key: string, size: string, sizeName: ClusterName, passives: number, minIlvl: number, notables: Array<ClusterName>, 
+export type ClusterRow = { key: string, size: string, sizeName: ClusterName, passives: number, 
+/**
+ * Сколько пассивов может быть у базы: `[4, 5]` у цели на 4, иначе только число цели.
+ */
+basePassives: Array<number>, minIlvl: number, notables: Array<ClusterName>, 
 /**
  * Id энчантов размера, на которых выпадают все notable цели: по ним карточка находит
  * другие цели, которые могут выпасть на той же базе.
