@@ -11,7 +11,9 @@ import type { FarmRef } from "@/generated/FarmRef";
 import type { FarmSettings } from "@/generated/FarmSettings";
 import type { FarmSummary } from "@/generated/FarmSummary";
 import type { FarmTable } from "@/generated/FarmTable";
-import { refKey, type BossesDemo } from "./useBosses";
+import { journalDemo, useBossKills, type BossKill, type BossKillDrop } from "./journal";
+import { showRunToast, useFarmLog } from "./runs";
+import { refKey, useBossesData, type BossesDemo } from "./useBosses";
 
 // Демо-данные вкладки для `?demo=bosses` (только dev-сервер): вёрстка и скриншоты без ядра.
 // Боссы и числа — порядок величин, не таблица шансов и не рынок. Расчёт упрощён: σ — как в
@@ -522,4 +524,132 @@ function compute(settings: FarmSettings, own: Record<string, number>): { table: 
 
 export function bossesDemo(): BossesDemo {
   return { compute, ownPrices: {}, details: {} };
+}
+
+// ---------- журнал (F10–F11) ----------
+
+/** Детерминированный «случайный» ряд: одни и те же записи на каждом запуске. */
+function rng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 1103515245 + 12345) % 2147483648;
+    return s / 2147483648;
+  };
+}
+
+/** Записи журнала: три сессии за два дня (лог), пара ручных, заход без убийства и без записанного дропа. */
+function demoKills(): BossKill[] {
+  const { details } = compute({ iiq: 0, preferCommunity: false, bosses: {} }, {});
+  const random = rng(42);
+  const kills: BossKill[] = [];
+  const now = Date.now();
+  const plan: { bossId: string; start: number; count: number; ttk: number }[] = [
+    { bossId: "uber-shaper", start: now - 26 * 3600_000, count: 9, ttk: 75 },
+    { bossId: "uber-elder", start: now - 22 * 3600_000, count: 6, ttk: 95 },
+    { bossId: "uber-shaper", start: now - 95 * 60_000, count: 7, ttk: 68 },
+    { bossId: "searing-exarch", start: now - 40 * 60_000, count: 4, ttk: 50 },
+  ];
+  let n = 0;
+  for (const p of plan) {
+    const detail = details[p.bossId];
+    const entry = detail.entry.reduce((sum, e) => sum + (e.cost ?? 0), 0);
+    let t = p.start;
+    for (let i = 0; i < p.count; i++) {
+      const duration = Math.round(p.ttk * (0.75 + random() * 0.6));
+      const overhead = i === 0 ? null : Math.round(35 + random() * 30);
+      t += ((overhead ?? 0) + duration) * 1000;
+      const killed = !(p.bossId === "uber-elder" && i === 3);
+      const recorded = killed && !(p.bossId === "uber-shaper" && i === 5);
+      const drops: BossKillDrop[] = [];
+      if (recorded) {
+        for (const pool of detail.pools) {
+          if (pool.kind === "one-of") {
+            let roll = random();
+            const pick = pool.drops.find((d) => (roll -= d.probability ?? 0) <= 0) ?? pool.drops[0];
+            drops.push({ key: pick.key, qty: 1, chaos: pick.price.chaos });
+          } else {
+            for (const d of pool.drops) if (random() < (d.probability ?? 0)) drops.push({ key: d.key, qty: 1, chaos: d.price.chaos });
+          }
+        }
+      }
+      kills.push({
+        id: `demo-kill-${n++}`,
+        bossId: p.bossId,
+        league: "Covens",
+        dataVersion: "3.30.0-2",
+        at: new Date(t).toISOString(),
+        durationSec: duration,
+        overheadSec: overhead,
+        pausedSec: i % 4 === 1 ? 14 : 0,
+        deaths: random() < 0.15 ? 1 : 0,
+        source: "LOG",
+        killed,
+        dropsRecorded: recorded,
+        drops: killed ? drops : [],
+        extra: recorded && random() < 0.3 ? [{ itemId: "base:Metadata/Items/Currency/CurrencyModValues", qty: 1, chaos: 160 }] : [],
+        entryChaos: entry,
+      });
+    }
+  }
+  kills.push({
+    id: `demo-kill-${n++}`,
+    bossId: "coven-queen",
+    league: "Covens",
+    dataVersion: "3.30.0-2",
+    at: new Date(now - 30 * 3600_000).toISOString(),
+    durationSec: 140,
+    overheadSec: null,
+    pausedSec: null,
+    deaths: 0,
+    source: "MANUAL",
+    killed: true,
+    dropsRecorded: true,
+    drops: [{ key: "witchs-veil", qty: 1, chaos: 90 }],
+    extra: [],
+    entryChaos: 60,
+  });
+  return kills.sort((a, b) => (a.at < b.at ? 1 : -1));
+}
+
+/** `?demo=bosses`: журнал, цены записи и ожидание без ядра; `&run=1` — открытый заход, `&toast=run` — тост после захода. */
+export function installJournalDemo(query: URLSearchParams) {
+  const priced = () => compute({ iiq: 0, preferCommunity: false, bosses: {} }, useBossesData.getState().demo?.ownPrices ?? {});
+  journalDemo.prices = (league, bossId, extra) => {
+    const detail = priced().details[bossId];
+    const entryChaos = detail.entry.some((e) => e.cost === null) ? null : detail.entry.reduce((sum, e) => sum + (e.cost ?? 0), 0);
+    const drops = Object.fromEntries(detail.pools.flatMap((p) => p.drops).map((d) => [d.key, d.price.chaos]));
+    return { league, dataVersion: "3.30.0-2", entryChaos, drops, extra: Object.fromEntries(extra.map((id) => [id, 160])) };
+  };
+  journalDemo.expect = (kills) => {
+    const rows = priced().table.bosses;
+    return Object.fromEntries(
+      Object.entries(kills).flatMap(([bossId, count]) => {
+        const s = rows.find((r) => r.id === bossId)?.summary;
+        return s ? [[bossId, { kills: count, income: s.ev * count, profit: s.profit === null ? null : s.profit * count, sigma: s.sigma * Math.sqrt(count) }]] : [];
+      }),
+    );
+  };
+  useBossKills.setState({ kills: demoKills() });
+
+  const now = Date.now();
+  if (query.get("run") === "1") {
+    useFarmLog.setState({
+      run: { bossId: "uber-shaper", bossName: { en: "Uber Shaper", ru: "Создатель (убер)" }, areaId: "MapWorldsShapersRealm", startedAt: now - 72_000, awaySince: null, pausedSec: 0, deaths: 1, pendingDrops: 0 },
+    });
+  }
+  if (query.get("toast") === "run") {
+    setTimeout(
+      () =>
+        showRunToast({
+          bossId: "uber-shaper",
+          bossName: { en: "Uber Shaper", ru: "Создатель (убер)" },
+          league: "Covens",
+          killId: useBossKills.getState().kills?.find((k) => k.bossId === "uber-shaper")?.id ?? null,
+          drops: 0,
+          error: null,
+          run: { bossId: "uber-shaper", areaId: "MapWorldsShapersRealm", startedAt: new Date(now - 180_000).toISOString(), endedAt: new Date(now).toISOString(), durationSec: 161, pausedSec: 15, deaths: 0, overheadSec: 48 },
+        }),
+      1500,
+    );
+  }
 }

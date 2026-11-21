@@ -35,10 +35,18 @@ if (import.meta.env.DEV) {
     const [{ useClustersData }, { clustersDemo }] = await Promise.all([import("./modules/clusters/useClusters"), import("./modules/clusters/demo")]);
     useClustersData.setState(clustersDemo());
   }
-  // demo=bosses — «Фарм → Боссы» с демо-боссами и расчётом в браузере (ядра нет).
+  // demo=bosses — «Фарм → Боссы» с демо-боссами и расчётом в браузере (ядра нет), журнал убийств;
+  // &tab=journal — вкладка «Журнал», &run=1 — идёт бой, &toast=run — тост после захода, &profile=log — «По логу».
   if (q.get("demo") === "bosses") {
-    const [{ useBossesData }, { bossesDemo }] = await Promise.all([import("./modules/bosses/useBosses"), import("./modules/bosses/demo")]);
+    const [{ useBossesData }, { bossesDemo, installJournalDemo }, { useBossesView }] = await Promise.all([
+      import("./modules/bosses/useBosses"),
+      import("./modules/bosses/demo"),
+      import("./modules/bosses/store"),
+    ]);
     useBossesData.setState({ demo: bossesDemo() });
+    installJournalDemo(q);
+    const tab = q.get("tab");
+    useBossesView.getState().set({ ...(tab === "journal" || tab === "calculator" ? { tab } : {}), ...(q.has("profile") ? { logProfile: q.get("profile") === "log" } : {}) });
   }
   // demo=stash — «Тайник» с демо-снапшотами (в tauri dev — настоящие цены и иконки), demo=stash-login — вход.
   if (q.get("demo") === "stash" || q.get("demo") === "stash-login") {

@@ -13,6 +13,7 @@ import { openSpecOnTrade } from "@/components/trade/TradeButton";
 import { IdentifiedControl, useIdentifiedChoice } from "@/components/trade/identified";
 import { WeaponDamageCompact } from "@/modules/price-check/WeaponDamage";
 import { useEquippedWeaponSync } from "@/app/weapon";
+import { BossDropButton } from "@/modules/bosses/DropButton";
 
 /**
  * Окно оверлея поверх игры (src-tauri/src/overlay.rs): последняя оценка предмета.
@@ -111,6 +112,7 @@ export function OverlayApp() {
             onOpenTrade={tradeSpec && league ? () => void openSpecOnTrade(tradeSpec, league).catch(() => undefined) : undefined}
             tradeOptions={identified.applicable && <IdentifiedControl value={identified.choice} onChange={identified.setChoice} />}
             damage={appraisal.item.weapon && <WeaponDamageCompact appraisal={appraisal} />}
+            dropAction={<BossDropButton itemId={appraisal.catalogItem?.id} block />}
           />
         </div>
         </PriceDisplay>

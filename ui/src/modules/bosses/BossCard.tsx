@@ -24,7 +24,9 @@ import {
   type NameLanguage,
 } from "./model";
 import { Amount, DropIcon, EditableValue } from "./parts";
-import { DRAFT_ID, farmEdits, useActiveProfile, type BossNumberField } from "./store";
+import { LOG_MIN_RUNS } from "./journal";
+import { MyJournal } from "./JournalView";
+import { DRAFT_ID, farmEdits, useActiveProfile, useBossesView, useBossLogTiming, type BossNumberField } from "./store";
 import { setOwnPrice, useBossDetail, useBossesData, type FarmBossDetail, type FarmDropLine, type FarmEntryLine, type FarmPool, type FarmPrice, type FarmRef } from "./useBosses";
 
 const fail = (title: string) => (e: unknown) => toast({ status: "warning", title, description: String(e) });
@@ -339,9 +341,26 @@ function ProfileField({
 
 const parseSeconds = (text: string) => (text.trim() === "" ? null : (parseDuration(text) ?? undefined));
 
+/** «По логу»: значение из журнала — без правки (его задают заходы). */
+function LogField({ label, shown, runs }: { label: string; shown: string; runs: number }) {
+  return (
+    <Tooltip content={`Медиана последних ${runs} ${plural(runs, "захода", "заходов", "заходов")} из лога игры; правится заходами, а не здесь. Чтобы задать своё — выберите обычный профиль.`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col">
+          <span className="text-label text-text-secondary">{label}</span>
+          <span className="text-caption text-text-accent">лог · {runs} {plural(runs, "заход", "захода", "заходов")}</span>
+        </div>
+        <span className="font-mono text-body font-semibold text-text-primary">{shown}</span>
+      </div>
+    </Tooltip>
+  );
+}
+
 function ProfileSection({ detail, summary }: { detail: FarmBossDetail; summary: FarmSummary }) {
   const bossId = detail.boss.id;
   const profile = useActiveProfile();
+  const logMode = useBossesView((s) => s.logProfile);
+  const log = useBossLogTiming(bossId);
   const own = profile.bosses[bossId] ?? NO_BOSS_SETTINGS;
   const globalIiq = profile.iiq;
   const scales = detail.pools.some((p) => p.scalesWithQuantity);
@@ -352,31 +371,43 @@ function ProfileSection({ detail, summary }: { detail: FarmBossDetail; summary: 
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-surface p-4">
       <div className="flex flex-col gap-0.5">
-        <h3 className="truncate text-body font-semibold text-text-primary">Профиль «{profile.name}»</h3>
+        <h3 className="truncate text-body font-semibold text-text-primary">{logMode ? `«По логу» (на основе «${profile.name}»)` : `Профиль «${profile.name}»`}</h3>
         <p className="text-caption text-text-secondary">
-          {profile.id === DRAFT_ID ? "Профиль сохранится при первой правке" : "Синхронизируется с аккаунтом"}; пусто — по умолчанию.
+          {logMode
+            ? log
+              ? "TTK — из журнала; остальное и правки — профиля-основы."
+              : `Заходов из лога меньше ${LOG_MIN_RUNS} — значения профиля-основы; правки пишутся в него.`
+            : `${profile.id === DRAFT_ID ? "Профиль сохранится при первой правке" : "Синхронизируется с аккаунтом"}; пусто — по умолчанию.`}
         </p>
       </div>
-      <ProfileField
-        label="Бой (TTK)"
-        bossId={bossId}
-        field="ttkSec"
-        shown={summary.ttkSec === null ? "—" : formatDuration(summary.ttkSec)}
-        own={own.ttkSec}
-        fallback={detail.defaultTtkSec === null ? "по умолчанию нет" : `по умолчанию ${formatDuration(detail.defaultTtkSec)}`}
-        parse={parseSeconds}
-        format={formatDuration}
-      />
-      <ProfileField
-        label="Между боями"
-        bossId={bossId}
-        field="overheadSec"
-        shown={summary.overheadSec === null ? "—" : formatDuration(summary.overheadSec)}
-        own={own.overheadSec}
-        fallback={detail.defaultOverheadSec === null ? "по умолчанию нет" : `по умолчанию ${formatDuration(detail.defaultOverheadSec)}`}
-        parse={parseSeconds}
-        format={formatDuration}
-      />
+      {log ? (
+        <LogField label="Бой (TTK)" shown={formatDuration(log.ttkSec)} runs={log.runs} />
+      ) : (
+        <ProfileField
+          label="Бой (TTK)"
+          bossId={bossId}
+          field="ttkSec"
+          shown={summary.ttkSec === null ? "—" : formatDuration(summary.ttkSec)}
+          own={own.ttkSec}
+          fallback={detail.defaultTtkSec === null ? "по умолчанию нет" : `по умолчанию ${formatDuration(detail.defaultTtkSec)}`}
+          parse={parseSeconds}
+          format={formatDuration}
+        />
+      )}
+      {log && log.overheadSec !== null ? (
+        <LogField label="Между боями" shown={formatDuration(log.overheadSec)} runs={log.runs} />
+      ) : (
+        <ProfileField
+          label="Между боями"
+          bossId={bossId}
+          field="overheadSec"
+          shown={summary.overheadSec === null ? "—" : formatDuration(summary.overheadSec)}
+          own={own.overheadSec}
+          fallback={detail.defaultOverheadSec === null ? "по умолчанию нет" : `по умолчанию ${formatDuration(detail.defaultOverheadSec)}`}
+          parse={parseSeconds}
+          format={formatDuration}
+        />
+      )}
       <ProfileField label="IIQ босса" bossId={bossId} field="iiq" shown={`${formatNumber(detail.iiq)} %`} own={own.iiq} fallback={`общий ${formatNumber(globalIiq)} %`} parse={parseAmount} format={String} />
       {steps && steps.length > 0 ? (
         <div className="flex flex-col gap-1">
@@ -572,7 +603,7 @@ export function BossCard({ bossId, language, onClose }: { bossId: string; langua
               <PoolSection key={pool.id} pool={pool} detail={detail} ev={summary.ev} league={league} language={language} />
             ))}
             <About detail={detail} language={language} />
-            {/* F10: «Мой журнал» — последние убийства этого босса и удача. */}
+            <MyJournal bossId={detail.boss.id} league={league} />
           </div>
           <aside className="sticky top-0 flex flex-col gap-3">
             <ProfileSection detail={detail} summary={summary} />

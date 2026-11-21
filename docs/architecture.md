@@ -79,6 +79,8 @@ desktop-application/
 │  ├─ item-parser/            разбор предмета: чистый Rust, тесты через cargo test
 │  ├─ game-window/            поиск окна PoE через WinAPI: режим, фокус, права; пример fake_poe
 │  ├─ craft-engine/           движок крафта кластеров: вероятности, методы, план; примеры evaluate, weights
+│  ├─ farm-engine/            расчёт фарма боссов: EV, прибыль, Монте-Карло за час; пример check
+│  ├─ game-log/               Client.txt: путь, хвост файла, разбор строк, заходы на арены; пример runs
 │  └─ pob-parser/             код экспорта Path of Building → сборка (предметы, наборы, камни, деревья); пример dump
 ├─ ui/                        React + Vite: главное окно и оверлей
 │  └─ src/
@@ -258,6 +260,15 @@ desktop-application/
 - **Хранение** (`stash/store.rs`): только локально, в `user.db` — таблицы `stash_snapshots`, `stash_snapshot_tabs`, `stash_snapshot_rows` (предмет × вариант × вкладка, цена за штуку на момент снапшота) и своя версия схемы `stash_meta` (`user_version` принадлежит синхронизации). На сервер ничего не уходит.
 - **Команды:** `stash_status`, `stash_connect(session, account?)`, `stash_disconnect` (снапшоты остаются), `stash_refresh_tabs`, `stash_select(tabIds)`, `stash_take_snapshot`, `stash_cancel`, `stash_snapshots` (аккаунт + лига цен), `stash_snapshot_detail(id)` (у строк ещё и цена сейчас), `stash_snapshot_delete(id)`.
 - **Интерфейс** (`ui/src/modules/stash/`): без подключения — инструкция, как достать `POESESSID`, и предупреждение; после — «Стоимость тайника», «Изменение» и «В час» относительно базового снапшота (по умолчанию — предыдущий), слева вкладки (галочка — входит в снапшот, клик — фильтр предметов, стоимость вкладки), справа «Предметы» (сложены по варианту цены, дорогие сверху, «без цены» внизу), «Изменения» (было → стало и стоимость по каждому предмету, выбор базы) и «История» (график, доход в час между соседними снапшотами, удаление). Скриншоты — `?demo=stash` / `?demo=stash-login` (в `tauri dev` — с настоящими ценами и иконками).
+
+### Фарм → Боссы
+
+Вкладка «Боссы» (группа «Фарм», 22.11.2026; план и решения — `shared/docs/boss-farm.md`): доход за убийство и в час, риск, профили TTK, журнал убийств из лога игры.
+
+- **Расчёт** — крейт `farm-engine` (чистая логика: EV, вход, прибыль, σ, Монте-Карло 20 000 часов, доля редких, `expect_kills`), ядро — `src-tauri/src/farm.rs`: `bosses.json` набора данных, сводные цены лиги, особые цены пула (`GET /v1/farm/bosses/:league`), общая статистика дропа (`/v1/farm/bosses/stats`), свои цены в `user.db`; команды `farm_bosses`, `farm_boss`, `farm_set_price_override`, `farm_refresh_stats`, `farm_kill_prices` (цены входа и дропа «сейчас» — для записи журнала), `farm_expect_kills`; событие `farm-updated`.
+- **Лог игры** — крейт `game-log` (путь к `Client.txt`, `Tail`, `parse_line` en/ru, `RunTracker`) и поток ядра `src-tauri/src/farm_log.rs`: раз в 500 мс читает хвост файла (свой путь из Настроек, иначе рядом с exe запущенной игры через `game_window::exe_path`, иначе папки установки), арены — из `bosses.json` (общий id арены обычного и убер-боя — по уровню области: убер с 85); имя персонажа — из Настроек. События `farm-log-status`, `farm-run` (индикатор «Идёт бой»), `boss-run-finished`. Законченный заход ядро само пишет в журнал (`bossKills`, `source: LOG`, `entryChaos` по текущим ценам) через `sync::put_record`. Быстрый дроп из Price check — `farm_drop_target` / `farm_add_drop`; выбор файла — `farm_log_pick_file` (окно Windows `GetOpenFileNameW`). Команды настроек — `farm_log_configure` (шлёт интерфейс из `useShell().farmLog`), `farm_log_status`.
+- **Синхронизация** — коллекции `farmProfiles` (профили TTK/IIQ/шансов) и `bossKills` (журнал), проверка формы — `sync/records.rs`.
+- **Интерфейс** (`ui/src/modules/bosses/`): `BossesPage` (переключатель «Калькулятор | Журнал», индикатор захода), `BossCard` (+ «Мой журнал»), `JournalView` (список с подгрузкой, итоги по боссам и сессиям, удача), `KillDialog` (дроп по пулам и «что ещё упало», живёт в корне приложения), `runs.tsx` (подписка на лог и тост «Записать дроп?» — ставится в `App.tsx`, работает на любой вкладке), `DropButton` (кнопка «В дроп» в оверлее и на странице Price check), `journal.ts` (стор журнала, сессии, медианы «По логу»), `profiles.tsx`/`store.ts` (профили и виртуальный «По логу»). Настройки лога — `modules/settings/FarmLogCard.tsx`. Демо — `?demo=bosses` (`&tab=journal`, `&run=1`, `&toast=run`, `&profile=log`).
 
 ### Kingsmarch
 

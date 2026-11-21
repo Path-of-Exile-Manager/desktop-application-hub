@@ -41,6 +41,8 @@ import { splashVersion } from "@/app/SplashReplay";
 import { DevBadge } from "@/app/DevBadge";
 import { PageErrorBoundary } from "@/app/PageErrorBoundary";
 import { MandatoryUpdateScreen, UpdateTitleAction, useUpdaterStatusSync, WhatsNewDialog } from "@/app/updater";
+import { useFarmLogSync } from "@/modules/bosses/runs";
+import { KillDialogHost } from "@/modules/bosses/KillDialog";
 
 /** При ширине окна меньше 1360 правая панель скрывается автоматически (app-shell.md). */
 const NARROW_QUERY = "(max-width: 1359px)";
@@ -73,6 +75,8 @@ export default function App() {
   useSyncStatusSync();
   useWatchlistSync();
   useUpdaterStatusSync();
+  // Лог игры для «Фарм → Боссы»: тост «Записать дроп?» после захода — на любой вкладке.
+  useFarmLogSync();
   const currencyIcons = useCurrencyIcons();
   const prices = usePrices((p) => p.status);
   const priceMode = usePriceMode((p) => p.mode);
@@ -190,6 +194,7 @@ export default function App() {
       </AppShell>
       <MandatoryUpdateScreen />
       <WhatsNewDialog enabled={startup.phase === "done"} />
+      <KillDialogHost />
       <CommandPalette open={s.paletteOpen} onOpenChange={s.setPaletteOpen} items={paletteItems} groups={["Модули", "Команды"]} />
       {startup.phase !== "done" && <SplashScreen steps={startup.steps} version={splashVersion(s.developerMode)} leaving={startup.phase === "leaving"} />}
       </PriceDisplay>

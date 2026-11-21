@@ -6,6 +6,7 @@ import { AccountCard } from "./AccountCard";
 import { ChatCommandsCard } from "./ChatCommandsCard";
 import { HoldClickCard, HoldClickHotkeyField } from "./HoldClickCard";
 import { MarketCard } from "./MarketCard";
+import { FarmLogCard } from "./FarmLogCard";
 import { UpdatesCard } from "./UpdatesCard";
 
 /**
@@ -48,6 +49,7 @@ export function SettingsPage() {
         <div className="flex min-w-0 flex-col gap-4">
           <AccountCard />
           <MarketCard />
+          <FarmLogCard />
 
           <Card>
             <CardHeader title="Интерфейс" />

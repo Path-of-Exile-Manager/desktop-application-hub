@@ -87,6 +87,11 @@ type ShellState = {
   /** Поисков в час для пула: 0–60, по умолчанию 30. */
   marketBudget: number;
   hotkeys: { check: string[]; palette: string[] };
+  /**
+   * Лог игры для «Фарм → Боссы» (shared/docs/boss-farm.md, 7.3): читать ли `Client.txt` (по умолчанию да),
+   * свой путь к нему (`null` — найти самому) и имя персонажа (только его смерти; пусто — все смерти в арене).
+   */
+  farmLog: FarmLogSetting;
   /** Команды чата по горячим клавишам; работают, когда игра в фокусе. */
   chatCommands: ChatCommandSetting[];
   holdClick: HoldClickSetting;
@@ -104,7 +109,12 @@ type ShellState = {
   setHotkey: (name: "check" | "palette", keys: string[]) => void;
   setChatCommands: (commands: ChatCommandSetting[]) => void;
   setHoldClick: (patch: Partial<HoldClickSetting>) => void;
+  setFarmLog: (patch: Partial<FarmLogSetting>) => void;
 };
+
+export type FarmLogSetting = { enabled: boolean; path: string | null; character: string };
+
+export const DEFAULT_FARM_LOG: FarmLogSetting = { enabled: true, path: null, character: "" };
 
 /**
  * Состояние оболочки. Открытый модуль, сайдбар, панель и горячие клавиши
@@ -128,6 +138,7 @@ export const useShell = create<ShellState>()(
       hotkeys: { check: ["Ctrl", "D"], palette: ["Ctrl", "K"] },
       chatCommands: DEFAULT_CHAT_COMMANDS,
       holdClick: DEFAULT_HOLD_CLICK,
+      farmLog: DEFAULT_FARM_LOG,
 
       openModule: (activeModule) => set({ activeModule }),
       setSim: (target, value) => set((s) => ({ sim: { ...s.sim, [target]: value } })),
@@ -144,6 +155,7 @@ export const useShell = create<ShellState>()(
       setHotkey: (name, keys) => set((s) => ({ hotkeys: { ...s.hotkeys, [name]: keys } })),
       setChatCommands: (chatCommands) => set({ chatCommands }),
       setHoldClick: (patch) => set((s) => ({ holdClick: { ...s.holdClick, ...patch } })),
+      setFarmLog: (patch) => set((s) => ({ farmLog: { ...s.farmLog, ...patch } })),
     }),
     {
       name: "poe-manager.shell",
@@ -160,6 +172,7 @@ export const useShell = create<ShellState>()(
         hotkeys: s.hotkeys,
         chatCommands: s.chatCommands,
         holdClick: s.holdClick,
+        farmLog: s.farmLog,
         developerMode: s.developerMode,
         apiUrlOverride: s.apiUrlOverride,
         discordPresence: s.discordPresence,

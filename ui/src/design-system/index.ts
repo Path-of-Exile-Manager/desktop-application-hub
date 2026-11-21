@@ -28,7 +28,7 @@ export { ListRow } from "./components/ListRow";
 export { Table, type Column, type SortState } from "./components/Table";
 export { Pagination, pageNumbers } from "./components/Pagination";
 export { Banner, EmptyState, Skeleton, ProgressBar } from "./components/Feedback";
-export { toast, Toaster } from "./components/Toast";
+export { toast, Toaster, type ToastAction } from "./components/Toast";
 export { StatusIcon, STATUS_ICONS, STATUS_CLASSES, type Status } from "./components/StatusIcon";
 
 // Игровые компоненты

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, CloudDownload, LoaderCircle, Monitor, RefreshCw, Skull, TriangleAlert, Users, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, CloudDownload, LoaderCircle, Monitor, RefreshCw, Skull, Swords, TriangleAlert, Users, type LucideIcon } from "lucide-react";
 import { Badge, Banner, Button, cx, EmptyState, Input, Page, SegmentedControl, Select, Switch, Tooltip } from "@/design-system";
 import { checkDatasetNow } from "@/app/dataset";
 import { useCurrentLeague } from "@/app/leagues";
@@ -29,7 +29,10 @@ import {
 import { Amount, DropIcon } from "./parts";
 import { BossCard } from "./BossCard";
 import { ProfilePicker } from "./profiles";
-import { farmEdits, useActiveProfile, useBossesView, useProfilesSync } from "./store";
+import { farmEdits, useActiveProfile, useBossesView, useProfilesSync, type BossesTab } from "./store";
+import { useBossKillsSync, useLogTimings, type LogTiming } from "./journal";
+import { JournalView } from "./JournalView";
+import { useFarmLog } from "./runs";
 import { refreshBosses, useBossesData, useBossesSync, type BossesInfoState, type FarmBossRow, type FarmTable } from "./useBosses";
 
 const COLUMNS =
@@ -92,7 +95,7 @@ function Risk({ row, language }: { row: FarmBossRow; language: NameLanguage }) {
   );
 }
 
-function BossRow({ row, language, ownTtk, onOpen }: { row: FarmBossRow; language: NameLanguage; ownTtk: boolean; onOpen: () => void }) {
+function BossRow({ row, language, ownTtk, log, onOpen }: { row: FarmBossRow; language: NameLanguage; ownTtk: boolean; log: LogTiming | null; onOpen: () => void }) {
   const s = row.summary;
   const notes = [
     s.unpriced.length > 0 && `${s.unpriced.length} ${plural(s.unpriced.length, "дроп", "дропа", "дропов")} без цены`,
@@ -168,10 +171,17 @@ function BossRow({ row, language, ownTtk, onOpen }: { row: FarmBossRow; language
         {s.ttkSec === null ? (
           muted("—", "TTK неизвестен — впишите свой в карточке")
         ) : (
-          <Tooltip content={`Бой ${formatDuration(s.ttkSec)}${s.overheadSec !== null ? ` + между боями ${formatDuration(s.overheadSec)}` : ""}; ${ownTtk ? "из профиля" : "оценка по умолчанию"}`}>
+          <Tooltip
+            content={`Бой ${formatDuration(s.ttkSec)}${s.overheadSec !== null ? ` + между боями ${formatDuration(s.overheadSec)}` : ""}; ${
+              log ? `медиана последних ${log.runs} заходов из лога игры` : ownTtk ? "из профиля" : "оценка по умолчанию"
+            }`}
+          >
             <div className="min-w-0">
-              <p className="font-mono text-label text-text-primary">{formatDuration(s.ttkSec)}</p>
-              <p className={cx("truncate text-caption", ownTtk ? "text-text-accent" : "text-text-secondary")}>{ownTtk ? "профиль" : "по умолч."}</p>
+              <p className="font-mono text-label text-text-primary">
+                {formatDuration(s.ttkSec)}
+                {log && <span className="ml-1 font-sans text-caption text-text-accent">(лог)</span>}
+              </p>
+              <p className={cx("truncate text-caption", log || ownTtk ? "text-text-accent" : "text-text-secondary")}>{log ? `${log.runs} ${plural(log.runs, "заход", "захода", "заходов")}` : ownTtk ? "профиль" : "по умолч."}</p>
             </div>
           </Tooltip>
         )}
@@ -320,20 +330,49 @@ function CommunitySwitch({ table, checked, onChange }: { table: FarmTable | null
   );
 }
 
+/** «Идёт бой: Uber Shaper 1:12» — открытый заход из лога игры; секунды идут сами. */
+function RunIndicator({ language }: { language: NameLanguage }) {
+  const run = useFarmLog((s) => s.run);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!run) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [run]);
+  if (!run) return null;
+  const until = run.awaySince ?? now;
+  const seconds = (until - run.startedAt) / 1000 - run.pausedSec;
+  const name = nameIn(run.bossName, language);
+  return (
+    <Tooltip
+      content={`Заход из лога игры: бой без пауз${run.deaths > 0 ? `, смертей ${run.deaths}` : ""}${run.pendingDrops > 0 ? `, в дроп добавлено ${run.pendingDrops} шт.` : ""}. Запись в журнал — когда заход закончится (новая область или 10 минут вне арены).`}
+    >
+      <span className={cx("inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-label", run.awaySince ? "border-border-default text-text-secondary" : "border-status-danger-border text-status-danger-fg")}>
+        <Swords aria-hidden className="size-3.5" />
+        {run.awaySince ? `${name}: вне арены` : `Идёт бой: ${name}`}
+        <span className="font-mono">{formatDuration(Math.max(0, seconds))}</span>
+      </span>
+    </Tooltip>
+  );
+}
+
 /**
  * «Фарм → Боссы» (план — shared/docs/boss-farm.md, 7.5): доход за убийство, прибыль в час и риск по
- * живым ценам лиги; клик по строке — карточка босса с дропом, ценами и настройками профиля.
+ * живым ценам лиги; клик по строке — карточка босса с дропом, ценами и настройками профиля. Вкладка
+ * «Журнал» — убийства из лога и ручные, итоги по боссам и сессиям.
  */
 export function BossesPage() {
   useProfilesSync();
   useBossesSync();
+  useBossKillsSync();
   const league = useCurrentLeague();
   const info = useBossesData((d) => d.info);
   const storedTable = useBossesData((d) => d.table);
   const computing = useBossesData((d) => d.computing);
   const error = useBossesData((d) => d.error);
-  const { group, showHidden, sort, language, preferCommunity, set } = useBossesView();
+  const { group, showHidden, sort, language, preferCommunity, logProfile, tab, set } = useBossesView();
   const bossSettings = useActiveProfile().bosses;
+  const timings = useLogTimings();
   const [selected, setSelected] = useState<string | null>(null);
 
   // В приложении таблица другой лиги (лигу только что сменили) не показывается; в демо лига своя.
@@ -392,6 +431,22 @@ export function BossesPage() {
         <NotReady state={info} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <SegmentedControl<BossesTab>
+              aria-label="Раздел"
+              value={tab}
+              onValueChange={(value) => set({ tab: value })}
+              options={[
+                { value: "calculator", label: "Калькулятор" },
+                { value: "journal", label: "Журнал" },
+              ]}
+            />
+            <RunIndicator language={language} />
+          </div>
+          {tab === "journal" ? (
+            <JournalView language={language} />
+          ) : (
+          <>
           {table && <PriceBanners table={table} leagueTracked={!inTauri || (league?.pricesTracked ?? false)} />}
           {error && (
             <Banner status="danger" title="Таблица не посчитана" actions={<Button variant="secondary" onClick={refreshBosses}>Повторить</Button>}>
@@ -458,7 +513,14 @@ export function BossesPage() {
             ) : (
               <ul className="flex flex-col">
                 {visible.map((row) => (
-                  <BossRow key={row.id} row={row} language={language} ownTtk={bossSettings[row.id]?.ttkSec !== undefined} onOpen={() => setSelected(row.id)} />
+                  <BossRow
+                    key={row.id}
+                    row={row}
+                    language={language}
+                    ownTtk={bossSettings[row.id]?.ttkSec !== undefined}
+                    log={logProfile ? (timings[row.id] ?? null) : null}
+                    onOpen={() => setSelected(row.id)}
+                  />
                 ))}
               </ul>
             )}
@@ -467,8 +529,10 @@ export function BossesPage() {
           {visible.length > 0 && (
             <p className="text-caption text-text-secondary">
               {visible.length} {plural(visible.length, "босс", "босса", "боссов")}
-              {table && ` · таблица шансов ${table.dataVersion}`} · прибыль в час — по TTK и времени между боями из профиля; риск — по 20 000 смоделированных часов
+              {table && ` · таблица шансов ${table.dataVersion}`} · прибыль в час — по TTK и времени между боями {logProfile ? "из лога (где заходов хватает) и профиля" : "из профиля"}; риск — по 20 000 смоделированных часов
             </p>
+          )}
+          </>
           )}
         </div>
       )}

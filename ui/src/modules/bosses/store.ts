@@ -6,6 +6,7 @@ import { deleteRecord, listRecords, putRecord, useSync } from "@/app/sync";
 import { inTauri } from "@/app/window";
 import type { FarmBossSettings } from "@/generated/FarmBossSettings";
 import type { FarmSettings } from "@/generated/FarmSettings";
+import { logTimings, useBossKills, useLogTimings, type LogTiming } from "./journal";
 import { DEFAULT_SORT, type GroupFilter, type NameLanguage, type Sort } from "./model";
 
 // Профили фарма — коллекция `farmProfiles` в user.db (форма — shared/docs/boss-farm.md, 7.2; проверка —
@@ -14,6 +15,9 @@ import { DEFAULT_SORT, type GroupFilter, type NameLanguage, type Sort } from "./
 // черновик «Мой»: он сохраняется при первой правке, поэтому новое устройство не плодит пустых
 // профилей, которые после входа задвоились бы (как «Мой первый набор» в RegEx карт).
 // Выбранный профиль и «Шансы сообщества» — вид вкладки на этом компьютере (`useBossesView`).
+// «По логу» (F11) — не запись, а флаг вида поверх выбранного профиля (он — база): TTK и накладные из
+// журнала, где заходов хватает, остальное — базы. Правки в этом режиме пишутся в базу; TTK и накладные
+// боссов, взятые из лога, не правятся (их задаёт журнал).
 
 export type { FarmBossSettings, FarmSettings };
 
@@ -30,12 +34,6 @@ export type FarmProfile = {
 
 /** Числовые поля босса, которые правятся на месте: бой, между боями, своя IIQ. */
 export type BossNumberField = "ttkSec" | "overheadSec" | "iiq";
-
-/**
- * Пункт выбора профиля. `log` — виртуальный профиль «По логу» (шаг F11): TTK и накладные из журнала,
- * остальное — из базового профиля; не хранится.
- */
-export type ProfileChoice = { kind: "profile"; profile: FarmProfile } | { kind: "log"; baseId: string };
 
 const COLLECTION = "farmProfiles";
 const SAVE_DELAY_MS = 400;
@@ -127,8 +125,14 @@ type ViewState = {
   profileId: string | null;
   /** «Шансы сообщества»: статистика вместо данных у всех дропов боссов со статистикой. */
   preferCommunity: boolean;
+  /** Виртуальный профиль «По логу» поверх выбранного (`profileId` — его база). */
+  logProfile: boolean;
+  /** Вкладка страницы: калькулятор или журнал убийств. */
+  tab: BossesTab;
   set: (patch: Partial<Omit<ViewState, "set">>) => void;
 };
+
+export type BossesTab = "calculator" | "journal";
 
 export const useBossesView = create<ViewState>()(
   persist(
@@ -139,12 +143,14 @@ export const useBossesView = create<ViewState>()(
       language: "ru",
       profileId: null,
       preferCommunity: false,
+      logProfile: false,
+      tab: "calculator",
       set: (patch) => set(patch),
     }),
     {
       name: "poe-manager.bosses-view",
       version: 1,
-      partialize: ({ group, showHidden, sort, language, profileId, preferCommunity }) => ({ group, showHidden, sort, language, profileId, preferCommunity }),
+      partialize: ({ group, showHidden, sort, language, profileId, preferCommunity, logProfile, tab }) => ({ group, showHidden, sort, language, profileId, preferCommunity, logProfile, tab }),
     },
   ),
 );
@@ -165,20 +171,46 @@ export function activeProfile(): FarmProfile {
   return activeOf(useFarmProfiles.getState(), useBossesView.getState().profileId);
 }
 
-/** Настройки расчёта для команд ядра (`farm_bosses`, `farm_boss`): выбранный профиль и шансы сообщества. */
-export function currentFarmSettings(): FarmSettings {
-  const profile = activeProfile();
-  return { iiq: profile.iiq, preferCommunity: useBossesView.getState().preferCommunity, bosses: profile.bosses };
+/**
+ * «По логу» (F11): TTK и накладные боссов, у которых в журнале ≥ 3 заходов из лога, — медианы
+ * последних 20 (`logTimings`); у остальных и всё прочее (IIQ, шансы, скрытие) — базового профиля.
+ */
+function withLog(bosses: Record<string, FarmBossSettings>, timings: Record<string, LogTiming>): Record<string, FarmBossSettings> {
+  const merged = { ...bosses };
+  for (const [bossId, t] of Object.entries(timings)) {
+    merged[bossId] = { ...merged[bossId], ttkSec: t.ttkSec, ...(t.overheadSec !== null ? { overheadSec: t.overheadSec } : {}) };
+  }
+  return merged;
 }
 
-/** То же в React: объект меняется, только когда меняются IIQ, боссы профиля или переключатель. */
+/** Настройки расчёта для команд ядра (`farm_bosses`, `farm_boss`): выбранный профиль (или «По логу») и шансы сообщества. */
+export function currentFarmSettings(): FarmSettings {
+  const profile = activeProfile();
+  const view = useBossesView.getState();
+  const bosses = view.logProfile ? withLog(profile.bosses, logTimings(useBossKills.getState().kills ?? [])) : profile.bosses;
+  return { iiq: profile.iiq, preferCommunity: view.preferCommunity, bosses };
+}
+
+/** То же в React: объект меняется, только когда меняются IIQ, боссы профиля, переключатель или медианы лога. */
 export function useFarmSettings(): FarmSettings {
   const profile = useActiveProfile();
   const preferCommunity = useBossesView((s) => s.preferCommunity);
-  return useMemo(() => ({ iiq: profile.iiq, preferCommunity, bosses: profile.bosses }), [profile.iiq, profile.bosses, preferCommunity]);
+  const log = useBossesView((s) => s.logProfile);
+  const timings = useLogTimings();
+  return useMemo(
+    () => ({ iiq: profile.iiq, preferCommunity, bosses: log ? withLog(profile.bosses, timings) : profile.bosses }),
+    [profile.iiq, profile.bosses, preferCommunity, log, timings],
+  );
 }
 
-export const selectProfile = (id: string) => useBossesView.getState().set({ profileId: id });
+/** Медианы лога босса, если сейчас выбран «По логу» и заходов хватает. */
+export function useBossLogTiming(bossId: string): LogTiming | null {
+  const log = useBossesView((s) => s.logProfile);
+  const timings = useLogTimings();
+  return log ? (timings[bossId] ?? null) : null;
+}
+
+export const selectProfile = (id: string) => useBossesView.getState().set({ profileId: id, logProfile: false });
 
 // ---------- запись ----------
 

@@ -14,6 +14,7 @@ import { PriceCard } from "./PriceCard";
 import { TradeSearchCard } from "./TradeSearchCard";
 import { useLiveSearch } from "./useLiveSearch";
 import { WeaponDamageCard } from "./WeaponDamage";
+import { BossDropButton } from "@/modules/bosses/DropButton";
 
 /**
  * Пойманный предмет в три колонки: предмет и поиск на трейде (моды с галочками и MIN/MAX), цена,
@@ -80,9 +81,12 @@ export function PriceCheckPage() {
       title="Price check"
       subtitle={appraisal && caught ? `Пойман в ${caught}` : undefined}
       actions={
-        <Button icon={ClipboardPaste} onClick={fromClipboard} disabled={!inTauri}>
-          Из буфера обмена
-        </Button>
+        <>
+          <BossDropButton itemId={appraisal?.catalogItem?.id} />
+          <Button icon={ClipboardPaste} onClick={fromClipboard} disabled={!inTauri}>
+            Из буфера обмена
+          </Button>
+        </>
       }
     >
       {game?.state === "notRunning" && (

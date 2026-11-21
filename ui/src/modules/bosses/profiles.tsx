@@ -1,8 +1,10 @@
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Copy, CopyPlus, Ellipsis, FileJson, FileUp, Pencil, Plus, Trash } from "lucide-react";
-import { Button, Dialog, Field, Input, Menu, Select, StatusIcon, cx, fieldClasses, toast, type MenuEntry } from "@/design-system";
+import { Button, Dialog, Field, Input, Menu, Select, StatusIcon, Tooltip, cx, fieldClasses, toast, type MenuEntry } from "@/design-system";
+import { LOG_MIN_RUNS, LOG_RUNS, useLogTimings } from "./journal";
 import { plural } from "./model";
 import {
+  useBossesView,
   DEFAULT_PROFILE_NAME,
   DRAFT_ID,
   PROFILE_NAME_MAX,
@@ -25,6 +27,8 @@ import {
 type OpenDialog = { kind: "create" } | { kind: "duplicate" } | { kind: "rename" } | { kind: "transfer" } | { kind: "delete" } | null;
 
 const NO_PROFILES: FarmProfile[] = [];
+/** Значение пункта «По логу» в выборе профиля (у записей id — uuid). */
+const LOG_VALUE = "__log";
 
 const closeOn = (onClose: () => void) => (open: boolean) => !open && onClose();
 
@@ -188,16 +192,27 @@ function TransferDialog({ profile, onClose }: { profile: FarmProfile; onClose: (
 export function ProfilePicker() {
   const profiles = useFarmProfiles((s) => s.profiles ?? NO_PROFILES);
   const active = useActiveProfile();
+  const logProfile = useBossesView((s) => s.logProfile);
+  const setView = useBossesView((s) => s.set);
+  const logBosses = Object.keys(useLogTimings()).length;
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const close = () => setDialog(null);
   const isDraft = active.id === DRAFT_ID;
 
-  const options = (isDraft ? [active, ...profiles] : profiles).map((p) => ({
+  const list = (isDraft ? [active, ...profiles] : profiles).map((p) => ({
     value: p.id,
     label: p.name,
     hint: p.id === DRAFT_ID ? "не сохранён" : bossCount(p) > 0 ? `${bossCount(p)} ${plural(bossCount(p), "босс", "босса", "боссов")}` : undefined,
   }));
-  // Место для виртуального профиля «По логу» (шаг F11): TTK и накладные из журнала убийств.
+  // «По логу» (F11): не запись, а режим поверх выбранного профиля — он база для боссов, где заходов в логе мало.
+  const options = [
+    ...list,
+    {
+      value: LOG_VALUE,
+      label: "По логу",
+      hint: logBosses > 0 ? `TTK из журнала у ${logBosses} ${plural(logBosses, "босса", "боссов", "боссов")}` : `нужно ≥ ${LOG_MIN_RUNS} заходов из лога`,
+    },
+  ];
 
   const menu: MenuEntry[] = [
     { label: "Новый профиль", icon: Plus, onSelect: () => setDialog({ kind: "create" }) },
@@ -211,7 +226,32 @@ export function ProfilePicker() {
 
   return (
     <>
-      <Select aria-label="Профиль фарма" value={active.id} onValueChange={selectProfile} options={options} className="w-48" />
+      <Tooltip
+        content={
+          logProfile
+            ? `«По логу»: TTK и время между боями — медиана последних ${LOG_RUNS} заходов из лога игры, где их не меньше ${LOG_MIN_RUNS}; у остальных боссов и IIQ, шансы, скрытие — профиля «${active.name}». Правки пишутся в «${active.name}».`
+            : "Профиль: TTK, время между боями, IIQ и свои шансы"
+        }
+      >
+        <span className="inline-flex">
+          <Select
+            aria-label="Профиль фарма"
+            value={logProfile ? LOG_VALUE : active.id}
+            onValueChange={(value) => (value === LOG_VALUE ? setView({ logProfile: true }) : selectProfile(value))}
+            options={options}
+            className="w-48"
+          />
+        </span>
+      </Tooltip>
+      {logProfile && (
+        <Select
+          aria-label="Базовый профиль для «По логу»"
+          value={active.id}
+          onValueChange={(value) => setView({ profileId: value })}
+          options={list.map((o) => ({ ...o, label: `на основе: ${o.label}` }))}
+          className="w-52"
+        />
+      )}
       <Menu align="end" items={menu} trigger={<Button icon={Ellipsis}>Профиль</Button>} />
 
       {dialog?.kind === "create" && (
