@@ -180,6 +180,9 @@ export function formatTime(ms: number): string {
   return new Date(ms).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
+/** Вкладки, содержимое которых сайт PoE не отдаёт (ядро: `OPAQUE_KINDS`). */
+export const OPAQUE_KINDS = ["MapStash", "UniqueStash"];
+
 /** Тип вкладки по-русски. */
 export function tabKindLabel(kind: string): string {
   const labels: Record<string, string> = {

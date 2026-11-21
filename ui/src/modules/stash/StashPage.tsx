@@ -36,6 +36,7 @@ import {
   formatSpan,
   formatTime,
   itemLines,
+  OPAQUE_KINDS,
   perHour,
   refreshTabs,
   selectTabs,
@@ -361,7 +362,13 @@ function Stat({ title, children }: { title: string; children: ReactNode }) {
 
 function limitsText(status: StashStatus): string | null {
   if (status.limits.length === 0) return null;
-  return status.limits.map((r) => `${r.hits} из ${r.max} за ${r.period >= 60 ? formatSpan(r.period * 1000) : `${r.period} с`}`).join(" · ");
+  const scopes = [...new Set(status.limits.map((r) => r.scope))];
+  return scopes
+    .map((scope) => {
+      const rules = status.limits.filter((r) => r.scope === scope).map((r) => `${r.hits} из ${r.max} за ${r.period >= 60 ? formatSpan(r.period * 1000) : `${r.period} с`}`);
+      return `${scope === "Account" ? "аккаунт" : scope === "Ip" ? "IP" : scope} — ${rules.join(", ")}`;
+    })
+    .join("; ");
 }
 
 function TabsCard({ status, current, filter, onFilter }: { status: StashStatus; current: StashSnapshotDetail | null; filter: string | null; onFilter: (id: string | null) => void }) {
@@ -390,7 +397,7 @@ function TabsCard({ status, current, filter, onFilter }: { status: StashStatus; 
         </EmptyState>
       ) : (
         <>
-          <div className="flex shrink-0 items-center gap-1 border-b border-border-subtle px-card-padding-x py-2 text-label">
+          <div className="flex shrink-0 flex-wrap items-center gap-x-1 gap-y-0.5 border-b border-border-subtle px-card-padding-x py-2 text-label whitespace-nowrap">
             <button type="button" className="text-text-accent hover:underline" onClick={() => selectTabs(status.tabs.map((t) => t.id))}>
               выбрать все
             </button>
@@ -426,6 +433,7 @@ function TabsCard({ status, current, filter, onFilter }: { status: StashStatus; 
                       <span className="block truncate text-caption text-text-secondary">
                         {tabKindLabel(tab.kind)}
                         {tab.hidden && " · скрытая"}
+                        {OPAQUE_KINDS.includes(tab.kind) && " · сайт не отдаёт содержимое"}
                       </span>
                     </span>
                     {value !== undefined && <MarketPrice chaos={value} size="md" compact />}

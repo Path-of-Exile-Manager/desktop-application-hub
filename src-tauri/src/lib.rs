@@ -209,6 +209,8 @@ pub fn run() {
             stash::stash_snapshots,
             stash::stash_snapshot_detail,
             stash::stash_snapshot_delete,
+            stash::stash_debug_tab,
+            stash::stash_debug_value,
             updater::updater_status,
             updater::updater_check,
             updater::updater_restart,

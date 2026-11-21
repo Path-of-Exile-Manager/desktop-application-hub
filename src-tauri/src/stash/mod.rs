@@ -268,11 +268,15 @@ impl StashService {
     }
 }
 
-/// Выбор вкладок лиги; не выбирали — все, кроме скрытых. Пропавшие вкладки отбрасываются.
+/// Вкладки, содержимое которых старый интерфейс сайта не отдаёт (`items: []`, проверено 22.11.2026
+/// на вкладке карт: приходит только пустой `mapLayout`).
+pub const OPAQUE_KINDS: [&str; 2] = ["MapStash", "UniqueStash"];
+
+/// Выбор вкладок лиги; не выбирали — все, кроме скрытых и непрозрачных. Пропавшие вкладки отбрасываются.
 fn selected_ids(settings: &Settings, league: Option<&str>, tabs: &[StashTab]) -> Vec<String> {
     match league.and_then(|l| settings.selected.get(l)) {
         Some(ids) => ids.iter().filter(|id| tabs.is_empty() || tabs.iter().any(|t| &t.id == *id)).cloned().collect(),
-        None => tabs.iter().filter(|t| !t.hidden).map(|t| t.id.clone()).collect(),
+        None => tabs.iter().filter(|t| !t.hidden && !OPAQUE_KINDS.contains(&t.kind.as_str())).map(|t| t.id.clone()).collect(),
     }
 }
 
@@ -757,6 +761,45 @@ pub fn stash_snapshot_detail(app: AppHandle, id: i64) -> Result<StashSnapshotDet
             .collect(),
         rows,
     })
+}
+
+/// Отладка: ответ сайта по вкладке `index` как есть — в `stash-debug\tab-<index>.json`; путь файла.
+#[tauri::command]
+pub async fn stash_debug_tab(app: AppHandle, index: u32) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let league = current_league(&app)?;
+        let account = app.state::<StashService>().inner.lock().unwrap().settings.account.clone().ok_or("аккаунт не подключён")?;
+        let text = with_client(&app, |client| {
+            let wait = client.wait_before(STASH_POLICY);
+            std::thread::sleep(wait.min(MAX_WAIT));
+            client.stash_raw(&account, &league, index).map_err(|e| e.to_string())
+        })?;
+        let dir = app.state::<AppPaths>().file("stash-debug");
+        fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+        let path = dir.join(format!("tab-{index}.json"));
+        fs::write(&path, text).map_err(|e| e.to_string())?;
+        Ok(path.display().to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Отладка: оценка сохранённого `stash-debug\tab-<index>.json` без запросов к сайту — итог и строки.
+#[tauri::command]
+pub fn stash_debug_value(app: AppHandle, index: u32) -> Result<Value, String> {
+    let path = app.state::<AppPaths>().file("stash-debug").join(format!("tab-{index}.json"));
+    let text = fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+    let response: client::StashResponse = serde_json::from_str(&text).map_err(|e| e.to_string())?;
+    let catalog = app.state::<DatasetService>().catalog().ok_or("справочник ещё не загружен")?;
+    let prices = app.state::<PricesService>();
+    let tab = StashTab { id: "debug".into(), index, name: format!("tab {index}"), kind: String::new(), colour: None, hidden: false };
+    let fetched = HashMap::from([(tab.id.clone(), response.items)]);
+    let (tabs, rows) = value_tabs(&catalog, &prices, std::slice::from_ref(&tab), &fetched);
+    let t = &tabs[0];
+    Ok(serde_json::json!({
+        "total": t.total_chaos, "priced": t.priced, "unpriced": t.unpriced, "skipped": t.skipped,
+        "rows": rows.iter().map(|r| format!("{} x{} {:?} {}", r.name, r.quantity, r.unit_chaos, r.note.clone().unwrap_or_default())).collect::<Vec<_>>(),
+    }))
 }
 
 #[tauri::command]

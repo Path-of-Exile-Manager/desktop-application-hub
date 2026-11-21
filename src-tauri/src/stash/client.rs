@@ -3,8 +3,8 @@
 //! документацию GGG — запросов делаем как можно меньше и строго по заголовкам лимитов; 401/403 не
 //! повторяем (у GGG есть порог неверных запросов).
 //!
-//! Лимиты на 21.11.2026 (по заголовкам, на IP): тайник `backend-item-request-limit`
-//! 30 за 60 с, 90 за 30 мин, 180 за 2 ч; персонажи — 15 за 60 с.
+//! Лимиты на 22.11.2026 (по заголовкам): тайник `backend-item-request-limit` — на IP 30 за 60 с,
+//! 100 за 30 мин; с сессией ещё на аккаунт 45 за 60 с, 180 за 30 мин. Персонажи — 15 за 60 с.
 
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -163,6 +163,12 @@ impl PoeClient {
             return Err(PoeError::NotFound(error.get("message").and_then(Value::as_str).unwrap_or("неизвестная ошибка").to_string()));
         }
         serde_json::from_value(value).map_err(|e| PoeError::Failed(format!("ответ сайта PoE не разобран: {e}")))
+    }
+
+    /// Ответ вкладки как есть (отладка в режиме разработчика).
+    pub fn stash_raw(&mut self, account: &str, league: &str, index: u32) -> Result<String, PoeError> {
+        let url = format!("{SITE}/character-window/get-stash-items?accountName={}&realm=pc&league={}&tabs=0&tabIndex={index}", encode(account), encode(league));
+        self.get(&url, Some(STASH_POLICY))
     }
 
     /// Имя аккаунта (`Name#1234`) со страницы профиля: ссылка `/account/view-profile/Name-1234`.
