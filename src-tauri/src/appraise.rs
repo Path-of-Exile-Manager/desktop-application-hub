@@ -176,7 +176,7 @@ fn catalog_kind(kind: ItemKind) -> CatalogKind {
 }
 
 /// Цена варианта: точная, иначе ближайшая по штрафу. `None` — подходящих нет.
-fn pick(wanted: &PriceVariant, key: &str, variants: &[Price]) -> Option<(Price, bool)> {
+pub(crate) fn pick(wanted: &PriceVariant, key: &str, variants: &[Price]) -> Option<(Price, bool)> {
     if let Some(exact) = variants.iter().find(|p| p.variant_key == key) {
         return Some((exact.clone(), true));
     }

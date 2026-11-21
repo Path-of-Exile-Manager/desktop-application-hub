@@ -2910,6 +2910,7 @@ dependencies = [
  "craft-engine",
  "discord-presence",
  "dotenvy",
+ "farm-engine",
  "game-window",
  "item-parser",
  "keyring",

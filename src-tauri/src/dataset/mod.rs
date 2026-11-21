@@ -26,8 +26,8 @@ use ts_rs::TS;
 use crate::api::{Api, ApiCode, Call, Reply};
 pub use catalog::{normalize, Catalog};
 use catalog::{
-    has_file, parse_ascendancies, parse_crafting, parse_item_mods, parse_map_search, parse_trade_stats, ASCENDANCIES_FILE, CRAFTING_FILE, ITEM_MODS_FILE,
-    MAP_SEARCH_FILE, TRADE_STATS_FILE,
+    has_file, parse_ascendancies, parse_bosses, parse_crafting, parse_item_mods, parse_map_search, parse_trade_stats, ASCENDANCIES_FILE, BOSSES_FILE, CRAFTING_FILE,
+    ITEM_MODS_FILE, MAP_SEARCH_FILE, TRADE_STATS_FILE,
 };
 use model::{Ascendancy, Bootstrap, CatalogItem, ItemClass, ManifestCounts, ManifestIcons, MapSearch, SCHEMA_VERSION};
 pub use store::sha256_hex;
@@ -219,9 +219,10 @@ fn sync(api: &Api, store: &DatasetStore, current: Option<&str>) -> Result<Option
     let ascendancies = has_file(&manifest, ASCENDANCIES_FILE).then(|| file(ASCENDANCIES_FILE).and_then(parse_ascendancies));
     let trade_stats = has_file(&manifest, TRADE_STATS_FILE).then(|| file(TRADE_STATS_FILE).and_then(parse_trade_stats));
     let item_mods = has_file(&manifest, ITEM_MODS_FILE).then(|| file(ITEM_MODS_FILE).and_then(parse_item_mods));
+    let bosses = has_file(&manifest, BOSSES_FILE).then(|| file(BOSSES_FILE).and_then(parse_bosses));
 
     store.install(&manifest, &files).map_err(|e| format!("набор не сохранён: {e}"))?;
-    Ok(Some(Catalog::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods)))
+    Ok(Some(Catalog::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods, bosses)))
 }
 
 fn publish(app: &AppHandle, service: &DatasetService) {
@@ -270,6 +271,36 @@ pub fn catalog_item(service: State<DatasetService>, id: String) -> Option<Catalo
 #[tauri::command]
 pub fn catalog_map_search(service: State<DatasetService>) -> Result<Option<MapSearch>, String> {
     service.catalog().and_then(|c| c.map_search.clone()).transpose()
+}
+
+/// Что знает вкладка «Фарм → Боссы» о таблице боссов набора данных.
+#[derive(Debug, Clone, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct BossesInfo {
+    /// Версия таблицы шансов (`bosses.json` → `version`).
+    pub version: String,
+    pub bosses: u32,
+    pub quotes: u32,
+    pub dataset_id: String,
+}
+
+/// Таблица боссов для вкладки «Фарм → Боссы». `null` — справочника ещё нет или в наборе нет
+/// `bosses.json` (старый набор — обновить набор данных); ошибка — файл есть, но не прочитан
+/// (формат новее приложения — обновить приложение).
+#[tauri::command]
+pub fn catalog_bosses(service: State<DatasetService>) -> Result<Option<BossesInfo>, String> {
+    let Some(catalog) = service.catalog() else { return Ok(None) };
+    let data = match catalog.bosses.clone() {
+        None => return Ok(None),
+        Some(data) => data?,
+    };
+    Ok(Some(BossesInfo {
+        version: data.version.clone(),
+        bosses: data.bosses.len() as u32,
+        quotes: data.quotes.len() as u32,
+        dataset_id: catalog.manifest.dataset_id.clone(),
+    }))
 }
 
 /// Портреты классов и восхождений для вкладки «Билды». Пусто — справочника ещё нет, в наборе нет

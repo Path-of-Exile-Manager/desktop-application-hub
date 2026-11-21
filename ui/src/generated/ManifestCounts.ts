@@ -12,4 +12,8 @@ tradeStats: number,
 /**
  * Из `item-mods.json`; 0 — файла нет.
  */
-itemMods: number, };
+itemMods: number, 
+/**
+ * Из `bosses.json`; 0 — файла нет или он не прочитан.
+ */
+bosses: number, };

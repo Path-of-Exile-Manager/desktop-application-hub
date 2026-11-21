@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use craft_engine::Engine;
+use farm_engine::BossData;
 
 use super::model::{Ascendancy, CatalogItem, ItemClass, Manifest, MapSearch, TradeStatsFile};
 use crate::item_mods::{ItemModIndex, ItemModsFile};
@@ -16,6 +17,10 @@ pub const CRAFTING_FILE: &str = "crafting.json";
 pub const ASCENDANCIES_FILE: &str = "ascendancies.json";
 pub const TRADE_STATS_FILE: &str = "trade-stats.json";
 pub const ITEM_MODS_FILE: &str = "item-mods.json";
+pub const BOSSES_FILE: &str = "bosses.json";
+
+/// `bosses.json`: `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан.
+pub type BossesFile = Option<Result<Arc<BossData>, String>>;
 
 /// `item-mods.json`: `None` — файла нет в наборе; `Some(Err)` — есть, но не прочитан.
 pub type ItemModsIndex = Option<Result<Arc<ItemModIndex>, String>>;
@@ -41,6 +46,8 @@ pub struct Catalog {
     pub trade_stats: TradeStatsIndex,
     /// Моды предметов для подписей префикс/суффикс и тир; необязательный.
     pub item_mods: ItemModsIndex,
+    /// Боссы «Фарм → Боссы»: вход, пулы дропа, особые цены; необязательный, как и `map_search`.
+    pub bosses: BossesFile,
     by_id: HashMap<String, usize>,
     /// Нормализованное название (ru и en) → предметы: одно имя бывает у нескольких записей
     /// (уникальный на разных базах).
@@ -64,7 +71,8 @@ impl Catalog {
         let trade_stats = has_file(&manifest, TRADE_STATS_FILE)
             .then(|| store.read_file(id, &manifest, TRADE_STATS_FILE).and_then(|bytes| parse_trade_stats(&bytes)));
         let item_mods = has_file(&manifest, ITEM_MODS_FILE).then(|| store.read_file(id, &manifest, ITEM_MODS_FILE).and_then(|bytes| parse_item_mods(&bytes)));
-        Ok(Self::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods))
+        let bosses = has_file(&manifest, BOSSES_FILE).then(|| store.read_file(id, &manifest, BOSSES_FILE).and_then(|bytes| parse_bosses(&bytes)));
+        Ok(Self::new(manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods, bosses))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -77,6 +85,7 @@ impl Catalog {
         ascendancies: Option<Result<Vec<Ascendancy>, String>>,
         trade_stats: TradeStatsIndex,
         item_mods: ItemModsIndex,
+        bosses: BossesFile,
     ) -> Self {
         // По самому файлу: манифесты в кэше, записанные до появления этих счётчиков, их потеряли.
         if let Some(Ok(search)) = &map_search {
@@ -88,6 +97,9 @@ impl Catalog {
         }
         if let Some(Ok(index)) = &item_mods {
             manifest.counts.item_mods = index.len() as u32;
+        }
+        if let Some(Ok(data)) = &bosses {
+            manifest.counts.bosses = data.bosses.len() as u32;
         }
         let mut by_id = HashMap::with_capacity(items.len());
         let mut by_name: HashMap<String, Vec<usize>> = HashMap::with_capacity(items.len() * 2);
@@ -103,7 +115,7 @@ impl Catalog {
                 by_trade_id.insert(trade_id.clone(), i);
             }
         }
-        Self { manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods, by_id, by_name, by_trade_id }
+        Self { manifest, items, classes, map_search, crafting, ascendancies, trade_stats, item_mods, bosses, by_id, by_name, by_trade_id }
     }
 
     pub fn get(&self, id: &str) -> Option<&CatalogItem> {
@@ -210,6 +222,10 @@ pub fn parse_trade_stats(bytes: &[u8]) -> Result<Arc<StatIndex>, String> {
 pub fn parse_item_mods(bytes: &[u8]) -> Result<Arc<ItemModIndex>, String> {
     let file: ItemModsFile = serde_json::from_slice(bytes).map_err(|e| format!("{ITEM_MODS_FILE} не разобран: {e}"))?;
     Ok(Arc::new(ItemModIndex::new(file)))
+}
+
+pub fn parse_bosses(bytes: &[u8]) -> Result<Arc<BossData>, String> {
+    serde_json::from_slice(bytes).map(Arc::new).map_err(|e| format!("{BOSSES_FILE} не разобран: {e}"))
 }
 
 pub fn parse_crafting(bytes: &[u8]) -> Result<Arc<Engine>, String> {

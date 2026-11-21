@@ -19,6 +19,7 @@ mod device;
 mod discord;
 mod economy;
 mod extension;
+mod farm;
 mod game;
 mod hotkeys;
 mod icons;
@@ -100,6 +101,7 @@ pub fn run() {
             leagues::start(app.handle(), &app_root);
             prices::start(app.handle(), &app_root);
             clusters::start(app.handle(), &app_root);
+            farm::start(app.handle(), &app.state::<paths::AppPaths>());
             account::start(app.handle(), &app.state::<paths::AppPaths>());
             sync::start(app.handle(), &app.state::<paths::AppPaths>())?;
             stash::start(app.handle(), &app.state::<paths::AppPaths>());
@@ -148,6 +150,7 @@ pub fn run() {
             dataset::catalog_by_trade_ids,
             dataset::catalog_map_search,
             dataset::catalog_ascendancies,
+            dataset::catalog_bosses,
             trade::stats::trade_stats_lookup,
             trade::query::trade_query,
             economy::economy_overview,
@@ -171,6 +174,9 @@ pub fn run() {
             clusters::cluster_base_check,
             clusters::clusters_set_own_prices,
             clusters::clusters_currency,
+            farm::farm_bosses,
+            farm::farm_boss,
+            farm::farm_set_price_override,
             appraise::item_appraise,
             appraise::item_last_appraisal,
             hotkeys::hotkeys_set,

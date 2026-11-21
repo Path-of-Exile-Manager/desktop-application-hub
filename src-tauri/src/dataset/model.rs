@@ -59,6 +59,8 @@ pub struct ManifestCounts {
     pub trade_stats: u32,
     /// Из `item-mods.json`; 0 — файла нет.
     pub item_mods: u32,
+    /// Из `bosses.json`; 0 — файла нет или он не прочитан.
+    pub bosses: u32,
 }
 
 /// Ответ `GET /v1/bootstrap`.

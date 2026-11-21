@@ -20,6 +20,15 @@ pub struct BossData {
     pub bosses: Vec<Boss>,
     #[serde(default)]
     pub quotes: Vec<Quote>,
+    /// Имена областей, которые перечисляют боссы (из файлов игры) — для журнала заходов.
+    #[serde(default)]
+    pub areas: Vec<BossArea>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BossArea {
+    pub id: String,
+    pub name: LocalizedText,
 }
 
 impl BossData {
@@ -54,9 +63,9 @@ pub struct Boss {
     pub name: LocalizedText,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub icon_item_id: Option<String>,
-    /// Области `WorldAreas` — для `Client.txt`.
-    #[serde(default)]
-    pub area_ids: Vec<String>,
+    /// Области `WorldAreas` — для `Client.txt`; `None` — своей арены нет (бой внутри большей области).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub area_ids: Option<Vec<String>>,
     /// Что тратится на одно убийство.
     #[serde(default)]
     pub entry: Vec<EntryItem>,
@@ -187,7 +196,7 @@ pub struct BossDefaults {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Patch {
-    /// `changed`, … — показывается значком.
+    /// `new` | `changed` — показывается значком.
     pub tag: String,
     pub text: LocalizedText,
 }

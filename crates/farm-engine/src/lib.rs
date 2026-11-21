@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
-pub use data::{Boss, BossData, DropRef, Pool, PoolEntry, PoolKind, Quote};
+pub use data::{Boss, BossArea, BossData, BossGroup, DropRef, Pool, PoolEntry, PoolKind, Quote};
 pub use simulate::Rng;
 
 use simulate::Distribution;
