@@ -326,7 +326,7 @@ dependencies = [
 
 [[package]]
 name = "browser-bridge"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -627,7 +627,7 @@ dependencies = [
 
 [[package]]
 name = "craft-engine"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -835,7 +835,7 @@ dependencies = [
 
 [[package]]
 name = "discord-presence"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "dotenvy",
  "serde_json",
@@ -1069,7 +1069,7 @@ checksum = "7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a"
 
 [[package]]
 name = "farm-engine"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1261,7 +1261,7 @@ dependencies = [
 
 [[package]]
 name = "game-log"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "chrono",
  "game-window",
@@ -1270,7 +1270,7 @@ dependencies = [
 
 [[package]]
 name = "game-window"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "serde",
  "windows",
@@ -1957,7 +1957,7 @@ dependencies = [
 
 [[package]]
 name = "item-parser"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "serde",
  "ts-rs",
@@ -2890,7 +2890,7 @@ dependencies = [
 
 [[package]]
 name = "pob-parser"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "base64 0.23.1",
  "flate2",
@@ -2903,7 +2903,7 @@ dependencies = [
 
 [[package]]
 name = "poe-manager"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "arboard",
  "browser-bridge",
